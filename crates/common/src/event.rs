@@ -69,14 +69,14 @@ pub fn validate_ingest_event(event: &IngestEvent) -> Result<(), Vec<String>> {
         errors.push("event_name must be at most 256 characters".to_string());
     }
 
-    // event_name allowed chars: alphanumeric + spaces + _ + . + -
+    // event_name allowed chars: alphanumeric + spaces + _ + . + - + $ (for system events like $screen)
     if !event
         .event_name
         .chars()
-        .all(|c| c.is_alphanumeric() || c == ' ' || c == '_' || c == '.' || c == '-')
+        .all(|c| c.is_alphanumeric() || c == ' ' || c == '_' || c == '.' || c == '-' || c == '$')
     {
         errors.push(
-            "event_name contains invalid characters; only alphanumeric, spaces, _, ., and - are allowed"
+            "event_name contains invalid characters; only alphanumeric, spaces, _, ., -, and $ are allowed"
                 .to_string(),
         );
     }
