@@ -272,6 +272,188 @@ export function getEventTypes(projectId: string, from?: string, to?: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Active users endpoints
+// ---------------------------------------------------------------------------
+
+export interface ActiveUsersPoint {
+  period: string;
+  active_users: number;
+  new_users: number;
+}
+
+export interface ActiveUsersResponse {
+  project_id: string;
+  granularity: string;
+  data: ActiveUsersPoint[];
+}
+
+export function getActiveUsers(
+  projectId: string,
+  from?: string,
+  to?: string,
+  granularity?: string,
+) {
+  const qs = new URLSearchParams();
+  if (from) qs.set("from", from);
+  if (to) qs.set("to", to);
+  if (granularity) qs.set("granularity", granularity);
+  const query = qs.toString();
+  return request<ActiveUsersResponse>(
+    "GET",
+    `/stats/projects/${projectId}/active-users${query ? `?${query}` : ""}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Live users endpoints
+// ---------------------------------------------------------------------------
+
+export interface LiveUsersResponse {
+  project_id: string;
+  active_users_5m: number;
+  active_users_30m: number;
+}
+
+export function getLiveUsers(projectId: string) {
+  return request<LiveUsersResponse>(
+    "GET",
+    `/stats/projects/${projectId}/live-users`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Funnel endpoints
+// ---------------------------------------------------------------------------
+
+export interface FunnelStep {
+  event_name: string;
+  filters?: Record<string, string>;
+}
+
+export interface Funnel {
+  id: string;
+  project_id: string;
+  name: string;
+  steps: FunnelStep[];
+  window_seconds: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateFunnelInput {
+  name: string;
+  steps: FunnelStep[];
+  window_seconds?: number;
+}
+
+export interface UpdateFunnelInput {
+  name?: string;
+  steps?: FunnelStep[];
+  window_seconds?: number;
+}
+
+export interface FunnelStepResult {
+  step: number;
+  event_name: string;
+  users: number;
+  conversion_rate: number;
+}
+
+export interface FunnelResultsResponse {
+  funnel_id: string;
+  from: string;
+  to: string;
+  steps: FunnelStepResult[];
+  overall_conversion: number;
+}
+
+export interface CompareFunnelsResponse {
+  funnels: FunnelResultsResponse[];
+}
+
+export function getFunnels(projectId: string) {
+  return request<Funnel[]>("GET", `/projects/${projectId}/funnels`);
+}
+
+export function getFunnel(projectId: string, funnelId: string) {
+  return request<Funnel>("GET", `/projects/${projectId}/funnels/${funnelId}`);
+}
+
+export function createFunnel(projectId: string, input: CreateFunnelInput) {
+  return request<Funnel>("POST", `/projects/${projectId}/funnels`, input);
+}
+
+export function updateFunnel(
+  projectId: string,
+  funnelId: string,
+  input: UpdateFunnelInput,
+) {
+  return request<Funnel>(
+    "PATCH",
+    `/projects/${projectId}/funnels/${funnelId}`,
+    input,
+  );
+}
+
+export function deleteFunnel(projectId: string, funnelId: string) {
+  return request<void>(
+    "DELETE",
+    `/projects/${projectId}/funnels/${funnelId}`,
+  );
+}
+
+export function getFunnelResults(
+  projectId: string,
+  funnelId: string,
+  from?: string,
+  to?: string,
+) {
+  const qs = new URLSearchParams();
+  if (from) qs.set("from", from);
+  if (to) qs.set("to", to);
+  const query = qs.toString();
+  return request<FunnelResultsResponse>(
+    "GET",
+    `/projects/${projectId}/funnels/${funnelId}/results${query ? `?${query}` : ""}`,
+  );
+}
+
+export function compareFunnels(
+  projectId: string,
+  funnelIds: string[],
+  from?: string,
+  to?: string,
+) {
+  const qs = new URLSearchParams();
+  qs.set("funnel_ids", funnelIds.join(","));
+  if (from) qs.set("from", from);
+  if (to) qs.set("to", to);
+  return request<CompareFunnelsResponse>(
+    "GET",
+    `/projects/${projectId}/funnels/compare?${qs.toString()}`,
+  );
+}
+
+export function compareFunnelTimeRanges(
+  projectId: string,
+  funnelId: string,
+  fromA: string,
+  toA: string,
+  fromB: string,
+  toB: string,
+) {
+  const qs = new URLSearchParams();
+  qs.set("from_a", fromA);
+  qs.set("to_a", toA);
+  qs.set("from_b", fromB);
+  qs.set("to_b", toB);
+  return request<CompareFunnelsResponse>(
+    "GET",
+    `/projects/${projectId}/funnels/${funnelId}/compare?${qs.toString()}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Event explorer endpoints
 // ---------------------------------------------------------------------------
 

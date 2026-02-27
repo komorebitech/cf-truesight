@@ -1,5 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { getEventCount, getThroughput, getEventTypes } from "@/lib/api";
+import {
+  getEventCount,
+  getThroughput,
+  getEventTypes,
+  getActiveUsers,
+  getLiveUsers,
+} from "@/lib/api";
 
 export function useEventCount(
   projectId: string | undefined,
@@ -35,5 +41,27 @@ export function useEventTypeBreakdown(
     queryKey: ["event-types", projectId, from, to],
     queryFn: () => getEventTypes(projectId!, from, to),
     enabled: !!projectId,
+  });
+}
+
+export function useActiveUsers(
+  projectId: string | undefined,
+  from?: string,
+  to?: string,
+  granularity?: string,
+) {
+  return useQuery({
+    queryKey: ["active-users", projectId, from, to, granularity],
+    queryFn: () => getActiveUsers(projectId!, from, to, granularity),
+    enabled: !!projectId && !!from && !!to,
+  });
+}
+
+export function useLiveUsers(projectId: string | undefined) {
+  return useQuery({
+    queryKey: ["live-users", projectId],
+    queryFn: () => getLiveUsers(projectId!),
+    enabled: !!projectId,
+    refetchInterval: 30_000,
   });
 }

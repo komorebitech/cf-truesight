@@ -18,6 +18,19 @@ diesel::table! {
 }
 
 diesel::table! {
+    funnels (id) {
+        id -> Uuid,
+        project_id -> Uuid,
+        #[max_length = 255]
+        name -> Varchar,
+        steps -> Jsonb,
+        window_seconds -> Int4,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     projects (id) {
         id -> Uuid,
         #[max_length = 255]
@@ -29,5 +42,6 @@ diesel::table! {
 }
 
 diesel::joinable!(api_keys -> projects (project_id));
+diesel::joinable!(funnels -> projects (project_id));
 
-diesel::allow_tables_to_appear_in_same_query!(api_keys, projects,);
+diesel::allow_tables_to_appear_in_same_query!(api_keys, funnels, projects,);

@@ -52,6 +52,48 @@ pub fn create_router(state: AppState) -> Router {
             "/v1/stats/projects/{pid}/events",
             get(handlers::stats::list_events),
         )
+        // Active Users
+        .route(
+            "/v1/stats/projects/{pid}/active-users",
+            get(handlers::stats::active_users),
+        )
+        .route(
+            "/v1/stats/projects/{pid}/live-users",
+            get(handlers::stats::live_users),
+        )
+        // Funnels
+        .route(
+            "/v1/projects/{pid}/funnels",
+            get(handlers::funnels::list_funnels),
+        )
+        .route(
+            "/v1/projects/{pid}/funnels",
+            post(handlers::funnels::create_funnel),
+        )
+        .route(
+            "/v1/projects/{pid}/funnels/compare",
+            get(handlers::funnels::compare_funnels),
+        )
+        .route(
+            "/v1/projects/{pid}/funnels/{fid}",
+            get(handlers::funnels::get_funnel),
+        )
+        .route(
+            "/v1/projects/{pid}/funnels/{fid}",
+            patch(handlers::funnels::update_funnel),
+        )
+        .route(
+            "/v1/projects/{pid}/funnels/{fid}",
+            delete(handlers::funnels::delete_funnel),
+        )
+        .route(
+            "/v1/projects/{pid}/funnels/{fid}/results",
+            get(handlers::funnels::funnel_results),
+        )
+        .route(
+            "/v1/projects/{pid}/funnels/{fid}/compare",
+            get(handlers::funnels::compare_time_ranges),
+        )
         .route_layer(middleware::from_fn_with_state(state.clone(), admin_auth))
         .with_state(state.clone());
 
