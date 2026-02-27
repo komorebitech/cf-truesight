@@ -12,7 +12,15 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronDown, ChevronRight, ChevronLeft, X } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { ChevronDown, ChevronRight, ChevronLeft } from "lucide-react";
+import { motion } from "motion/react";
 
 interface EventsTableProps {
   events: TrackedEvent[] | undefined;
@@ -49,7 +57,7 @@ export function EventsTable({
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 p-4">
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-12 w-full" />
         ))}
@@ -59,7 +67,7 @@ export function EventsTable({
 
   if (!events || events.length === 0) {
     return (
-      <div className="py-12 text-center text-sm text-gray-500">
+      <div className="py-12 text-center text-sm text-muted-foreground">
         No events found matching your filters.
       </div>
     );
@@ -79,11 +87,14 @@ export function EventsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {events.map((event) => (
+          {events.map((event, i) => (
             <>
-              <TableRow
+              <motion.tr
                 key={event.event_id}
-                className="cursor-pointer"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2, delay: i * 0.02 }}
+                className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/50"
                 onClick={() => {
                   setExpandedId(
                     expandedId === event.event_id ? null : event.event_id,
@@ -93,9 +104,9 @@ export function EventsTable({
               >
                 <TableCell className="w-8 pr-0">
                   {expandedId === event.event_id ? (
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   )}
                 </TableCell>
                 <TableCell className="font-medium">
@@ -106,20 +117,20 @@ export function EventsTable({
                     {event.event_type}
                   </Badge>
                 </TableCell>
-                <TableCell className="font-mono text-xs text-gray-500">
+                <TableCell className="font-mono text-xs text-muted-foreground">
                   {event.anonymous_id.slice(0, 12)}...
                 </TableCell>
-                <TableCell className="text-gray-500">
+                <TableCell className="text-muted-foreground">
                   {event.user_id || "-"}
                 </TableCell>
-                <TableCell className="text-gray-500">
+                <TableCell className="text-muted-foreground">
                   {formatDate(event.client_timestamp)}
                 </TableCell>
-              </TableRow>
+              </motion.tr>
               {expandedId === event.event_id && (
                 <TableRow key={`${event.event_id}-expanded`}>
-                  <TableCell colSpan={6} className="bg-gray-50 p-0">
-                    <pre className="max-h-64 overflow-auto p-4 text-xs text-gray-700">
+                  <TableCell colSpan={6} className="bg-muted p-0">
+                    <pre className="max-h-64 overflow-auto p-4 text-xs">
                       {JSON.stringify(JSON.parse(event.properties || "{}"), null, 2)}
                     </pre>
                   </TableCell>
@@ -131,8 +142,8 @@ export function EventsTable({
       </Table>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
-        <p className="text-sm text-gray-500">
+      <div className="flex items-center justify-between border-t px-4 py-3">
+        <p className="text-sm text-muted-foreground">
           Page {page} &middot; {events.length} event{events.length !== 1 ? "s" : ""}
         </p>
         <div className="flex items-center gap-2">
@@ -145,7 +156,7 @@ export function EventsTable({
             <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             Page {page}
           </span>
           <Button
@@ -161,88 +172,90 @@ export function EventsTable({
       </div>
 
       {/* Side drawer for event detail */}
-      {drawerEvent && expandedId === drawerEvent.event_id && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md border-l border-gray-200 bg-white shadow-xl lg:max-w-lg">
-          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-            <h3 className="text-lg font-semibold">Event Detail</h3>
-            <button
-              onClick={() => {
-                setDrawerEvent(null);
-                setExpandedId(null);
-              }}
-              className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="overflow-auto p-6" style={{ height: "calc(100vh - 65px)" }}>
-            <dl className="space-y-4">
-              <div>
-                <dt className="text-xs font-medium uppercase text-gray-500">
-                  Event Name
-                </dt>
-                <dd className="mt-1 text-sm font-medium">
-                  {drawerEvent.event_name}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium uppercase text-gray-500">
-                  Type
-                </dt>
-                <dd className="mt-1">
-                  <Badge variant={EventTypeColor(drawerEvent.event_type)}>
-                    {drawerEvent.event_type}
-                  </Badge>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium uppercase text-gray-500">
-                  Anonymous ID
-                </dt>
-                <dd className="mt-1 font-mono text-sm text-gray-600">
-                  {drawerEvent.anonymous_id}
-                </dd>
-              </div>
-              {drawerEvent.user_id && (
+      <Sheet
+        open={!!drawerEvent && expandedId === drawerEvent?.event_id}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDrawerEvent(null);
+            setExpandedId(null);
+          }
+        }}
+      >
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Event Detail</SheetTitle>
+            <SheetDescription>Detailed event information</SheetDescription>
+          </SheetHeader>
+          {drawerEvent && (
+            <div className="mt-6 overflow-auto" style={{ height: "calc(100vh - 140px)" }}>
+              <dl className="space-y-4">
                 <div>
-                  <dt className="text-xs font-medium uppercase text-gray-500">
-                    User ID
+                  <dt className="text-xs font-medium uppercase text-muted-foreground">
+                    Event Name
                   </dt>
-                  <dd className="mt-1 text-sm text-gray-600">
-                    {drawerEvent.user_id}
+                  <dd className="mt-1 text-sm font-medium">
+                    {drawerEvent.event_name}
                   </dd>
                 </div>
-              )}
-              <div>
-                <dt className="text-xs font-medium uppercase text-gray-500">
-                  Timestamp
-                </dt>
-                <dd className="mt-1 text-sm text-gray-600">
-                  {formatDate(drawerEvent.client_timestamp)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium uppercase text-gray-500">
-                  Received At
-                </dt>
-                <dd className="mt-1 text-sm text-gray-600">
-                  {formatDate(drawerEvent.server_timestamp)}
-                </dd>
-              </div>
-              <div>
-                <dt className="mb-2 text-xs font-medium uppercase text-gray-500">
-                  Properties
-                </dt>
-                <dd>
-                  <pre className="rounded-md bg-gray-50 p-4 text-xs text-gray-700 overflow-auto">
-                    {JSON.stringify(JSON.parse(drawerEvent.properties || "{}"), null, 2)}
-                  </pre>
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      )}
+                <div>
+                  <dt className="text-xs font-medium uppercase text-muted-foreground">
+                    Type
+                  </dt>
+                  <dd className="mt-1">
+                    <Badge variant={EventTypeColor(drawerEvent.event_type)}>
+                      {drawerEvent.event_type}
+                    </Badge>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium uppercase text-muted-foreground">
+                    Anonymous ID
+                  </dt>
+                  <dd className="mt-1 font-mono text-sm text-muted-foreground">
+                    {drawerEvent.anonymous_id}
+                  </dd>
+                </div>
+                {drawerEvent.user_id && (
+                  <div>
+                    <dt className="text-xs font-medium uppercase text-muted-foreground">
+                      User ID
+                    </dt>
+                    <dd className="mt-1 text-sm text-muted-foreground">
+                      {drawerEvent.user_id}
+                    </dd>
+                  </div>
+                )}
+                <div>
+                  <dt className="text-xs font-medium uppercase text-muted-foreground">
+                    Timestamp
+                  </dt>
+                  <dd className="mt-1 text-sm text-muted-foreground">
+                    {formatDate(drawerEvent.client_timestamp)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium uppercase text-muted-foreground">
+                    Received At
+                  </dt>
+                  <dd className="mt-1 text-sm text-muted-foreground">
+                    {formatDate(drawerEvent.server_timestamp)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="mb-2 text-xs font-medium uppercase text-muted-foreground">
+                    Properties
+                  </dt>
+                  <dd>
+                    <pre className="rounded-md bg-muted p-4 text-xs overflow-auto">
+                      {JSON.stringify(JSON.parse(drawerEvent.properties || "{}"), null, 2)}
+                    </pre>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

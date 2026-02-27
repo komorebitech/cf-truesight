@@ -25,10 +25,26 @@ function useBreadcrumbs(): Crumb[] {
     crumbs.push({ label: "Events" });
   }
 
+  if (location.pathname.includes("/analytics") && params.id) {
+    crumbs.push({ label: "Analytics" });
+  }
+
+  if (location.pathname.includes("/funnels") && params.id) {
+    if (params.funnelId) {
+      crumbs.push({ label: "Funnels", href: `/projects/${params.id}/funnels` });
+      crumbs.push({ label: "Detail" });
+    } else if (location.pathname.includes("/compare")) {
+      crumbs.push({ label: "Funnels", href: `/projects/${params.id}/funnels` });
+      crumbs.push({ label: "Compare" });
+    } else {
+      crumbs.push({ label: "Funnels" });
+    }
+  }
+
   // Last crumb has no link
   if (crumbs.length > 0) {
     const last = crumbs[crumbs.length - 1]!;
-    if (!location.pathname.endsWith("/events") && params.id) {
+    if (!location.pathname.endsWith("/events") && !location.pathname.includes("/analytics") && !location.pathname.includes("/funnels") && params.id) {
       delete last.href;
     }
     if (location.pathname === "/") {
@@ -43,21 +59,23 @@ export function Header({ title }: { title?: string }) {
   const crumbs = useBreadcrumbs();
 
   return (
-    <header className="border-b border-gray-200 bg-white px-6 py-4">
+    <header className="border-b bg-card px-6 py-4">
       {/* Breadcrumbs */}
-      <nav className="mb-1 flex items-center gap-1 text-sm text-gray-500">
+      <nav className="mb-1 flex items-center gap-1 text-sm text-muted-foreground">
         {crumbs.map((crumb, i) => (
           <span key={i} className="flex items-center gap-1">
             {i > 0 && <ChevronRight className="h-3 w-3" />}
             {crumb.href ? (
               <Link
                 to={crumb.href}
-                className="hover:text-gray-700 hover:underline"
+                className="hover:text-foreground hover:underline"
               >
                 {crumb.label}
               </Link>
             ) : (
-              <span className="text-gray-900">{crumb.label}</span>
+              <span className="text-foreground">
+                {crumb.label}
+              </span>
             )}
           </span>
         ))}
@@ -65,7 +83,9 @@ export function Header({ title }: { title?: string }) {
 
       {/* Title */}
       {title && (
-        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+        <h1 className="font-serif text-2xl font-bold">
+          {title}
+        </h1>
       )}
     </header>
   );

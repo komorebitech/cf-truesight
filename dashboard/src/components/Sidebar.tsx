@@ -1,7 +1,17 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { cn } from "@/lib/utils";
-import { FolderKanban, Menu, X, Eye } from "lucide-react";
+import { FolderKanban, Menu, Eye } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 
 interface NavItem {
   label: string;
@@ -29,10 +39,14 @@ export function Sidebar() {
   const nav = (
     <>
       {/* Brand */}
-      <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-5">
-        <Eye className="h-6 w-6 text-blue-600" />
-        <span className="text-lg font-bold text-gray-900">TrueSight</span>
+      <div className="flex items-center gap-2 px-4 py-5">
+        <Eye className="h-6 w-6 text-primary" />
+        <span className="font-serif text-lg font-bold">
+          TrueSight
+        </span>
       </div>
+
+      <Separator />
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
@@ -44,8 +58,8 @@ export function Sidebar() {
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               isActive(item.href)
-                ? "bg-blue-50 text-blue-700"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+                ? "border-l-2 border-primary bg-primary/8 text-primary"
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
             )}
           >
             {item.icon}
@@ -54,9 +68,14 @@ export function Sidebar() {
         ))}
       </nav>
 
+      <Separator />
+
       {/* Footer */}
-      <div className="border-t border-gray-200 px-4 py-3">
-        <p className="text-xs text-gray-400">TrueSight v0.1.0</p>
+      <div className="flex items-center justify-between px-4 py-3">
+        <p className="text-xs text-muted-foreground">
+          TrueSight v0.1.0
+        </p>
+        <ThemeToggle />
       </div>
     </>
   );
@@ -64,37 +83,28 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile toggle */}
-      <button
-        className="fixed left-4 top-4 z-50 rounded-md bg-white p-2 shadow-md lg:hidden"
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed left-4 top-4 z-50 lg:hidden"
         onClick={() => setMobileOpen(!mobileOpen)}
       >
-        {mobileOpen ? (
-          <X className="h-5 w-5" />
-        ) : (
-          <Menu className="h-5 w-5" />
-        )}
-      </button>
+        <Menu className="h-5 w-5" />
+      </Button>
 
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
+      {/* Mobile sidebar - Sheet */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="flex w-60 flex-col p-0">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Navigation</SheetTitle>
+            <SheetDescription>Main navigation menu</SheetDescription>
+          </SheetHeader>
+          {nav}
+        </SheetContent>
+      </Sheet>
 
-      {/* Sidebar - mobile */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-60 flex-col border-r border-gray-200 bg-white transition-transform lg:hidden",
-          mobileOpen ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
-        {nav}
-      </aside>
-
-      {/* Sidebar - desktop */}
-      <aside className="hidden w-60 shrink-0 border-r border-gray-200 bg-white lg:flex lg:flex-col">
+      {/* Desktop sidebar */}
+      <aside className="hidden w-60 shrink-0 border-r bg-card lg:flex lg:flex-col">
         {nav}
       </aside>
     </>

@@ -1,14 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useParams, Link } from "react-router";
-import { subHours, formatISO } from "date-fns";
 import { useProject } from "@/hooks/use-projects";
 import { useApiKeys, useGenerateApiKey, useRevokeApiKey } from "@/hooks/use-api-keys";
-import { useEventCount, useThroughput, useEventTypeBreakdown } from "@/hooks/use-stats";
+import { useEventCount, useThroughput, useEventTypeBreakdown, useLiveUsers } from "@/hooks/use-stats";
 import { Header } from "@/components/Header";
 import { StatsCards, type StatCardData } from "@/components/StatsCards";
 import { ThroughputChart } from "@/components/ThroughputChart";
 import { ApiKeyTable } from "@/components/ApiKeyTable";
 import { ApiKeyGenerateDialog } from "@/components/ApiKeyGenerateDialog";
+import {
+  TimeRangeSelector,
+  type TimeRange,
+  getPresetRange,
+} from "@/components/TimeRangeSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -16,38 +20,34 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart3,
   Activity,
-  Users,
+  Radio,
   Tag,
   Plus,
   ExternalLink,
+  TrendingUp,
+  GitBranch,
 } from "lucide-react";
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: project, isLoading: projectLoading } = useProject(id);
 
-  // Time range: last 24 hours
-  const { from24h, to24h } = useMemo(() => {
-    const now = new Date();
-    return {
-      from24h: formatISO(subHours(now, 24)),
-      to24h: formatISO(now),
-    };
-  }, []);
+  const [timeRange, setTimeRange] = useState<TimeRange>(getPresetRange("7d"));
 
   const { data: eventCountData, isLoading: countLoading } = useEventCount(
     id,
-    from24h,
-    to24h,
+    timeRange.from,
+    timeRange.to,
   );
   const { data: throughputData, isLoading: throughputLoading } = useThroughput(
     id,
-    from24h,
-    to24h,
+    timeRange.from,
+    timeRange.to,
     "hour",
   );
   const { data: breakdownData, isLoading: breakdownLoading } =
-    useEventTypeBreakdown(id, from24h, to24h);
+    useEventTypeBreakdown(id, timeRange.from, timeRange.to);
+  const { data: liveData } = useLiveUsers(id);
 
   const { data: apiKeysData, isLoading: keysLoading } = useApiKeys(id);
   const generateApiKey = useGenerateApiKey();
@@ -56,26 +56,25 @@ export function ProjectDetailPage() {
   const [showKeyDialog, setShowKeyDialog] = useState(false);
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
 
-  // Compute stats
   const statsLoading = countLoading || breakdownLoading;
   const totalEvents = eventCountData?.total_events ?? 0;
   const topEvent = breakdownData?.top_events?.[0];
 
   const stats: StatCardData[] = [
     {
-      label: "Total Events (24h)",
+      label: "Total Events",
       value: totalEvents,
       icon: <BarChart3 className="h-5 w-5" />,
+    },
+    {
+      label: "Live Users (5m)",
+      value: liveData?.active_users_5m ?? 0,
+      icon: <Radio className="h-5 w-5" />,
     },
     {
       label: "Events / sec",
       value: totalEvents > 0 ? (totalEvents / (24 * 3600)).toFixed(2) : "0",
       icon: <Activity className="h-5 w-5" />,
-    },
-    {
-      label: "Event Types",
-      value: breakdownData?.by_type ? Object.keys(breakdownData.by_type).length : 0,
-      icon: <Users className="h-5 w-5" />,
     },
     {
       label: "Top Event",
@@ -121,7 +120,9 @@ export function ProjectDetailPage() {
       <div className="flex flex-1 flex-col">
         <Header />
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-gray-500">Project not found.</p>
+          <p className="text-muted-foreground">
+            Project not found.
+          </p>
         </div>
       </div>
     );
@@ -132,20 +133,37 @@ export function ProjectDetailPage() {
       <Header title={project.name} />
 
       <div className="flex-1 space-y-6 p-6">
-        {/* Status badge row */}
-        <div className="flex items-center gap-4">
-          <Badge
-            variant={project.active ? "success" : "secondary"}
-          >
-            {project.active ? "active" : "inactive"}
-          </Badge>
-          <Link
-            to={`/projects/${id}/events`}
-            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 hover:underline"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            Event Explorer
-          </Link>
+        {/* Status + nav links + time range */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Badge
+              variant={project.active ? "success" : "secondary"}
+            >
+              {project.active ? "active" : "inactive"}
+            </Badge>
+            <Link
+              to={`/projects/${id}/events`}
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Event Explorer
+            </Link>
+            <Link
+              to={`/projects/${id}/analytics`}
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              <TrendingUp className="h-3.5 w-3.5" />
+              Analytics
+            </Link>
+            <Link
+              to={`/projects/${id}/funnels`}
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              <GitBranch className="h-3.5 w-3.5" />
+              Funnels
+            </Link>
+          </div>
+          <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
         </div>
 
         {/* Stats cards */}
@@ -154,7 +172,7 @@ export function ProjectDetailPage() {
         {/* Throughput chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Throughput (Last 24 Hours)</CardTitle>
+            <CardTitle>Throughput</CardTitle>
           </CardHeader>
           <CardContent>
             <ThroughputChart

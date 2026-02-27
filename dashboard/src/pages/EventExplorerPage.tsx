@@ -16,19 +16,16 @@ const PAGE_SIZE = 25;
 export function EventExplorerPage() {
   const { id } = useParams<{ id: string }>();
 
-  // Default date range: last 7 days
   const defaultFrom = useMemo(() => formatISO(subDays(new Date(), 7)), []);
   const defaultTo = useMemo(() => formatISO(new Date()), []);
 
-  // Filter state
-  const [from, setFrom] = useState(defaultFrom.slice(0, 16)); // datetime-local format
+  const [from, setFrom] = useState(defaultFrom.slice(0, 16));
   const [to, setTo] = useState(defaultTo.slice(0, 16));
   const [eventType, setEventType] = useState("");
   const [eventName, setEventName] = useState("");
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(1);
 
-  // Build filters
   const filters: EventFilters = {
     from: from ? new Date(from).toISOString() : undefined,
     to: to ? new Date(to).toISOString() : undefined,
@@ -61,10 +58,10 @@ export function EventExplorerPage() {
 
       <div className="flex-1 p-6">
         {/* Filters */}
-        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="mb-6 rounded-lg border bg-card p-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
                 From
               </label>
               <Input
@@ -77,7 +74,7 @@ export function EventExplorerPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
                 To
               </label>
               <Input
@@ -90,7 +87,7 @@ export function EventExplorerPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
                 Event Type
               </label>
               <Select
@@ -109,11 +106,11 @@ export function EventExplorerPage() {
               </Select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
                 Event Name
               </label>
               <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+                <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   value={eventName}
                   onChange={(e) => {
@@ -126,7 +123,7 @@ export function EventExplorerPage() {
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
                 User ID
               </label>
               <div className="flex gap-2">
@@ -152,7 +149,7 @@ export function EventExplorerPage() {
         </div>
 
         {/* Events table */}
-        <div className="rounded-lg border border-gray-200 bg-white">
+        <div className="rounded-lg border bg-card">
           <EventsTable
             events={data?.data}
             isLoading={isLoading}

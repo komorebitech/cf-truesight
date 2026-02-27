@@ -44,7 +44,7 @@ export function ProjectForm({
       <div>
         <label
           htmlFor="project-name"
-          className="mb-1.5 block text-sm font-medium text-gray-700"
+          className="mb-1.5 block text-sm font-medium"
         >
           Project Name
         </label>
@@ -58,7 +58,11 @@ export function ProjectForm({
           placeholder="My Project"
           autoFocus
         />
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        {error && (
+          <p className="mt-1 text-sm text-destructive">
+            {error}
+          </p>
+        )}
       </div>
 
       <div className="flex items-center justify-end gap-3">

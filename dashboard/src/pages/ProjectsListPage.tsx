@@ -9,8 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogHeader,
   DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -22,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, FolderOpen } from "lucide-react";
+import { motion } from "motion/react";
 
 function ProjectEventCount({ projectId }: { projectId: string }) {
   const { data, isLoading } = useEventCount(projectId);
@@ -44,7 +47,7 @@ export function ProjectsListPage() {
       <div className="flex-1 p-6">
         {/* Actions bar */}
         <div className="mb-6 flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             {isLoading
               ? "Loading..."
               : `${projects.length} project${projects.length !== 1 ? "s" : ""}`}
@@ -64,11 +67,11 @@ export function ProjectsListPage() {
           </div>
         ) : projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <FolderOpen className="mb-4 h-12 w-12 text-gray-300" />
-            <h3 className="mb-1 text-lg font-medium text-gray-900">
+            <FolderOpen className="mb-4 h-12 w-12 text-muted-foreground/40" />
+            <h3 className="mb-1 font-serif text-lg font-medium">
               No projects yet
             </h3>
-            <p className="mb-6 text-sm text-gray-500">
+            <p className="mb-6 text-sm text-muted-foreground">
               Create your first project to start tracking events.
             </p>
             <Button onClick={() => setShowCreate(true)}>
@@ -77,7 +80,12 @@ export function ProjectsListPage() {
             </Button>
           </div>
         ) : (
-          <div className="rounded-lg border border-gray-200 bg-white">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="rounded-lg border bg-card"
+          >
             <Table>
               <TableHeader>
                 <TableRow>
@@ -97,7 +105,7 @@ export function ProjectsListPage() {
                     <TableCell className="font-medium">
                       {project.name}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-muted-foreground">
                       <ProjectEventCount projectId={project.id} />
                     </TableCell>
                     <TableCell>
@@ -107,23 +115,26 @@ export function ProjectsListPage() {
                         {project.active ? "active" : "inactive"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-gray-500">
+                    <TableCell className="text-muted-foreground">
                       {formatDate(project.created_at)}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </motion.div>
         )}
       </div>
 
       {/* Create Project Dialog */}
-      <Dialog open={showCreate} onClose={() => setShowCreate(false)}>
-        <DialogHeader onClose={() => setShowCreate(false)}>
-          Create Project
-        </DialogHeader>
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Project</DialogTitle>
+            <DialogDescription>
+              Add a new project to start tracking events.
+            </DialogDescription>
+          </DialogHeader>
           <ProjectForm
             onSubmit={async (values) => {
               await createProject.mutateAsync(values);

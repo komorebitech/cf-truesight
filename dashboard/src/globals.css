@@ -2,38 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --color-primary: 59 130 246;
-  --color-danger: 239 68 68;
-  --color-success: 34 197 94;
-  --color-warning: 234 179 8;
-  --sidebar-width: 240px;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 216 14% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 216 14% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 216 14% 14%;
+    --primary: 212 92% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 18% 93%;
+    --secondary-foreground: 215 9% 42%;
+    --muted: 210 18% 93%;
+    --muted-foreground: 215 9% 42%;
+    --accent: 210 18% 93%;
+    --accent-foreground: 216 14% 14%;
+    --destructive: 356 83% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 140 70% 33%;
+    --success-foreground: 0 0% 100%;
+    --warning: 40 100% 30%;
+    --warning-foreground: 0 0% 100%;
+    --border: 210 18% 84%;
+    --input: 210 18% 84%;
+    --ring: 212 92% 45%;
+    --radius: 0.5rem;
+    --sidebar-width: 240px;
+    --chart-1: 212 92% 45%;
+    --chart-2: 140 70% 33%;
+    --chart-3: 40 100% 30%;
+    --chart-4: 356 83% 45%;
+    --chart-5: 215 9% 42%;
+  }
+
+  .dark {
+    --background: 215 21% 7%;
+    --foreground: 210 29% 90%;
+    --card: 215 19% 11%;
+    --card-foreground: 210 29% 90%;
+    --popover: 215 19% 11%;
+    --popover-foreground: 210 29% 90%;
+    --primary: 211 100% 67%;
+    --primary-foreground: 215 21% 7%;
+    --secondary: 215 14% 15%;
+    --secondary-foreground: 213 13% 58%;
+    --muted: 215 14% 15%;
+    --muted-foreground: 213 13% 58%;
+    --accent: 215 14% 15%;
+    --accent-foreground: 210 29% 90%;
+    --destructive: 356 95% 62%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 130 61% 50%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 74% 50%;
+    --warning-foreground: 0 0% 100%;
+    --border: 215 14% 21%;
+    --input: 215 14% 21%;
+    --ring: 211 100% 67%;
+    --chart-1: 211 100% 67%;
+    --chart-2: 130 61% 50%;
+    --chart-3: 38 74% 50%;
+    --chart-4: 356 95% 62%;
+    --chart-5: 213 13% 58%;
+  }
 }
 
-body {
-  min-height: 100vh;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Noto Sans", system-ui, sans-serif;
+    min-height: 100vh;
+  }
 }
 
-/* Scrollbar styling */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: hsl(var(--border));
   border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
-/* Dialog backdrop */
-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.5);
+  background: hsl(var(--muted-foreground));
 }

@@ -1,10 +1,18 @@
 import { useState, type FormEvent } from "react";
-import { Dialog, DialogHeader, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { copyToClipboard } from "@/lib/utils";
 import { Copy, Check, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 
 interface ApiKeyGenerateDialogProps {
   open: boolean;
@@ -42,6 +50,7 @@ export function ApiKeyGenerateDialog({
       const ok = await copyToClipboard(generatedKey);
       if (ok) {
         setCopied(true);
+        toast.success("API key copied to clipboard");
         setTimeout(() => setCopied(false), 2000);
       }
     }
@@ -56,51 +65,58 @@ export function ApiKeyGenerateDialog({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose}>
-      <DialogHeader onClose={handleClose}>
-        {generatedKey ? "API Key Generated" : "Generate API Key"}
-      </DialogHeader>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {generatedKey ? "API Key Generated" : "Generate API Key"}
+          </DialogTitle>
+          <DialogDescription>
+            {generatedKey
+              ? "Your new API key has been generated successfully."
+              : "Create a new API key for your project."}
+          </DialogDescription>
+        </DialogHeader>
 
-      {generatedKey ? (
-        <>
-          <DialogContent>
-            <div className="mb-4 flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-3">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
-              <p className="text-sm text-yellow-800">
-                Copy this key now. It will not be shown again.
-              </p>
-            </div>
+        {generatedKey ? (
+          <>
+            <div className="space-y-4">
+              <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/5 p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+                <p className="text-sm text-warning">
+                  Copy this key now. It will not be shown again.
+                </p>
+              </div>
 
-            <div className="flex items-center gap-2">
-              <code className="flex-1 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm break-all">
-                {generatedKey}
-              </code>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleCopy}
-                title="Copy to clipboard"
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 rounded-md border bg-muted px-3 py-2 text-sm break-all">
+                  {generatedKey}
+                </code>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCopy}
+                  title="Copy to clipboard"
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4 text-success" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
-          </DialogContent>
-          <DialogFooter>
-            <Button onClick={handleClose}>Done</Button>
-          </DialogFooter>
-        </>
-      ) : (
-        <form onSubmit={handleSubmit}>
-          <DialogContent>
+            <DialogFooter>
+              <Button onClick={handleClose}>Done</Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div>
                 <label
                   htmlFor="key-label"
-                  className="mb-1.5 block text-sm font-medium text-gray-700"
+                  className="mb-1.5 block text-sm font-medium"
                 >
                   Label
                 </label>
@@ -115,14 +131,16 @@ export function ApiKeyGenerateDialog({
                   autoFocus
                 />
                 {labelError && (
-                  <p className="mt-1 text-sm text-red-600">{labelError}</p>
+                  <p className="mt-1 text-sm text-destructive">
+                    {labelError}
+                  </p>
                 )}
               </div>
 
               <div>
                 <label
                   htmlFor="key-env"
-                  className="mb-1.5 block text-sm font-medium text-gray-700"
+                  className="mb-1.5 block text-sm font-medium"
                 >
                   Environment
                 </label>
@@ -138,17 +156,17 @@ export function ApiKeyGenerateDialog({
                 </Select>
               </div>
             </div>
-          </DialogContent>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isGenerating}>
-              {isGenerating ? "Generating..." : "Generate Key"}
-            </Button>
-          </DialogFooter>
-        </form>
-      )}
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isGenerating}>
+                {isGenerating ? "Generating..." : "Generate Key"}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
+      </DialogContent>
     </Dialog>
   );
 }
