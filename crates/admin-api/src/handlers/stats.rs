@@ -350,3 +350,175 @@ pub async fn list_events(
         },
     }))
 }
+
+// ── Active Users (DAU/WAU/MAU) ──────────────────────────────────────
+
+#[derive(Debug, Deserialize)]
+pub struct ActiveUsersQuery {
+    pub from: DateTime<Utc>,
+    pub to: DateTime<Utc>,
+    #[serde(default = "default_active_granularity")]
+    pub granularity: String,
+}
+
+fn default_active_granularity() -> String {
+    "day".to_string()
+}
+
+#[derive(Debug, Serialize, clickhouse::Row, Deserialize)]
+pub struct ActiveUsersRow {
+    pub period: String,
+    pub active_users: u64,
+}
+
+#[derive(Debug, Serialize, clickhouse::Row, Deserialize)]
+pub struct NewUsersRow {
+    pub period: String,
+    pub new_users: u64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ActiveUsersPoint {
+    pub period: String,
+    pub active_users: u64,
+    pub new_users: u64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ActiveUsersResponse {
+    pub project_id: Uuid,
+    pub granularity: String,
+    pub data: Vec<ActiveUsersPoint>,
+}
+
+pub async fn active_users(
+    State(state): State<AppState>,
+    Path(project_id): Path<Uuid>,
+    Query(params): Query<ActiveUsersQuery>,
+) -> Result<impl IntoResponse, AppError> {
+    let db = &state.config.clickhouse_database;
+    let from_date = params.from.format("%Y-%m-%d").to_string();
+    let to_date = params.to.format("%Y-%m-%d").to_string();
+
+    let period_expr = match params.granularity.as_str() {
+        "week" => "toString(toMonday(event_date))".to_string(),
+        "month" => "toString(toStartOfMonth(event_date))".to_string(),
+        _ => "toString(event_date)".to_string(), // day
+    };
+
+    // Active users per period
+    let active_query = format!(
+        "SELECT {period_expr} AS period, uniqExact(user_uid) AS active_users \
+         FROM {db}.users_daily \
+         WHERE project_id = ? AND event_date BETWEEN ? AND ? \
+         GROUP BY period ORDER BY period"
+    );
+
+    let active_rows = state
+        .clickhouse_client
+        .query(&active_query)
+        .bind(project_id)
+        .bind(from_date.as_str())
+        .bind(to_date.as_str())
+        .fetch_all::<ActiveUsersRow>()
+        .await
+        .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
+
+    // New users per period (first_seen_date falls within each period)
+    let new_period_expr = match params.granularity.as_str() {
+        "week" => "toString(toMonday(first_seen_date))".to_string(),
+        "month" => "toString(toStartOfMonth(first_seen_date))".to_string(),
+        _ => "toString(first_seen_date)".to_string(),
+    };
+
+    let new_query = format!(
+        "SELECT {new_period_expr} AS period, count() AS new_users \
+         FROM {db}.user_first_seen \
+         WHERE project_id = ? AND first_seen_date BETWEEN ? AND ? \
+         GROUP BY period ORDER BY period"
+    );
+
+    let new_rows = state
+        .clickhouse_client
+        .query(&new_query)
+        .bind(project_id)
+        .bind(from_date.as_str())
+        .bind(to_date.as_str())
+        .fetch_all::<NewUsersRow>()
+        .await
+        .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
+
+    // Merge active + new users by period
+    let new_map: std::collections::HashMap<String, u64> = new_rows
+        .into_iter()
+        .map(|r| (r.period, r.new_users))
+        .collect();
+
+    let data: Vec<ActiveUsersPoint> = active_rows
+        .into_iter()
+        .map(|r| {
+            let new_users = new_map.get(&r.period).copied().unwrap_or(0);
+            ActiveUsersPoint {
+                period: r.period,
+                active_users: r.active_users,
+                new_users,
+            }
+        })
+        .collect();
+
+    Ok(Json(ActiveUsersResponse {
+        project_id,
+        granularity: params.granularity,
+        data,
+    }))
+}
+
+// ── Live Users ──────────────────────────────────────────────────────
+
+#[derive(Debug, Serialize)]
+pub struct LiveUsersResponse {
+    pub project_id: Uuid,
+    pub active_users_5m: u64,
+    pub active_users_30m: u64,
+}
+
+pub async fn live_users(
+    State(state): State<AppState>,
+    Path(project_id): Path<Uuid>,
+) -> Result<impl IntoResponse, AppError> {
+    let db = &state.config.clickhouse_database;
+
+    let query_5m = format!(
+        "SELECT uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)) AS active \
+         FROM {db}.events \
+         WHERE project_id = ? AND server_timestamp >= now() - INTERVAL 5 MINUTE"
+    );
+
+    let active_5m: u64 = state
+        .clickhouse_client
+        .query(&query_5m)
+        .bind(project_id)
+        .fetch_one::<u64>()
+        .await
+        .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
+
+    let query_30m = format!(
+        "SELECT uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)) AS active \
+         FROM {db}.events \
+         WHERE project_id = ? AND server_timestamp >= now() - INTERVAL 30 MINUTE"
+    );
+
+    let active_30m: u64 = state
+        .clickhouse_client
+        .query(&query_30m)
+        .bind(project_id)
+        .fetch_one::<u64>()
+        .await
+        .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
+
+    Ok(Json(LiveUsersResponse {
+        project_id,
+        active_users_5m: active_5m,
+        active_users_30m: active_30m,
+    }))
+}
