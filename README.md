@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="truesight-banner.png" alt="TrueSight" />
+</p>
+
 # TrueSight
 
 Self-hosted analytics event routing system. Ingests events from mobile (Android/iOS) and web apps, queues via AWS SQS, and batch-writes to ClickHouse for BI queries. Multi-tenant by project (UUID).
