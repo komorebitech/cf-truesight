@@ -1,0 +1,21 @@
+# TrueSight Code Ownership
+# Each line is a file pattern followed by one or more owners.
+# Order matters: later rules take precedence.
+
+# Backend
+/crates/                    @backend-team
+/migrations/                @backend-team
+/clickhouse-migrations/     @backend-team
+Cargo.toml                  @backend-team
+Cargo.lock                  @backend-team
+
+# SDKs
+/sdks/                      @sdk-team
+
+# Dashboard
+/dashboard/                 @frontend-team
+
+# Infrastructure
+/docker-compose.yml         @platform-team
+/.github/                   @platform-team
+/scripts/                   @platform-team

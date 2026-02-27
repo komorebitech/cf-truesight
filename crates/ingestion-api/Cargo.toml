@@ -1,0 +1,33 @@
+[package]
+name = "ingestion-api"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "ingestion-api"
+path = "src/main.rs"
+
+[dependencies]
+truesight-common = { workspace = true }
+axum = { workspace = true }
+tokio = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+sentry = { workspace = true }
+sentry-tower = { workspace = true }
+governor = { workspace = true }
+zstd = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+bytes = { workspace = true }
+diesel = { workspace = true }
+dashmap = { workspace = true }
+aws-sdk-sqs = { workspace = true }
+anyhow = { workspace = true }
+dotenvy = { workspace = true }
+envy = { workspace = true }

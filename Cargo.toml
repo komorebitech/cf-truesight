@@ -1,0 +1,75 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.93.1"
+license = "MIT"
+
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Web framework
+axum = { version = "0.8", features = ["macros"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace", "request-id", "util", "compression-zstd", "decompression-zstd"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Database - Diesel
+diesel = { version = "2.2", features = ["postgres", "uuid", "chrono", "r2d2"] }
+diesel-derive-enum = { version = "2.1", features = ["postgres"] }
+
+# ClickHouse
+clickhouse = { version = "0.13", features = ["uuid", "time"] }
+
+# AWS
+aws-config = "1"
+aws-sdk-sqs = "1"
+
+# Identity & Crypto
+uuid = { version = "1", features = ["v4", "serde"] }
+argon2 = "0.5"
+rand = "0.8"
+sha2 = "0.10"
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Config
+envy = "0.4"
+dotenvy = "0.15"
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# Logging & Telemetry
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+sentry = { version = "0.35", features = ["tower", "tracing", "reqwest"] }
+sentry-tower = { version = "0.35", features = ["http"] }
+
+# Rate limiting
+governor = "0.8"
+
+# Compression
+zstd = "0.13"
+
+# Caching
+dashmap = "6"
+
+# Misc
+bytes = "1"
+base64 = "0.22"
+hex = "0.4"
+regex = "1"
+validator = { version = "0.19", features = ["derive"] }
+
+# Common crate
+truesight-common = { path = "crates/common" }

@@ -1,0 +1,28 @@
+[package]
+name = "ch-writer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "ch-writer"
+path = "src/main.rs"
+
+[dependencies]
+truesight-common = { workspace = true }
+tokio = { workspace = true }
+clickhouse = { workspace = true }
+aws-sdk-sqs = { workspace = true }
+aws-config = { workspace = true }
+sentry = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+axum = { workspace = true }
+dotenvy = { workspace = true }
+envy = { workspace = true }

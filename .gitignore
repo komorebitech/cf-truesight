@@ -1,0 +1,51 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+
+# Node
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Gradle / KMM
+.gradle/
+sdks/kmm/build/
+sdks/kmm/**/build/
+sdks/kmm/local.properties
+sdks/kmm/gradle/wrapper/gradle-wrapper.jar
+
+# Database
+*.db
+*.sqlite
+
+# Logs
+*.log
+
+# Docker volumes
+clickhouse_data/
+postgres_data/
+
+# Lock files (pnpm is canonical, npm lock is SDK-local)
+# sdks/web/package-lock.json is committed for npm publish
+
+# Claude Code
+.claude/

@@ -1,0 +1,37 @@
+[package]
+name = "truesight-common"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+argon2 = { workspace = true }
+aws-sdk-sqs = { workspace = true }
+aws-config = { workspace = true }
+diesel = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+sentry = { workspace = true }
+zstd = { workspace = true }
+dashmap = { workspace = true }
+sha2 = { workspace = true }
+rand = { workspace = true }
+hex = { workspace = true }
+bytes = { workspace = true }
+validator = { workspace = true }
+envy = { workspace = true }
+dotenvy = { workspace = true }
+anyhow = { workspace = true }
+tokio = { workspace = true }
+axum = { workspace = true }
+regex = { workspace = true }
+base64 = { workspace = true }
