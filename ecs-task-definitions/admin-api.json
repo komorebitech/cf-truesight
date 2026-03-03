@@ -1,0 +1,68 @@
+{
+  "family": "truesight-admin-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "runtimePlatform": {
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "executionRoleArn": "arn:aws:iam::581933458044:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::581933458044:role/truesight-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "truesight-admin-api",
+      "image": "581933458044.dkr.ecr.ap-south-1.amazonaws.com/truesight/admin-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8081,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "ADMIN_API_PORT", "value": "8081" },
+        { "name": "CORS_ALLOWED_ORIGINS", "value": "*" },
+        { "name": "RUST_LOG", "value": "info,truesight=debug" }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:581933458044:secret:truesight/database-url"
+        },
+        {
+          "name": "ADMIN_API_TOKEN",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:581933458044:secret:truesight/admin-api-token"
+        },
+        {
+          "name": "CLICKHOUSE_URL",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:581933458044:secret:truesight/clickhouse-url"
+        },
+        {
+          "name": "CLICKHOUSE_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:581933458044:secret:truesight/clickhouse-password"
+        },
+        {
+          "name": "SENTRY_DSN",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:581933458044:secret:truesight/sentry-dsn"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/truesight-admin-api",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8081/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      }
+    }
+  ]
+}

@@ -27,14 +27,20 @@ RUN touch crates/common/src/lib.rs crates/admin-api/src/main.rs
 RUN cargo build --release --package admin-api
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────
-FROM debian:bookworm-slim
+FROM alpine:latest
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates libpq5 \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache libgcc libstdc++ libpq ca-certificates curl
 
-COPY --from=builder /app/target/release/admin-api /usr/local/bin/admin-api
+# Create a non-root user.
+RUN addgroup -g 1001 appuser \
+    && adduser -u 1001 -G appuser -s /bin/false -D appuser
+
+WORKDIR /app
+
+COPY --from=builder /app/target/release/admin-api ./admin-api
+
+USER appuser
 
 EXPOSE 8081
 
-CMD ["admin-api"]
+CMD ["./admin-api"]

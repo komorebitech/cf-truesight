@@ -1,0 +1,60 @@
+{
+  "family": "truesight-ingestion-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "runtimePlatform": {
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "executionRoleArn": "arn:aws:iam::581933458044:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::581933458044:role/truesight-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "truesight-ingestion-api",
+      "image": "581933458044.dkr.ecr.ap-south-1.amazonaws.com/truesight/ingestion-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "INGESTION_API_PORT", "value": "8080" },
+        { "name": "AWS_REGION", "value": "ap-south-1" },
+        { "name": "RUST_LOG", "value": "info,truesight=debug" }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:581933458044:secret:truesight/database-url"
+        },
+        {
+          "name": "SQS_QUEUE_URL",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:581933458044:secret:truesight/sqs-queue-url"
+        },
+        {
+          "name": "SENTRY_DSN",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:581933458044:secret:truesight/sentry-dsn"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/truesight-ingestion-api",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      }
+    }
+  ]
+}

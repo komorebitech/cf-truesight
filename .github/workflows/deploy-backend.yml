@@ -2,9 +2,8 @@ name: Deploy - Backend
 
 on:
   push:
-    branches: [main]
-    tags:
-      - "v*"
+    branches: [master]
+    paths: ['crates/**', 'Cargo.toml', 'Cargo.lock']
   workflow_dispatch:
     inputs:
       environment:
@@ -12,16 +11,15 @@ on:
         required: true
         type: choice
         options:
-          - staging
           - production
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: ap-south-1
 
 jobs:
   deploy:
     name: Deploy ${{ matrix.service }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     strategy:
       matrix:
@@ -30,9 +28,6 @@ jobs:
     permissions:
       id-token: write
       contents: read
-
-    environment:
-      name: ${{ github.event.inputs.environment || (startsWith(github.ref, 'refs/tags/v') && 'production' || 'staging') }}
 
     steps:
       - name: Checkout repository
@@ -52,31 +47,33 @@ jobs:
         id: tag
         run: echo "TAG=$(echo ${{ github.sha }} | cut -c1-7)" >> "$GITHUB_OUTPUT"
 
-      - name: Build Docker image
+      - name: Build and push ARM64 image
         env:
           ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           SERVICE: ${{ matrix.service }}
           TAG: ${{ steps.tag.outputs.TAG }}
         run: |
           docker build \
-            -t "$ECR_REGISTRY/truesight-$SERVICE:$TAG" \
+            -t "$ECR_REGISTRY/truesight/$SERVICE:$TAG" \
+            -t "$ECR_REGISTRY/truesight/$SERVICE:latest" \
             -f "crates/$SERVICE/Dockerfile" \
             .
+          docker push "$ECR_REGISTRY/truesight/$SERVICE:$TAG"
+          docker push "$ECR_REGISTRY/truesight/$SERVICE:latest"
 
-      - name: Push Docker image
+      - name: Register task definition and deploy
         env:
-          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           SERVICE: ${{ matrix.service }}
           TAG: ${{ steps.tag.outputs.TAG }}
         run: |
-          docker push "$ECR_REGISTRY/truesight-$SERVICE:$TAG"
-
-      # - name: Update ECS service
-      #   env:
-      #     SERVICE: ${{ matrix.service }}
-      #     TAG: ${{ steps.tag.outputs.TAG }}
-      #   run: |
-      #     aws ecs update-service \
-      #       --cluster truesight-cluster \
-      #       --service "truesight-$SERVICE" \
-      #       --force-new-deployment
+          # Substitute image tag in task definition
+          sed -i "s|:latest|:$TAG|g" ecs-task-definitions/$SERVICE.json
+          # Register new task definition revision
+          aws ecs register-task-definition \
+            --cli-input-json file://ecs-task-definitions/$SERVICE.json
+          # Update ECS service to use latest task def
+          aws ecs update-service \
+            --cluster cityflo-analytics \
+            --service "truesight-$SERVICE" \
+            --task-definition "truesight-$SERVICE" \
+            --force-new-deployment
