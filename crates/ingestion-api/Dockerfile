@@ -47,4 +47,4 @@ USER appuser
 
 EXPOSE 8080
 
-CMD ["./ingestion-api"]
+CMD ["sh", "-c", "echo 'Binary info:' && ls -la ./ingestion-api && ldd ./ingestion-api && echo 'Starting...' && exec ./ingestion-api"]
