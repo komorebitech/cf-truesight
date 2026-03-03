@@ -1,7 +1,7 @@
 # ---- Builder stage ----
 FROM rust:1.93.1-slim AS builder
 
-RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -29,7 +29,7 @@ RUN cargo build --release --bin ch-writer
 # ---- Runtime stage ----
 FROM alpine:latest
 
-RUN apk add --no-cache libgcc libstdc++ ca-certificates curl
+RUN apk add --no-cache libgcc libstdc++ libpq ca-certificates curl
 
 # Create a non-root user.
 RUN addgroup -g 1001 appuser \

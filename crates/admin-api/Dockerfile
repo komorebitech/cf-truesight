@@ -1,6 +1,8 @@
 # ── Stage 1: Build ────────────────────────────────────────────────────
 FROM rust:1.93-bookworm AS builder
 
+RUN apt-get update && apt-get install -y libpq-dev && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy workspace manifests
