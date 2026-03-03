@@ -2,7 +2,7 @@
 // TrueSight Admin API client
 // ---------------------------------------------------------------------------
 
-const baseURL = import.meta.env.VITE_API_URL ?? "/api/v1";
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
 const configuredToken: string | undefined = import.meta.env.VITE_ADMIN_TOKEN;
 
 // ---------------------------------------------------------------------------

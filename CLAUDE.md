@@ -68,7 +68,7 @@ Key env vars (see `.env.example` for full list):
 - `SQS_QUEUE_URL` — SQS queue URL
 - `ADMIN_API_TOKEN` — Static bearer token for admin API (MVP auth)
 - `VITE_ADMIN_TOKEN` — Same token, passed to dashboard via Vite
-- `VITE_API_URL` — API base URL for dashboard (default `/api/v1`)
+- `VITE_API_BASE_URL` — API base URL for dashboard (default `/api/v1`)
 
 ## Common Pitfalls
 
