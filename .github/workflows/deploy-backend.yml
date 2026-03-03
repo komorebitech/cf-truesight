@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-24.04-arm
 
     strategy:
+      fail-fast: false
       matrix:
         service: [ingestion-api, ch-writer, admin-api]
 
