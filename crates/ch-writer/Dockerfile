@@ -27,13 +27,15 @@ RUN touch crates/common/src/lib.rs crates/ch-writer/src/main.rs
 RUN cargo build --release --bin ch-writer
 
 # ---- Runtime stage ----
-FROM alpine:latest
+FROM debian:bookworm-slim
 
-RUN apk add --no-cache libgcc libstdc++ libpq ca-certificates curl
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user.
-RUN addgroup -g 1001 appuser \
-    && adduser -u 1001 -G appuser -s /bin/false -D appuser
+RUN groupadd -g 1001 appuser \
+    && useradd -u 1001 -g appuser -s /bin/false -M appuser
 
 WORKDIR /home/appuser
 

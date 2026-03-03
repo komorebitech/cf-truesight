@@ -27,13 +27,15 @@ RUN cargo build --release --bin ingestion-api
 # ---------------------------------------------------------------------------
 # Stage 2: Runtime
 # ---------------------------------------------------------------------------
-FROM alpine:latest AS runtime
+FROM debian:bookworm-slim AS runtime
 
-RUN apk add --no-cache libgcc libstdc++ libpq ca-certificates curl
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user.
-RUN addgroup -g 1001 appuser \
-    && adduser -u 1001 -G appuser -s /bin/false -D appuser
+RUN groupadd -g 1001 appuser \
+    && useradd -u 1001 -g appuser -s /bin/false -M appuser
 
 WORKDIR /app
 
