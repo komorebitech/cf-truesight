@@ -26,6 +26,8 @@
         { "name": "CH_FLUSH_INTERVAL_SECS", "value": "5" },
         { "name": "SQS_RECEIVE_BATCH_SIZE", "value": "10" },
         { "name": "AWS_REGION", "value": "ap-south-1" },
+        { "name": "CLICKHOUSE_DATABASE", "value": "truesight" },
+        { "name": "CLICKHOUSE_USER", "value": "default" },
         { "name": "RUST_LOG", "value": "info,truesight=debug" }
       ],
       "secrets": [
