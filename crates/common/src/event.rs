@@ -37,6 +37,10 @@ pub struct IngestEvent {
     pub context: DeviceContext,
 }
 
+fn default_live() -> String {
+    "live".to_string()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnrichedEvent {
     pub event_id: Uuid,
@@ -51,6 +55,8 @@ pub struct EnrichedEvent {
     pub context: DeviceContext,
     pub project_id: Uuid,
     pub server_timestamp: DateTime<Utc>,
+    #[serde(default = "default_live")]
+    pub environment: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

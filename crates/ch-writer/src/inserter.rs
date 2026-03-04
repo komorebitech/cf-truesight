@@ -31,6 +31,7 @@ struct EventRow {
     server_timestamp: String,
     properties: String,
     project_id: Uuid,
+    environment: String,
     // Flattened DeviceContext fields
     app_version: String,
     os_name: String,
@@ -68,6 +69,7 @@ impl EventRow {
             server_timestamp: format_datetime(&event.server_timestamp),
             properties: properties_json,
             project_id: event.project_id,
+            environment: event.environment.clone(),
             app_version: event.context.app_version.clone().unwrap_or_default(),
             os_name: event.context.os_name.clone(),
             os_version: event.context.os_version.clone(),

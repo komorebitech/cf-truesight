@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, Link, useSearchParams } from "react-router";
 import { useProject } from "@/hooks/use-projects";
 import { useApiKeys, useGenerateApiKey, useRevokeApiKey } from "@/hooks/use-api-keys";
 import { useEventCount, useThroughput, useEventTypeBreakdown, useLiveUsers } from "@/hooks/use-stats";
@@ -13,6 +13,7 @@ import {
   type TimeRange,
   getPresetRange,
 } from "@/components/TimeRangeSelector";
+import { EnvironmentSelector } from "@/components/EnvironmentSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -34,20 +35,31 @@ export function ProjectDetailPage() {
 
   const [timeRange, setTimeRange] = useState<TimeRange>(getPresetRange("7d"));
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const environment = (searchParams.get("env") as "live" | "test") || "live";
+  const setEnvironment = (env: "live" | "test") => {
+    setSearchParams((prev) => {
+      if (env === "live") { prev.delete("env"); } else { prev.set("env", env); }
+      return prev;
+    });
+  };
+
   const { data: eventCountData, isLoading: countLoading } = useEventCount(
     id,
     timeRange.from,
     timeRange.to,
+    environment,
   );
   const { data: throughputData, isLoading: throughputLoading } = useThroughput(
     id,
     timeRange.from,
     timeRange.to,
     "hour",
+    environment,
   );
   const { data: breakdownData, isLoading: breakdownLoading } =
-    useEventTypeBreakdown(id, timeRange.from, timeRange.to);
-  const { data: liveData } = useLiveUsers(id);
+    useEventTypeBreakdown(id, timeRange.from, timeRange.to, environment);
+  const { data: liveData } = useLiveUsers(id, environment);
 
   const { data: apiKeysData, isLoading: keysLoading } = useApiKeys(id);
   const generateApiKey = useGenerateApiKey();
@@ -83,12 +95,12 @@ export function ProjectDetailPage() {
     },
   ];
 
-  const handleGenerate = async (label: string, environment: "live" | "test") => {
+  const handleGenerate = async (label: string, env: "live" | "test") => {
     if (!id) return;
     const result = await generateApiKey.mutateAsync({
       project_id: id,
       label,
-      environment,
+      environment: env,
     });
     setGeneratedKey(result.key);
   };
@@ -97,6 +109,8 @@ export function ProjectDetailPage() {
     if (!id) return;
     revokeApiKey.mutate({ projectId: id, keyId });
   };
+
+  const envSuffix = environment === "test" ? "?env=test" : "";
 
   if (projectLoading) {
     return (
@@ -142,28 +156,31 @@ export function ProjectDetailPage() {
               {project.active ? "active" : "inactive"}
             </Badge>
             <Link
-              to={`/projects/${id}/events`}
+              to={`/projects/${id}/events${envSuffix}`}
               className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               Event Explorer
             </Link>
             <Link
-              to={`/projects/${id}/analytics`}
+              to={`/projects/${id}/analytics${envSuffix}`}
               className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
             >
               <TrendingUp className="h-3.5 w-3.5" />
               Analytics
             </Link>
             <Link
-              to={`/projects/${id}/funnels`}
+              to={`/projects/${id}/funnels${envSuffix}`}
               className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
             >
               <GitBranch className="h-3.5 w-3.5" />
               Funnels
             </Link>
           </div>
-          <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+          <div className="flex items-center gap-3">
+            <EnvironmentSelector value={environment} onChange={setEnvironment} />
+            <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+          </div>
         </div>
 
         {/* Stats cards */}

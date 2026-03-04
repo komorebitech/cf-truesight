@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { useFunnels, useCompareFunnels, useCompareFunnelTimeRanges } from "@/hooks/use-funnels";
 import { Header } from "@/components/Header";
 import { FunnelChart } from "@/components/FunnelChart";
+import { EnvironmentSelector } from "@/components/EnvironmentSelector";
 import {
   TimeRangeSelector,
   type TimeRange,
@@ -31,6 +32,15 @@ export function FunnelComparePage() {
   const { id } = useParams<{ id: string }>();
   const { data: funnels } = useFunnels(id);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const environment = (searchParams.get("env") as "live" | "test") || "live";
+  const setEnvironment = (env: "live" | "test") => {
+    setSearchParams((prev) => {
+      if (env === "live") { prev.delete("env"); } else { prev.set("env", env); }
+      return prev;
+    });
+  };
+
   const [mode, setMode] = useState<CompareMode>("funnels");
   const [funnelA, setFunnelA] = useState("");
   const [funnelB, setFunnelB] = useState("");
@@ -47,6 +57,7 @@ export function FunnelComparePage() {
     funnelIds,
     timeRange.from,
     timeRange.to,
+    environment,
   );
 
   const { data: timeCompareData, isLoading: timeCompareLoading } =
@@ -57,6 +68,7 @@ export function FunnelComparePage() {
       rangeA.to,
       rangeB.from,
       rangeB.to,
+      environment,
     );
 
   const data = mode === "funnels" ? compareData : timeCompareData;
@@ -72,6 +84,7 @@ export function FunnelComparePage() {
       <div className="flex-1 space-y-6 p-6">
         {/* Mode selector */}
         <div className="flex flex-wrap items-center gap-4">
+          <EnvironmentSelector value={environment} onChange={setEnvironment} />
           <Tabs value={mode} onValueChange={(v) => setMode(v as CompareMode)}>
             <TabsList>
               <TabsTrigger value="funnels">Compare Funnels</TabsTrigger>

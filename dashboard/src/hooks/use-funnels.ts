@@ -73,10 +73,11 @@ export function useFunnelResults(
   funnelId: string | undefined,
   from?: string,
   to?: string,
+  environment?: string,
 ) {
   return useQuery({
-    queryKey: ["funnel-results", projectId, funnelId, from, to],
-    queryFn: () => getFunnelResults(projectId!, funnelId!, from, to),
+    queryKey: ["funnel-results", projectId, funnelId, from, to, environment],
+    queryFn: () => getFunnelResults(projectId!, funnelId!, from, to, environment),
     enabled: !!projectId && !!funnelId && !!from && !!to,
   });
 }
@@ -86,10 +87,11 @@ export function useCompareFunnels(
   funnelIds: string[],
   from?: string,
   to?: string,
+  environment?: string,
 ) {
   return useQuery({
-    queryKey: ["compare-funnels", projectId, funnelIds, from, to],
-    queryFn: () => compareFunnels(projectId!, funnelIds, from, to),
+    queryKey: ["compare-funnels", projectId, funnelIds, from, to, environment],
+    queryFn: () => compareFunnels(projectId!, funnelIds, from, to, environment),
     enabled:
       !!projectId && funnelIds.length >= 2 && !!from && !!to,
   });
@@ -102,6 +104,7 @@ export function useCompareFunnelTimeRanges(
   toA?: string,
   fromB?: string,
   toB?: string,
+  environment?: string,
 ) {
   return useQuery({
     queryKey: [
@@ -112,9 +115,10 @@ export function useCompareFunnelTimeRanges(
       toA,
       fromB,
       toB,
+      environment,
     ],
     queryFn: () =>
-      compareFunnelTimeRanges(projectId!, funnelId!, fromA!, toA!, fromB!, toB!),
+      compareFunnelTimeRanges(projectId!, funnelId!, fromA!, toA!, fromB!, toB!, environment),
     enabled:
       !!projectId && !!funnelId && !!fromA && !!toA && !!fromB && !!toB,
   });

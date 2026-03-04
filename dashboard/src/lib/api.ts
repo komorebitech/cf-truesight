@@ -107,6 +107,7 @@ export interface EventFilters {
   event_name?: string;
   user_id?: string;
   anonymous_id?: string;
+  environment?: "live" | "test";
   page?: number;
   per_page?: number;
 }
@@ -232,10 +233,11 @@ export function revokeApiKey(projectId: string, keyId: string) {
 // Stats endpoints
 // ---------------------------------------------------------------------------
 
-export function getEventCount(projectId: string, from?: string, to?: string) {
+export function getEventCount(projectId: string, from?: string, to?: string, environment?: string) {
   const qs = new URLSearchParams();
   if (from) qs.set("from", from);
   if (to) qs.set("to", to);
+  if (environment) qs.set("environment", environment);
   const query = qs.toString();
   return request<EventCountResponse>(
     "GET",
@@ -248,11 +250,13 @@ export function getThroughput(
   from?: string,
   to?: string,
   granularity?: string,
+  environment?: string,
 ) {
   const qs = new URLSearchParams();
   if (from) qs.set("from", from);
   if (to) qs.set("to", to);
   if (granularity) qs.set("granularity", granularity);
+  if (environment) qs.set("environment", environment);
   const query = qs.toString();
   return request<ThroughputResponse>(
     "GET",
@@ -260,10 +264,11 @@ export function getThroughput(
   );
 }
 
-export function getEventTypes(projectId: string, from?: string, to?: string) {
+export function getEventTypes(projectId: string, from?: string, to?: string, environment?: string) {
   const qs = new URLSearchParams();
   if (from) qs.set("from", from);
   if (to) qs.set("to", to);
+  if (environment) qs.set("environment", environment);
   const query = qs.toString();
   return request<EventTypeBreakdownResponse>(
     "GET",
@@ -292,11 +297,13 @@ export function getActiveUsers(
   from?: string,
   to?: string,
   granularity?: string,
+  environment?: string,
 ) {
   const qs = new URLSearchParams();
   if (from) qs.set("from", from);
   if (to) qs.set("to", to);
   if (granularity) qs.set("granularity", granularity);
+  if (environment) qs.set("environment", environment);
   const query = qs.toString();
   return request<ActiveUsersResponse>(
     "GET",
@@ -314,10 +321,13 @@ export interface LiveUsersResponse {
   active_users_30m: number;
 }
 
-export function getLiveUsers(projectId: string) {
+export function getLiveUsers(projectId: string, environment?: string) {
+  const qs = new URLSearchParams();
+  if (environment) qs.set("environment", environment);
+  const query = qs.toString();
   return request<LiveUsersResponse>(
     "GET",
-    `/stats/projects/${projectId}/live-users`,
+    `/stats/projects/${projectId}/live-users${query ? `?${query}` : ""}`,
   );
 }
 
@@ -407,10 +417,12 @@ export function getFunnelResults(
   funnelId: string,
   from?: string,
   to?: string,
+  environment?: string,
 ) {
   const qs = new URLSearchParams();
   if (from) qs.set("from", from);
   if (to) qs.set("to", to);
+  if (environment) qs.set("environment", environment);
   const query = qs.toString();
   return request<FunnelResultsResponse>(
     "GET",
@@ -423,11 +435,13 @@ export function compareFunnels(
   funnelIds: string[],
   from?: string,
   to?: string,
+  environment?: string,
 ) {
   const qs = new URLSearchParams();
   qs.set("funnel_ids", funnelIds.join(","));
   if (from) qs.set("from", from);
   if (to) qs.set("to", to);
+  if (environment) qs.set("environment", environment);
   return request<CompareFunnelsResponse>(
     "GET",
     `/projects/${projectId}/funnels/compare?${qs.toString()}`,
@@ -441,12 +455,14 @@ export function compareFunnelTimeRanges(
   toA: string,
   fromB: string,
   toB: string,
+  environment?: string,
 ) {
   const qs = new URLSearchParams();
   qs.set("from_a", fromA);
   qs.set("to_a", toA);
   qs.set("from_b", fromB);
   qs.set("to_b", toB);
+  if (environment) qs.set("environment", environment);
   return request<CompareFunnelsResponse>(
     "GET",
     `/projects/${projectId}/funnels/${funnelId}/compare?${qs.toString()}`,
@@ -465,6 +481,7 @@ export function getEvents(projectId: string, filters?: EventFilters) {
   if (filters?.event_name) qs.set("event_name", filters.event_name);
   if (filters?.user_id) qs.set("user_id", filters.user_id);
   if (filters?.anonymous_id) qs.set("anonymous_id", filters.anonymous_id);
+  if (filters?.environment) qs.set("environment", filters.environment);
   if (filters?.page) qs.set("page", String(filters.page));
   if (filters?.per_page) qs.set("per_page", String(filters.per_page));
   const query = qs.toString();

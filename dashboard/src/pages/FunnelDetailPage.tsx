@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useFunnel, useFunnelResults, useUpdateFunnel, useDeleteFunnel } from "@/hooks/use-funnels";
 import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import { Header } from "@/components/Header";
 import { FunnelChart } from "@/components/FunnelChart";
 import { FunnelBuilder } from "@/components/FunnelBuilder";
+import { EnvironmentSelector } from "@/components/EnvironmentSelector";
 import {
   TimeRangeSelector,
   type TimeRange,
@@ -48,11 +49,22 @@ export function FunnelDetailPage() {
   const navigate = useNavigate();
   const { data: funnel, isLoading: funnelLoading } = useFunnel(id, funnelId);
   const [timeRange, setTimeRange] = useState<TimeRange>(getPresetRange("30d"));
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const environment = (searchParams.get("env") as "live" | "test") || "live";
+  const setEnvironment = (env: "live" | "test") => {
+    setSearchParams((prev) => {
+      if (env === "live") { prev.delete("env"); } else { prev.set("env", env); }
+      return prev;
+    });
+  };
+
   const { data: results, isLoading: resultsLoading } = useFunnelResults(
     id,
     funnelId,
     timeRange.from,
     timeRange.to,
+    environment,
   );
   const updateFunnel = useUpdateFunnel(id, funnelId);
   const deleteFunnel = useDeleteFunnel(id);
@@ -100,6 +112,7 @@ export function FunnelDetailPage() {
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
+            <EnvironmentSelector value={environment} onChange={setEnvironment} />
             <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
             <Badge variant="secondary" className="flex items-center gap-1">
               <Clock className="h-3 w-3" />

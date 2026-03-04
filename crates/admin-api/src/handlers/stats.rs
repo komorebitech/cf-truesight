@@ -17,6 +17,7 @@ use crate::state::AppState;
 pub struct TimeRangeQuery {
     pub from: DateTime<Utc>,
     pub to: DateTime<Utc>,
+    pub environment: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -32,17 +33,26 @@ pub async fn event_count(
     Path(project_id): Path<Uuid>,
     Query(params): Query<TimeRangeQuery>,
 ) -> Result<impl IntoResponse, AppError> {
+    let env_filter = if params.environment.is_some() {
+        " AND environment = ?"
+    } else {
+        ""
+    };
     let query = format!(
-        "SELECT count() AS cnt FROM {}.events WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?",
-        state.config.clickhouse_database
+        "SELECT count() AS cnt FROM {}.events WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{}",
+        state.config.clickhouse_database, env_filter
     );
 
-    let count: u64 = state
+    let mut q = state
         .clickhouse_client
         .query(&query)
         .bind(project_id)
         .bind(params.from.timestamp_millis() as f64 / 1000.0)
-        .bind(params.to.timestamp_millis() as f64 / 1000.0)
+        .bind(params.to.timestamp_millis() as f64 / 1000.0);
+    if let Some(ref env) = params.environment {
+        q = q.bind(env.as_str());
+    }
+    let count: u64 = q
         .fetch_one::<u64>()
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
@@ -63,6 +73,7 @@ pub struct ThroughputQuery {
     pub to: DateTime<Utc>,
     #[serde(default = "default_granularity")]
     pub granularity: String,
+    pub environment: Option<String>,
 }
 
 fn default_granularity() -> String {
@@ -92,21 +103,30 @@ pub async fn throughput(
         _ => "toStartOfHour",
     };
 
+    let env_filter = if params.environment.is_some() {
+        " AND environment = ?"
+    } else {
+        ""
+    };
     let query = format!(
         "SELECT toUnixTimestamp({}(server_timestamp)) AS timestamp, count() AS count \
          FROM {}.events \
-         WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
+         WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{} \
          GROUP BY timestamp \
          ORDER BY timestamp",
-        trunc_fn, state.config.clickhouse_database
+        trunc_fn, state.config.clickhouse_database, env_filter
     );
 
-    let rows = state
+    let mut q = state
         .clickhouse_client
         .query(&query)
         .bind(project_id)
         .bind(params.from.timestamp_millis() as f64 / 1000.0)
-        .bind(params.to.timestamp_millis() as f64 / 1000.0)
+        .bind(params.to.timestamp_millis() as f64 / 1000.0);
+    if let Some(ref env) = params.environment {
+        q = q.bind(env.as_str());
+    }
+    let rows = q
         .fetch_all::<ThroughputBucket>()
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
@@ -126,6 +146,7 @@ pub struct EventTypesQuery {
     pub to: DateTime<Utc>,
     #[serde(default = "default_limit")]
     pub limit: u64,
+    pub environment: Option<String>,
 }
 
 fn default_limit() -> u64 {
@@ -158,21 +179,30 @@ pub async fn event_types(
     let db = &state.config.clickhouse_database;
     let from_ts = params.from.timestamp_millis() as f64 / 1000.0;
     let to_ts = params.to.timestamp_millis() as f64 / 1000.0;
+    let env_filter = if params.environment.is_some() {
+        " AND environment = ?"
+    } else {
+        ""
+    };
 
     // By type
     let by_type_query = format!(
         "SELECT event_type, count() AS count FROM {}.events \
-         WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
+         WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{} \
          GROUP BY event_type",
-        db
+        db, env_filter
     );
 
-    let type_rows = state
+    let mut q = state
         .clickhouse_client
         .query(&by_type_query)
         .bind(project_id)
         .bind(from_ts)
-        .bind(to_ts)
+        .bind(to_ts);
+    if let Some(ref env) = params.environment {
+        q = q.bind(env.as_str());
+    }
+    let type_rows = q
         .fetch_all::<TypeCount>()
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
@@ -188,17 +218,21 @@ pub async fn event_types(
     // Top events by name
     let top_query = format!(
         "SELECT event_name AS name, count() AS count FROM {}.events \
-         WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
+         WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{} \
          GROUP BY name ORDER BY count DESC LIMIT ?",
-        db
+        db, env_filter
     );
 
-    let top_rows = state
+    let mut q = state
         .clickhouse_client
         .query(&top_query)
         .bind(project_id)
         .bind(from_ts)
-        .bind(to_ts)
+        .bind(to_ts);
+    if let Some(ref env) = params.environment {
+        q = q.bind(env.as_str());
+    }
+    let top_rows = q
         .bind(params.limit)
         .fetch_all::<TopEvent>()
         .await
@@ -220,6 +254,7 @@ pub struct ListEventsQuery {
     pub event_name: Option<String>,
     pub user_id: Option<String>,
     pub anonymous_id: Option<String>,
+    pub environment: Option<String>,
     #[serde(default = "default_events_page")]
     pub page: u64,
     #[serde(default = "default_events_per_page")]
@@ -290,6 +325,9 @@ pub async fn list_events(
     if params.anonymous_id.is_some() {
         conditions.push("anonymous_id = ?".to_string());
     }
+    if params.environment.is_some() {
+        conditions.push("environment = ?".to_string());
+    }
 
     let where_clause = conditions.join(" AND ");
 
@@ -328,6 +366,9 @@ pub async fn list_events(
     if let Some(ref aid) = params.anonymous_id {
         q = q.bind(aid.as_str());
     }
+    if let Some(ref env) = params.environment {
+        q = q.bind(env.as_str());
+    }
 
     let mut rows = q
         .bind(fetch_limit)
@@ -359,6 +400,7 @@ pub struct ActiveUsersQuery {
     pub to: DateTime<Utc>,
     #[serde(default = "default_active_granularity")]
     pub granularity: String,
+    pub environment: Option<String>,
 }
 
 fn default_active_granularity() -> String {
@@ -406,20 +448,30 @@ pub async fn active_users(
         _ => "toString(event_date)".to_string(), // day
     };
 
+    let env_filter = if params.environment.is_some() {
+        " AND environment = ?"
+    } else {
+        ""
+    };
+
     // Active users per period
     let active_query = format!(
         "SELECT {period_expr} AS period, uniqExact(user_uid) AS active_users \
          FROM {db}.users_daily \
-         WHERE project_id = ? AND event_date BETWEEN ? AND ? \
+         WHERE project_id = ? AND event_date BETWEEN ? AND ?{env_filter} \
          GROUP BY period ORDER BY period"
     );
 
-    let active_rows = state
+    let mut q = state
         .clickhouse_client
         .query(&active_query)
         .bind(project_id)
         .bind(from_date.as_str())
-        .bind(to_date.as_str())
+        .bind(to_date.as_str());
+    if let Some(ref env) = params.environment {
+        q = q.bind(env.as_str());
+    }
+    let active_rows = q
         .fetch_all::<ActiveUsersRow>()
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
@@ -434,16 +486,20 @@ pub async fn active_users(
     let new_query = format!(
         "SELECT {new_period_expr} AS period, count() AS new_users \
          FROM {db}.user_first_seen \
-         WHERE project_id = ? AND first_seen_date BETWEEN ? AND ? \
+         WHERE project_id = ? AND first_seen_date BETWEEN ? AND ?{env_filter} \
          GROUP BY period ORDER BY period"
     );
 
-    let new_rows = state
+    let mut q = state
         .clickhouse_client
         .query(&new_query)
         .bind(project_id)
         .bind(from_date.as_str())
-        .bind(to_date.as_str())
+        .bind(to_date.as_str());
+    if let Some(ref env) = params.environment {
+        q = q.bind(env.as_str());
+    }
+    let new_rows = q
         .fetch_all::<NewUsersRow>()
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
@@ -475,6 +531,11 @@ pub async fn active_users(
 
 // ── Live Users ──────────────────────────────────────────────────────
 
+#[derive(Debug, Deserialize)]
+pub struct LiveUsersQuery {
+    pub environment: Option<String>,
+}
+
 #[derive(Debug, Serialize)]
 pub struct LiveUsersResponse {
     pub project_id: Uuid,
@@ -485,19 +546,26 @@ pub struct LiveUsersResponse {
 pub async fn live_users(
     State(state): State<AppState>,
     Path(project_id): Path<Uuid>,
+    Query(params): Query<LiveUsersQuery>,
 ) -> Result<impl IntoResponse, AppError> {
     let db = &state.config.clickhouse_database;
+    let env_filter = if params.environment.is_some() {
+        " AND environment = ?"
+    } else {
+        ""
+    };
 
     let query_5m = format!(
         "SELECT uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)) AS active \
          FROM {db}.events \
-         WHERE project_id = ? AND server_timestamp >= now() - INTERVAL 5 MINUTE"
+         WHERE project_id = ? AND server_timestamp >= now() - INTERVAL 5 MINUTE{env_filter}"
     );
 
-    let active_5m: u64 = state
-        .clickhouse_client
-        .query(&query_5m)
-        .bind(project_id)
+    let mut q = state.clickhouse_client.query(&query_5m).bind(project_id);
+    if let Some(ref env) = params.environment {
+        q = q.bind(env.as_str());
+    }
+    let active_5m: u64 = q
         .fetch_one::<u64>()
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
@@ -505,13 +573,14 @@ pub async fn live_users(
     let query_30m = format!(
         "SELECT uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)) AS active \
          FROM {db}.events \
-         WHERE project_id = ? AND server_timestamp >= now() - INTERVAL 30 MINUTE"
+         WHERE project_id = ? AND server_timestamp >= now() - INTERVAL 30 MINUTE{env_filter}"
     );
 
-    let active_30m: u64 = state
-        .clickhouse_client
-        .query(&query_30m)
-        .bind(project_id)
+    let mut q = state.clickhouse_client.query(&query_30m).bind(project_id);
+    if let Some(ref env) = params.environment {
+        q = q.bind(env.as_str());
+    }
+    let active_30m: u64 = q
         .fetch_one::<u64>()
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;

@@ -130,6 +130,7 @@ pub async fn delete_funnel(
 pub struct FunnelResultsQuery {
     pub from: DateTime<Utc>,
     pub to: DateTime<Utc>,
+    pub environment: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -169,6 +170,7 @@ async fn compute_funnel_results(
     funnel_id: Uuid,
     from: DateTime<Utc>,
     to: DateTime<Utc>,
+    environment: Option<String>,
 ) -> Result<FunnelResultsResponse, AppError> {
     let funnel = db::find_funnel(&state.db_pool, project_id, funnel_id)?;
 
@@ -196,6 +198,12 @@ async fn compute_funnel_results(
         .map(|s| format!("'{}'", s.event_name.replace('\'', "\\'")))
         .collect();
 
+    let env_filter = if environment.is_some() {
+        " AND environment = ?"
+    } else {
+        ""
+    };
+
     let query = format!(
         "SELECT level, count() AS users FROM ( \
             SELECT user_uid, windowFunnel({window})(server_timestamp, {conditions}) AS level \
@@ -203,7 +211,7 @@ async fn compute_funnel_results(
                 SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid, server_timestamp, event_name \
                 FROM {db_name}.events \
                 WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
-                AND event_name IN ({event_names}) \
+                AND event_name IN ({event_names}){env_filter} \
             ) GROUP BY user_uid \
         ) GROUP BY level ORDER BY level",
         window = funnel.window_seconds,
@@ -211,12 +219,16 @@ async fn compute_funnel_results(
         event_names = event_names.join(", "),
     );
 
-    let rows = state
+    let mut q = state
         .clickhouse_client
         .query(&query)
         .bind(project_id)
         .bind(from_ts)
-        .bind(to_ts)
+        .bind(to_ts);
+    if let Some(ref env) = environment {
+        q = q.bind(env.as_str());
+    }
+    let rows = q
         .fetch_all::<WindowFunnelRow>()
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
@@ -282,8 +294,15 @@ pub async fn funnel_results(
     Path((project_id, funnel_id)): Path<(Uuid, Uuid)>,
     Query(params): Query<FunnelResultsQuery>,
 ) -> Result<impl IntoResponse, AppError> {
-    let result =
-        compute_funnel_results(&state, project_id, funnel_id, params.from, params.to).await?;
+    let result = compute_funnel_results(
+        &state,
+        project_id,
+        funnel_id,
+        params.from,
+        params.to,
+        params.environment,
+    )
+    .await?;
     Ok(Json(result))
 }
 
@@ -294,6 +313,7 @@ pub struct CompareFunnelsQuery {
     pub funnel_ids: String, // comma-separated UUIDs
     pub from: DateTime<Utc>,
     pub to: DateTime<Utc>,
+    pub environment: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -315,8 +335,15 @@ pub async fn compare_funnels(
 
     let mut results = Vec::new();
     for fid in funnel_ids {
-        let result =
-            compute_funnel_results(&state, project_id, fid, params.from, params.to).await?;
+        let result = compute_funnel_results(
+            &state,
+            project_id,
+            fid,
+            params.from,
+            params.to,
+            params.environment.clone(),
+        )
+        .await?;
         results.push(result);
     }
 
@@ -329,6 +356,7 @@ pub struct CompareTimeRangesQuery {
     pub to_a: DateTime<Utc>,
     pub from_b: DateTime<Utc>,
     pub to_b: DateTime<Utc>,
+    pub environment: Option<String>,
 }
 
 pub async fn compare_time_ranges(
@@ -336,10 +364,24 @@ pub async fn compare_time_ranges(
     Path((project_id, funnel_id)): Path<(Uuid, Uuid)>,
     Query(params): Query<CompareTimeRangesQuery>,
 ) -> Result<impl IntoResponse, AppError> {
-    let result_a =
-        compute_funnel_results(&state, project_id, funnel_id, params.from_a, params.to_a).await?;
-    let result_b =
-        compute_funnel_results(&state, project_id, funnel_id, params.from_b, params.to_b).await?;
+    let result_a = compute_funnel_results(
+        &state,
+        project_id,
+        funnel_id,
+        params.from_a,
+        params.to_a,
+        params.environment.clone(),
+    )
+    .await?;
+    let result_b = compute_funnel_results(
+        &state,
+        project_id,
+        funnel_id,
+        params.from_b,
+        params.to_b,
+        params.environment,
+    )
+    .await?;
 
     Ok(Json(CompareFunnelsResponse {
         funnels: vec![result_a, result_b],

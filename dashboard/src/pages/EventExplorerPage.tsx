@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { subDays, formatISO } from "date-fns";
 import { useEvents } from "@/hooks/use-events";
 import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import { Header } from "@/components/Header";
+import { EnvironmentSelector } from "@/components/EnvironmentSelector";
 import { EventsTable } from "@/components/EventsTable";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -15,6 +16,15 @@ const PAGE_SIZE = 25;
 
 export function EventExplorerPage() {
   const { id } = useParams<{ id: string }>();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const environment = (searchParams.get("env") as "live" | "test") || "live";
+  const setEnvironment = (env: "live" | "test") => {
+    setSearchParams((prev) => {
+      if (env === "live") { prev.delete("env"); } else { prev.set("env", env); }
+      return prev;
+    });
+  };
 
   const defaultFrom = useMemo(() => formatISO(subDays(new Date(), 7)), []);
   const defaultTo = useMemo(() => formatISO(new Date()), []);
@@ -32,6 +42,7 @@ export function EventExplorerPage() {
     event_type: eventType || undefined,
     event_name: eventName || undefined,
     user_id: userId || undefined,
+    environment,
     page,
     per_page: PAGE_SIZE,
   };
@@ -59,6 +70,9 @@ export function EventExplorerPage() {
       <div className="flex-1 p-6">
         {/* Filters */}
         <div className="mb-6 rounded-lg border bg-card p-4">
+          <div className="mb-4 flex items-center gap-3">
+            <EnvironmentSelector value={environment} onChange={setEnvironment} />
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">

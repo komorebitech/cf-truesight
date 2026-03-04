@@ -37,6 +37,7 @@ pub fn cache_key(key: &str) -> String {
 #[derive(Debug, Clone)]
 pub struct CacheEntry {
     pub project_id: Uuid,
+    pub environment: String,
     pub expires_at: Instant,
 }
 
@@ -52,12 +53,12 @@ impl ApiKeyCache {
         }
     }
 
-    /// Returns the cached project_id if the key is cached and has not expired.
-    pub fn get(&self, key: &str) -> Option<Uuid> {
+    /// Returns the cached (project_id, environment) if the key is cached and has not expired.
+    pub fn get(&self, key: &str) -> Option<(Uuid, String)> {
         let cache_k = cache_key(key);
         let entry = self.inner.get(&cache_k)?;
         if entry.expires_at > Instant::now() {
-            Some(entry.project_id)
+            Some((entry.project_id, entry.environment.clone()))
         } else {
             // Expired - remove it
             drop(entry);
@@ -67,12 +68,13 @@ impl ApiKeyCache {
     }
 
     /// Inserts a key into the cache with the given TTL.
-    pub fn insert(&self, key: &str, project_id: Uuid, ttl: Duration) {
+    pub fn insert(&self, key: &str, project_id: Uuid, environment: String, ttl: Duration) {
         let cache_k = cache_key(key);
         self.inner.insert(
             cache_k,
             CacheEntry {
                 project_id,
+                environment,
                 expires_at: Instant::now() + ttl,
             },
         );

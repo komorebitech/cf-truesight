@@ -36,6 +36,22 @@ impl<S: Send + Sync> FromRequestParts<S> for ProjectId {
     }
 }
 
+/// Newtype wrapper for the environment associated with the API key.
+#[derive(Debug, Clone)]
+pub struct Environment(pub String);
+
+impl<S: Send + Sync> FromRequestParts<S> for Environment {
+    type Rejection = AppError;
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        parts
+            .extensions
+            .get::<Environment>()
+            .cloned()
+            .ok_or_else(|| AppError::Unauthorized("Missing or invalid API key".to_string()))
+    }
+}
+
 /// TTL for cached API key lookups (5 minutes).
 const CACHE_TTL: Duration = Duration::from_secs(300);
 
@@ -66,8 +82,9 @@ pub async fn api_key_auth_middleware(
     };
 
     // Check the cache first.
-    if let Some(project_id) = state.api_key_cache.get(&raw_key) {
+    if let Some((project_id, environment)) = state.api_key_cache.get(&raw_key) {
         request.extensions_mut().insert(ProjectId(project_id));
+        request.extensions_mut().insert(Environment(environment));
         return next.run(request).await;
     }
 
@@ -104,12 +121,18 @@ pub async fn api_key_auth_middleware(
         match verify_api_key(&raw_key, &candidate.key_hash) {
             Ok(true) => {
                 // Successful verification -- cache and proceed.
-                state
-                    .api_key_cache
-                    .insert(&raw_key, candidate.project_id, CACHE_TTL);
+                state.api_key_cache.insert(
+                    &raw_key,
+                    candidate.project_id,
+                    candidate.environment.clone(),
+                    CACHE_TTL,
+                );
                 request
                     .extensions_mut()
                     .insert(ProjectId(candidate.project_id));
+                request
+                    .extensions_mut()
+                    .insert(Environment(candidate.environment.clone()));
                 return next.run(request).await;
             }
             Ok(false) => continue,

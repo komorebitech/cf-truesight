@@ -5,7 +5,7 @@ use serde_json::json;
 use truesight_common::error::AppError;
 use truesight_common::event::{BatchRequest, EnrichedEvent};
 
-use crate::middleware::api_key_auth::ProjectId;
+use crate::middleware::api_key_auth::{Environment, ProjectId};
 use crate::middleware::request_id::RequestId;
 use crate::state::AppState;
 use crate::validation::{validate_batch, validate_event};
@@ -21,6 +21,7 @@ use crate::validation::{validate_batch, validate_event};
 pub async fn ingest_batch(
     State(state): State<AppState>,
     project_id: ProjectId,
+    environment: Environment,
     Extension(request_id): Extension<RequestId>,
     Json(batch_request): Json<BatchRequest>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -50,6 +51,7 @@ pub async fn ingest_batch(
             context: event.context,
             project_id: project_id.0,
             server_timestamp: now,
+            environment: environment.0.clone(),
         })
         .collect();
 

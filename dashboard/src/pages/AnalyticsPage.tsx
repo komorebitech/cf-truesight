@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { formatISO, startOfDay, format } from "date-fns";
 import { useActiveUsers, useLiveUsers, useEventCount } from "@/hooks/use-stats";
 import { Header } from "@/components/Header";
@@ -9,6 +9,7 @@ import {
   type TimeRange,
   getPresetRange,
 } from "@/components/TimeRangeSelector";
+import { EnvironmentSelector } from "@/components/EnvironmentSelector";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,14 +32,24 @@ export function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>(getPresetRange("30d"));
   const [granularity, setGranularity] = useState<Granularity>("day");
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const environment = (searchParams.get("env") as "live" | "test") || "live";
+  const setEnvironment = (env: "live" | "test") => {
+    setSearchParams((prev) => {
+      if (env === "live") { prev.delete("env"); } else { prev.set("env", env); }
+      return prev;
+    });
+  };
+
   const { data: activeData, isLoading: activeLoading } = useActiveUsers(
     id,
     timeRange.from,
     timeRange.to,
     granularity,
+    environment,
   );
 
-  const { data: liveData } = useLiveUsers(id);
+  const { data: liveData } = useLiveUsers(id, environment);
 
   // DAU: today
   const todayFrom = useMemo(
@@ -46,9 +57,9 @@ export function AnalyticsPage() {
     [],
   );
   const todayTo = useMemo(() => formatISO(new Date()), []);
-  const { data: todayData } = useActiveUsers(id, todayFrom, todayTo, "day");
+  const { data: todayData } = useActiveUsers(id, todayFrom, todayTo, "day", environment);
 
-  const { data: eventCount } = useEventCount(id, timeRange.from, timeRange.to);
+  const { data: eventCount } = useEventCount(id, timeRange.from, timeRange.to, environment);
 
   const currentDAU = todayData?.data?.[0]?.active_users ?? 0;
   const totalNewUsers =
@@ -89,7 +100,10 @@ export function AnalyticsPage() {
       <div className="flex-1 space-y-6 p-6">
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+          <div className="flex items-center gap-3">
+            <EnvironmentSelector value={environment} onChange={setEnvironment} />
+            <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+          </div>
 
           <Tabs value={granularity} onValueChange={(v) => setGranularity(v as Granularity)}>
             <TabsList>
