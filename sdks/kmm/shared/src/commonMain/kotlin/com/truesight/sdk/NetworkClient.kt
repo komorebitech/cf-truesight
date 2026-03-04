@@ -1,6 +1,6 @@
 package com.truesight.sdk
 
-expect class NetworkClient {
+expect class NetworkClient() {
     suspend fun sendBatch(endpoint: String, apiKey: String, payload: BatchPayload): NetworkResult
 }
 
