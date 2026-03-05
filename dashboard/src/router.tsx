@@ -1,9 +1,10 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
 import { App } from "@/App";
 import { ProtectedLayout } from "@/components/ProtectedLayout";
 import { LoginPage } from "@/pages/LoginPage";
 import { ProjectsListPage } from "@/pages/ProjectsListPage";
 import { ProjectDetailPage } from "@/pages/ProjectDetailPage";
+import { ProjectSettingsPage } from "@/pages/ProjectSettingsPage";
 import { EventExplorerPage } from "@/pages/EventExplorerPage";
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
 import { InsightsPage } from "@/pages/InsightsPage";
@@ -20,6 +21,24 @@ import { TeamsListPage } from "@/pages/TeamsListPage";
 import { TeamDetailPage } from "@/pages/TeamDetailPage";
 import { AcceptInvitationPage } from "@/pages/AcceptInvitationPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+
+const STORAGE_KEY = "truesight_last_project";
+
+function LastProjectRedirect() {
+  const lastProjectId = (() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY);
+    } catch {
+      return null;
+    }
+  })();
+
+  if (lastProjectId) {
+    return <Navigate to={`/projects/${lastProjectId}`} replace />;
+  }
+
+  return <ProjectsListPage />;
+}
 
 export const router = createBrowserRouter([
   {
@@ -40,11 +59,19 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
+        element: <LastProjectRedirect />,
+      },
+      {
+        path: "projects",
         element: <ProjectsListPage />,
       },
       {
         path: "projects/:id",
         element: <ProjectDetailPage />,
+      },
+      {
+        path: "projects/:id/settings",
+        element: <ProjectSettingsPage />,
       },
       {
         path: "projects/:id/events",

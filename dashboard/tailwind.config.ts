@@ -58,6 +58,10 @@ export default {
           4: "hsl(var(--chart-4))",
           5: "hsl(var(--chart-5))",
         },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-bg))",
+          active: "hsl(var(--sidebar-active-bg))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

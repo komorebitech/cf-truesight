@@ -11,7 +11,7 @@ export function App() {
     <TooltipProvider>
       <div className="flex h-screen overflow-hidden">
         <Sidebar />
-        <main className="flex flex-1 flex-col overflow-auto bg-muted/30">
+        <main className="flex flex-1 flex-col overflow-auto bg-background">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

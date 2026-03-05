@@ -1,13 +1,11 @@
-import { useState } from "react";
-import { useParams, Link, useSearchParams } from "react-router";
+import { useState, useEffect } from "react";
+import { useParams, useSearchParams } from "react-router";
 import { useProject } from "@/hooks/use-projects";
-import { useApiKeys, useGenerateApiKey, useRevokeApiKey } from "@/hooks/use-api-keys";
+import { useLastProject } from "@/hooks/use-last-project";
 import { useEventCount, useThroughput, useEventTypeBreakdown, useLiveUsers } from "@/hooks/use-stats";
 import { Header } from "@/components/Header";
 import { StatsCards, type StatCardData } from "@/components/StatsCards";
 import { ThroughputChart } from "@/components/ThroughputChart";
-import { ApiKeyTable } from "@/components/ApiKeyTable";
-import { ApiKeyGenerateDialog } from "@/components/ApiKeyGenerateDialog";
 import {
   TimeRangeSelector,
   type TimeRange,
@@ -15,28 +13,14 @@ import {
 } from "@/components/TimeRangeSelector";
 import { EnvironmentSelector } from "@/components/EnvironmentSelector";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  BarChart3,
-  Activity,
-  Radio,
-  Tag,
-  Plus,
-  ExternalLink,
-  TrendingUp,
-  GitBranch,
-  Lightbulb,
-  Users,
-  RotateCcw,
-  UsersRound,
-  Workflow,
-} from "lucide-react";
+import { BarChart3, Activity, Radio, Tag } from "lucide-react";
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: project, isLoading: projectLoading } = useProject(id);
+  const { setLastProject } = useLastProject();
 
   const [timeRange, setTimeRange] = useState<TimeRange>(getPresetRange("7d"));
 
@@ -48,6 +32,11 @@ export function ProjectDetailPage() {
       return prev;
     });
   };
+
+  // Persist last opened project
+  useEffect(() => {
+    if (id) setLastProject(id);
+  }, [id, setLastProject]);
 
   const { data: eventCountData, isLoading: countLoading } = useEventCount(
     id,
@@ -65,13 +54,6 @@ export function ProjectDetailPage() {
   const { data: breakdownData, isLoading: breakdownLoading } =
     useEventTypeBreakdown(id, timeRange.from, timeRange.to, environment);
   const { data: liveData } = useLiveUsers(id, environment);
-
-  const { data: apiKeysData, isLoading: keysLoading } = useApiKeys(id);
-  const generateApiKey = useGenerateApiKey();
-  const revokeApiKey = useRevokeApiKey();
-
-  const [showKeyDialog, setShowKeyDialog] = useState(false);
-  const [generatedKey, setGeneratedKey] = useState<string | null>(null);
 
   const statsLoading = countLoading || breakdownLoading;
   const totalEvents = eventCountData?.total_events ?? 0;
@@ -99,23 +81,6 @@ export function ProjectDetailPage() {
       icon: <Tag className="h-5 w-5" />,
     },
   ];
-
-  const handleGenerate = async (label: string, env: "live" | "test") => {
-    if (!id) return;
-    const result = await generateApiKey.mutateAsync({
-      project_id: id,
-      label,
-      environment: env,
-    });
-    setGeneratedKey(result.key);
-  };
-
-  const handleRevoke = (keyId: string) => {
-    if (!id) return;
-    revokeApiKey.mutate({ projectId: id, keyId });
-  };
-
-  const envSuffix = environment === "test" ? "?env=test" : "";
 
   if (projectLoading) {
     return (
@@ -152,71 +117,11 @@ export function ProjectDetailPage() {
       <Header title={project.name} />
 
       <div className="flex-1 space-y-6 p-6">
-        {/* Status + nav links + time range */}
+        {/* Status + controls */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Badge
-              variant={project.active ? "success" : "secondary"}
-            >
-              {project.active ? "active" : "inactive"}
-            </Badge>
-            <Link
-              to={`/projects/${id}/events${envSuffix}`}
-              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Event Explorer
-            </Link>
-            <Link
-              to={`/projects/${id}/analytics${envSuffix}`}
-              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-            >
-              <TrendingUp className="h-3.5 w-3.5" />
-              Analytics
-            </Link>
-            <Link
-              to={`/projects/${id}/funnels${envSuffix}`}
-              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-            >
-              <GitBranch className="h-3.5 w-3.5" />
-              Funnels
-            </Link>
-            <Link
-              to={`/projects/${id}/insights${envSuffix}`}
-              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-            >
-              <Lightbulb className="h-3.5 w-3.5" />
-              Insights
-            </Link>
-            <Link
-              to={`/projects/${id}/users${envSuffix}`}
-              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-            >
-              <Users className="h-3.5 w-3.5" />
-              Users
-            </Link>
-            <Link
-              to={`/projects/${id}/retention${envSuffix}`}
-              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Retention
-            </Link>
-            <Link
-              to={`/projects/${id}/cohorts${envSuffix}`}
-              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-            >
-              <UsersRound className="h-3.5 w-3.5" />
-              Cohorts
-            </Link>
-            <Link
-              to={`/projects/${id}/flows${envSuffix}`}
-              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-            >
-              <Workflow className="h-3.5 w-3.5" />
-              Flows
-            </Link>
-          </div>
+          <Badge variant={project.active ? "success" : "secondary"}>
+            {project.active ? "active" : "inactive"}
+          </Badge>
           <div className="flex items-center gap-3">
             <EnvironmentSelector value={environment} onChange={setEnvironment} />
             <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
@@ -238,46 +143,7 @@ export function ProjectDetailPage() {
             />
           </CardContent>
         </Card>
-
-        {/* API Keys */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>API Keys</CardTitle>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setGeneratedKey(null);
-                  setShowKeyDialog(true);
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                Generate Key
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ApiKeyTable
-              apiKeys={apiKeysData}
-              isLoading={keysLoading}
-              onRevoke={handleRevoke}
-              isRevoking={revokeApiKey.isPending}
-            />
-          </CardContent>
-        </Card>
       </div>
-
-      {/* Generate API Key Dialog */}
-      <ApiKeyGenerateDialog
-        open={showKeyDialog}
-        onClose={() => {
-          setShowKeyDialog(false);
-          setGeneratedKey(null);
-        }}
-        onGenerate={handleGenerate}
-        isGenerating={generateApiKey.isPending}
-        generatedKey={generatedKey}
-      />
     </div>
   );
 }

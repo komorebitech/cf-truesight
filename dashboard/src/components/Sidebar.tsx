@@ -1,12 +1,34 @@
-import { useState } from "react";
+import { useState, useCallback, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import { cn } from "@/lib/utils";
-import { FolderKanban, Menu, Eye, Users } from "lucide-react";
+import {
+  Eye,
+  Menu,
+  LayoutDashboard,
+  TrendingUp,
+  List,
+  Lightbulb,
+  GitBranch,
+  RotateCcw,
+  UsersRound,
+  Workflow,
+  Users,
+  Settings,
+  UserCog,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserMenu } from "@/components/UserMenu";
+import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Sheet,
   SheetContent,
@@ -15,65 +37,210 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 
+// ---------------------------------------------------------------------------
+
 interface NavItem {
   label: string;
   href: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }
 
-const navItems: NavItem[] = [
-  {
-    label: "Projects",
-    href: "/",
-    icon: <FolderKanban className="h-4 w-4" />,
-  },
-  {
-    label: "Teams",
-    href: "/teams",
-    icon: <Users className="h-4 w-4" />,
-  },
-];
+function extractProjectId(pathname: string): string | undefined {
+  const match = pathname.match(/^\/projects\/([^/]+)/);
+  return match?.[1];
+}
+
+const COLLAPSED_KEY = "truesight_sidebar_collapsed";
+
+function getInitialCollapsed(): boolean {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
 
 export function Sidebar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(getInitialCollapsed);
   const { isAuthenticated } = useAuth();
 
+  const projectId = extractProjectId(location.pathname);
+
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(COLLAPSED_KEY, String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
   const isActive = (href: string) => {
-    if (href === "/") return location.pathname === "/";
+    if (href === `/projects/${projectId}`) {
+      return location.pathname === href;
+    }
     return location.pathname.startsWith(href);
   };
 
-  const nav = (
+  // -- Analysis nav (only when project is selected) --
+  const analysisItems: NavItem[] = projectId
+    ? [
+        {
+          label: "Overview",
+          href: `/projects/${projectId}`,
+          icon: <LayoutDashboard className="h-4 w-4" />,
+        },
+        {
+          label: "Analytics",
+          href: `/projects/${projectId}/analytics`,
+          icon: <TrendingUp className="h-4 w-4" />,
+        },
+        {
+          label: "Events",
+          href: `/projects/${projectId}/events`,
+          icon: <List className="h-4 w-4" />,
+        },
+        {
+          label: "Insights",
+          href: `/projects/${projectId}/insights`,
+          icon: <Lightbulb className="h-4 w-4" />,
+        },
+        {
+          label: "Funnels",
+          href: `/projects/${projectId}/funnels`,
+          icon: <GitBranch className="h-4 w-4" />,
+        },
+        {
+          label: "Retention",
+          href: `/projects/${projectId}/retention`,
+          icon: <RotateCcw className="h-4 w-4" />,
+        },
+        {
+          label: "Cohorts",
+          href: `/projects/${projectId}/cohorts`,
+          icon: <UsersRound className="h-4 w-4" />,
+        },
+        {
+          label: "Flows",
+          href: `/projects/${projectId}/flows`,
+          icon: <Workflow className="h-4 w-4" />,
+        },
+        {
+          label: "Users",
+          href: `/projects/${projectId}/users`,
+          icon: <Users className="h-4 w-4" />,
+        },
+      ]
+    : [];
+
+  // -- Manage nav --
+  const manageItems: NavItem[] = [
+    ...(projectId
+      ? [
+          {
+            label: "Settings",
+            href: `/projects/${projectId}/settings`,
+            icon: <Settings className="h-4 w-4" />,
+          },
+        ]
+      : []),
+    {
+      label: "Teams",
+      href: "/teams",
+      icon: <UserCog className="h-4 w-4" />,
+    },
+  ];
+
+  // -- Render a single nav link --
+  const renderNavItem = (item: NavItem, closeMobile?: () => void) => {
+    const active = isActive(item.href);
+    const link = (
+      <Link
+        to={item.href}
+        onClick={closeMobile}
+        className={cn(
+          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          active
+            ? "border-l-2 border-primary bg-sidebar-active text-primary"
+            : "border-l-2 border-transparent text-muted-foreground hover:bg-sidebar-active/50 hover:text-foreground",
+          collapsed && "justify-center px-2",
+        )}
+      >
+        {item.icon}
+        {!collapsed && item.label}
+      </Link>
+    );
+
+    if (collapsed) {
+      return (
+        <Tooltip key={item.href} delayDuration={0}>
+          <TooltipTrigger asChild>{link}</TooltipTrigger>
+          <TooltipContent side="right" sideOffset={8}>
+            {item.label}
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return <div key={item.href}>{link}</div>;
+  };
+
+  // -- Section label --
+  const sectionLabel = (text: string) =>
+    !collapsed ? (
+      <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {text}
+      </p>
+    ) : (
+      <Separator className="my-2" />
+    );
+
+  // -- Full sidebar content --
+  const sidebarContent = (closeMobile?: () => void) => (
     <>
       {/* Brand */}
-      <div className="flex items-center gap-2 px-4 py-5">
+      <div
+        className={cn(
+          "flex items-center gap-2 px-4 py-5",
+          collapsed && "justify-center px-2",
+        )}
+      >
         <Eye className="h-6 w-6 text-primary" />
-        <span className="font-serif text-lg font-bold">
-          TrueSight
-        </span>
+        {!collapsed && (
+          <span className="font-heading text-lg font-bold">TrueSight</span>
+        )}
+      </div>
+
+      <Separator />
+
+      {/* Project Switcher */}
+      <div className="px-2 py-2">
+        <ProjectSwitcher
+          currentProjectId={projectId}
+          collapsed={collapsed}
+        />
       </div>
 
       <Separator />
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            to={item.href}
-            onClick={() => setMobileOpen(false)}
-            className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              isActive(item.href)
-                ? "border-l-2 border-primary bg-primary/8 text-primary"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-            )}
-          >
-            {item.icon}
-            {item.label}
-          </Link>
-        ))}
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2 scrollbar-thin">
+        {analysisItems.length > 0 && (
+          <>
+            {sectionLabel("Analysis")}
+            {analysisItems.map((item) => renderNavItem(item, closeMobile))}
+          </>
+        )}
+
+        {sectionLabel("Manage")}
+        {manageItems.map((item) => renderNavItem(item, closeMobile))}
       </nav>
 
       <Separator />
@@ -81,13 +248,45 @@ export function Sidebar() {
       {/* Footer */}
       <div className="px-2 py-3">
         {isAuthenticated ? (
-          <UserMenu />
+          <div className="flex items-center gap-1">
+            <div className="flex-1 min-w-0">
+              <UserMenu />
+            </div>
+            {!collapsed && (
+              <ThemeToggle />
+            )}
+          </div>
         ) : (
-          <div className="flex items-center justify-between px-2">
-            <p className="text-xs text-muted-foreground">TrueSight v0.1.0</p>
+          <div
+            className={cn(
+              "flex items-center justify-between px-2",
+              collapsed && "justify-center",
+            )}
+          >
+            <p
+              className={cn(
+                "text-xs text-muted-foreground",
+                collapsed && "hidden",
+              )}
+            >
+              TrueSight v0.1.0
+            </p>
             <ThemeToggle />
           </div>
         )}
+        {/* Collapse toggle (desktop only, rendered in both states) */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleCollapsed}
+          className="mt-1 w-full justify-center text-muted-foreground hover:text-foreground lg:flex hidden"
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="h-4 w-4" />
+          ) : (
+            <PanelLeftClose className="h-4 w-4" />
+          )}
+        </Button>
       </div>
     </>
   );
@@ -111,13 +310,18 @@ export function Sidebar() {
             <SheetTitle>Navigation</SheetTitle>
             <SheetDescription>Main navigation menu</SheetDescription>
           </SheetHeader>
-          {nav}
+          {sidebarContent(() => setMobileOpen(false))}
         </SheetContent>
       </Sheet>
 
       {/* Desktop sidebar */}
-      <aside className="hidden w-60 shrink-0 border-r bg-card lg:flex lg:flex-col">
-        {nav}
+      <aside
+        className={cn(
+          "hidden shrink-0 border-r bg-sidebar lg:flex lg:flex-col transition-all duration-200",
+          collapsed ? "w-16" : "w-60",
+        )}
+      >
+        {sidebarContent()}
       </aside>
     </>
   );
