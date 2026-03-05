@@ -55,6 +55,12 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 sentry = { version = "0.35", features = ["tower", "tracing", "reqwest"] }
 sentry-tower = { version = "0.35", features = ["http"] }
 
+# OpenTelemetry (Datadog via OTLP)
+opentelemetry = "0.31"
+opentelemetry_sdk = { version = "0.31", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.31", features = ["grpc-tonic"] }
+tracing-opentelemetry = "0.32"
+
 # Rate limiting
 governor = "0.8"
 

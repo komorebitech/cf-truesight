@@ -37,6 +37,7 @@ impl SqsProducer {
     /// Sends a batch of enriched events to the given SQS queue.
     /// SQS allows at most 10 messages per `SendMessageBatch` call, so this
     /// method chunks the events accordingly.
+    #[tracing::instrument(name = "sqs.send_batch", skip(self, events), fields(event_count = events.len()))]
     pub async fn send_batch(&self, events: &[EnrichedEvent], queue_url: &str) -> Result<()> {
         for chunk in events.chunks(10) {
             let mut entries = Vec::with_capacity(chunk.len());
@@ -129,6 +130,7 @@ impl SqsConsumer {
     }
 
     /// Receives messages from the given SQS queue.
+    #[tracing::instrument(name = "sqs.receive", skip(self))]
     pub async fn receive_messages(
         &self,
         queue_url: &str,
@@ -164,6 +166,7 @@ impl SqsConsumer {
 
     /// Deletes a batch of messages from the queue.
     /// `entries` is a vector of `(id, receipt_handle)` pairs.
+    #[tracing::instrument(name = "sqs.delete_batch", skip(self, entries))]
     pub async fn delete_message_batch(
         &self,
         queue_url: &str,

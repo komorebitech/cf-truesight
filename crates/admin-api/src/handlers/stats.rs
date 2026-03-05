@@ -187,7 +187,9 @@ pub async fn event_types(
     rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let db = &state.config.clickhouse_database;
     let now = Utc::now();
-    let from = params.from.unwrap_or_else(|| now - chrono::Duration::days(90));
+    let from = params
+        .from
+        .unwrap_or_else(|| now - chrono::Duration::days(90));
     let to = params.to.unwrap_or(now);
     let from_ts = from.timestamp_millis() as f64 / 1000.0;
     let to_ts = to.timestamp_millis() as f64 / 1000.0;

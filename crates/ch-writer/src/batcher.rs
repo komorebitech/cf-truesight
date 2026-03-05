@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use tokio::sync::{Semaphore, mpsc};
+use tracing::Instrument;
 use truesight_common::sqs::SqsConsumer;
 
 use crate::config::{DEFAULT_BATCH_SIZE, DEFAULT_BATCH_TIMEOUT_MS, MAX_IN_FLIGHT};
@@ -152,88 +153,94 @@ impl Batcher {
         let queue_url = self.queue_url.clone();
         let dlq_url = self.dlq_url.clone();
 
-        tokio::spawn(async move {
-            let event_count = batch.len();
-            tracing::info!(count = event_count, "flushing batch");
+        let event_count = batch.len();
+        let span = tracing::info_span!("flush_batch", event_count);
+        tokio::spawn(
+            async move {
+                tracing::info!(count = event_count, "flushing batch");
 
-            let events: Vec<_> = batch.iter().map(|ie| ie.event.clone()).collect();
+                let events: Vec<_> = batch.iter().map(|ie| ie.event.clone()).collect();
 
-            match inserter.insert_batch(&events).await {
-                Ok(()) => {
-                    tracing::info!(count = event_count, "batch inserted successfully");
+                match inserter.insert_batch(&events).await {
+                    Ok(()) => {
+                        tracing::info!(count = event_count, "batch inserted successfully");
 
-                    // Process identify events for identity resolution.
-                    for event in &events {
-                        if let Err(e) = process_identify_event(inserter.client(), event).await {
+                        // Process identify events for identity resolution.
+                        for event in &events {
+                            if let Err(e) = process_identify_event(inserter.client(), event).await {
+                                tracing::error!(
+                                    error = %e,
+                                    event_id = %event.event_id,
+                                    "failed to process identify event"
+                                );
+                            }
+                        }
+
+                        // Upsert user profiles.
+                        if let Err(e) = profiles::upsert_profiles(inserter.client(), &events).await
+                        {
+                            tracing::error!(error = %e, "failed to upsert user profiles");
+                        }
+
+                        // Delete successfully processed messages from SQS.
+                        let entries: Vec<(String, String)> = batch
+                            .iter()
+                            .enumerate()
+                            .map(|(i, ie)| (format!("del_{i}"), ie.receipt_handle.clone()))
+                            .collect();
+
+                        if let Err(e) = sqs_consumer.delete_message_batch(&queue_url, entries).await
+                        {
                             tracing::error!(
                                 error = %e,
-                                event_id = %event.event_id,
-                                "failed to process identify event"
+                                "failed to delete SQS messages after successful insert"
                             );
                         }
                     }
-
-                    // Upsert user profiles.
-                    if let Err(e) = profiles::upsert_profiles(inserter.client(), &events).await {
-                        tracing::error!(error = %e, "failed to upsert user profiles");
-                    }
-
-                    // Delete successfully processed messages from SQS.
-                    let entries: Vec<(String, String)> = batch
-                        .iter()
-                        .enumerate()
-                        .map(|(i, ie)| (format!("del_{i}"), ie.receipt_handle.clone()))
-                        .collect();
-
-                    if let Err(e) = sqs_consumer.delete_message_batch(&queue_url, entries).await {
+                    Err(e) => {
                         tracing::error!(
                             error = %e,
-                            "failed to delete SQS messages after successful insert"
+                            count = event_count,
+                            "batch insert failed after retries"
                         );
-                    }
-                }
-                Err(e) => {
-                    tracing::error!(
-                        error = %e,
-                        count = event_count,
-                        "batch insert failed after retries"
-                    );
 
-                    // Route each event to DLQ if configured.
-                    if let Some(ref dlq_url) = dlq_url {
-                        for incoming in &batch {
-                            if let Err(dlq_err) = dlq_sender
-                                .send_to_dlq(
-                                    dlq_url,
-                                    &incoming.raw_body,
-                                    &format!("insert failure: {e}"),
-                                )
-                                .await
-                            {
-                                tracing::error!(error = %dlq_err, "failed to send to DLQ");
+                        // Route each event to DLQ if configured.
+                        if let Some(ref dlq_url) = dlq_url {
+                            for incoming in &batch {
+                                if let Err(dlq_err) = dlq_sender
+                                    .send_to_dlq(
+                                        dlq_url,
+                                        &incoming.raw_body,
+                                        &format!("insert failure: {e}"),
+                                    )
+                                    .await
+                                {
+                                    tracing::error!(error = %dlq_err, "failed to send to DLQ");
+                                }
                             }
                         }
-                    }
 
-                    // Delete from source queue to avoid infinite reprocessing.
-                    let entries: Vec<(String, String)> = batch
-                        .iter()
-                        .enumerate()
-                        .map(|(i, ie)| (format!("del_{i}"), ie.receipt_handle.clone()))
-                        .collect();
+                        // Delete from source queue to avoid infinite reprocessing.
+                        let entries: Vec<(String, String)> = batch
+                            .iter()
+                            .enumerate()
+                            .map(|(i, ie)| (format!("del_{i}"), ie.receipt_handle.clone()))
+                            .collect();
 
-                    if let Err(del_err) =
-                        sqs_consumer.delete_message_batch(&queue_url, entries).await
-                    {
-                        tracing::error!(
-                            error = %del_err,
-                            "failed to delete SQS messages after DLQ routing"
-                        );
+                        if let Err(del_err) =
+                            sqs_consumer.delete_message_batch(&queue_url, entries).await
+                        {
+                            tracing::error!(
+                                error = %del_err,
+                                "failed to delete SQS messages after DLQ routing"
+                            );
+                        }
                     }
                 }
-            }
 
-            drop(permit);
-        });
+                drop(permit);
+            }
+            .instrument(span),
+        );
     }
 }
