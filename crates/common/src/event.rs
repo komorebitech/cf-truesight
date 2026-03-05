@@ -32,6 +32,7 @@ pub struct IngestEvent {
     pub anonymous_id: String,
     pub mobile_number: Option<String>,
     pub email: Option<String>,
+    pub session_id: Option<String>,
     pub client_timestamp: DateTime<Utc>,
     pub properties: Option<serde_json::Value>,
     pub context: DeviceContext,
@@ -50,6 +51,7 @@ pub struct EnrichedEvent {
     pub anonymous_id: String,
     pub mobile_number: Option<String>,
     pub email: Option<String>,
+    pub session_id: Option<String>,
     pub client_timestamp: DateTime<Utc>,
     pub properties: Option<serde_json::Value>,
     pub context: DeviceContext,
@@ -125,6 +127,13 @@ pub fn validate_ingest_event(event: &IngestEvent) -> Result<(), Vec<String>> {
     // anonymous_id non-empty
     if event.anonymous_id.is_empty() {
         errors.push("anonymous_id must not be empty".to_string());
+    }
+
+    // session_id must be a valid UUID when present
+    if let Some(ref sid) = event.session_id
+        && uuid::Uuid::parse_str(sid).is_err()
+    {
+        errors.push("session_id must be a valid UUID".to_string());
     }
 
     if errors.is_empty() {

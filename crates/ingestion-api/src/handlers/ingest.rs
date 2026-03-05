@@ -46,6 +46,7 @@ pub async fn ingest_batch(
             anonymous_id: event.anonymous_id,
             mobile_number: event.mobile_number,
             email: event.email,
+            session_id: event.session_id,
             client_timestamp: event.client_timestamp,
             properties: event.properties,
             context: event.context,
