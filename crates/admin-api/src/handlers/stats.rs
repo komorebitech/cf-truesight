@@ -286,8 +286,8 @@ pub struct EventRow {
     pub event_type: String,
     pub user_id: String,
     pub anonymous_id: String,
-    pub client_timestamp: f64,
-    pub server_timestamp: f64,
+    pub client_timestamp: String,
+    pub server_timestamp: String,
     pub properties: String,
 }
 
@@ -328,10 +328,10 @@ pub async fn list_events(
         conditions.push("event_type = ?".to_string());
     }
     if params.event_name.is_some() {
-        conditions.push("event_name = ?".to_string());
+        conditions.push("positionCaseInsensitive(event_name, ?) > 0".to_string());
     }
     if params.user_id.is_some() {
-        conditions.push("user_id = ?".to_string());
+        conditions.push("positionCaseInsensitive(user_id, ?) > 0".to_string());
     }
     if params.anonymous_id.is_some() {
         conditions.push("anonymous_id = ?".to_string());
@@ -346,8 +346,8 @@ pub async fn list_events(
         "SELECT toString(event_id) AS event_id, toString(project_id) AS project_id, \
          event_name, event_type, \
          COALESCE(user_id, '') AS user_id, anonymous_id, \
-         toUnixTimestamp64Milli(client_timestamp) / 1000.0 AS client_timestamp, \
-         toUnixTimestamp64Milli(server_timestamp) / 1000.0 AS server_timestamp, \
+         formatDateTime64(client_timestamp, 3, 'UTC') AS client_timestamp, \
+         formatDateTime64(server_timestamp, 3, 'UTC') AS server_timestamp, \
          properties \
          FROM {}.events WHERE {} \
          ORDER BY server_timestamp DESC \

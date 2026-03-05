@@ -6,8 +6,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: string | Date): string {
-  const d = typeof date === "string" ? new Date(date) : date;
+export function formatDate(date: string | number | Date): string {
+  let d: Date;
+  if (date instanceof Date) {
+    d = date;
+  } else if (typeof date === "number") {
+    d = new Date(date < 1e12 ? date * 1000 : date);
+  } else if (typeof date === "string" && /^\d+(\.\d+)?$/.test(date)) {
+    const n = parseFloat(date);
+    d = new Date(n < 1e12 ? n * 1000 : n);
+  } else {
+    d = new Date(date);
+  }
   return format(d, "MMM d, yyyy HH:mm");
 }
 

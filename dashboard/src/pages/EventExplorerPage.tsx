@@ -1,16 +1,26 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router";
-import { subDays, formatISO } from "date-fns";
 import { useEvents } from "@/hooks/use-events";
 import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import { Header } from "@/components/Header";
 import { EnvironmentSelector } from "@/components/EnvironmentSelector";
+import { TimeRangeSelector, getPresetRange } from "@/components/TimeRangeSelector";
+import type { TimeRange } from "@/components/TimeRangeSelector";
 import { EventsTable } from "@/components/EventsTable";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, RotateCcw } from "lucide-react";
 import type { EventFilters } from "@/lib/api";
+
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
 
 const PAGE_SIZE = 25;
 
@@ -26,22 +36,21 @@ export function EventExplorerPage() {
     });
   };
 
-  const defaultFrom = useMemo(() => formatISO(subDays(new Date(), 7)), []);
-  const defaultTo = useMemo(() => formatISO(new Date()), []);
-
-  const [from, setFrom] = useState(defaultFrom.slice(0, 16));
-  const [to, setTo] = useState(defaultTo.slice(0, 16));
+  const [timeRange, setTimeRange] = useState<TimeRange>(() => getPresetRange("7d"));
   const [eventType, setEventType] = useState("");
   const [eventName, setEventName] = useState("");
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(1);
 
+  const debouncedEventName = useDebouncedValue(eventName, 300);
+  const debouncedUserId = useDebouncedValue(userId, 300);
+
   const filters: EventFilters = {
-    from: from ? new Date(from).toISOString() : undefined,
-    to: to ? new Date(to).toISOString() : undefined,
+    from: timeRange.from,
+    to: timeRange.to,
     event_type: eventType || undefined,
-    event_name: eventName || undefined,
-    user_id: userId || undefined,
+    event_name: debouncedEventName || undefined,
+    user_id: debouncedUserId || undefined,
     environment,
     page,
     per_page: PAGE_SIZE,
@@ -55,8 +64,7 @@ export function EventExplorerPage() {
     : [];
 
   const handleReset = () => {
-    setFrom(defaultFrom.slice(0, 16));
-    setTo(defaultTo.slice(0, 16));
+    setTimeRange(getPresetRange("7d"));
     setEventType("");
     setEventName("");
     setUserId("");
@@ -70,36 +78,17 @@ export function EventExplorerPage() {
       <div className="flex-1 p-6">
         {/* Filters */}
         <div className="mb-6 rounded-lg border bg-card p-4">
-          <div className="mb-4 flex items-center gap-3">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
             <EnvironmentSelector value={environment} onChange={setEnvironment} />
+            <TimeRangeSelector
+              value={timeRange}
+              onChange={(range) => {
+                setTimeRange(range);
+                setPage(1);
+              }}
+            />
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                From
-              </label>
-              <Input
-                type="datetime-local"
-                value={from}
-                onChange={(e) => {
-                  setFrom(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                To
-              </label>
-              <Input
-                type="datetime-local"
-                value={to}
-                onChange={(e) => {
-                  setTo(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">
                 Event Type
