@@ -355,7 +355,7 @@ pub async fn list_events(
          formatDateTime(server_timestamp, '%Y-%m-%d %H:%M:%S', 'UTC') AS server_ts, \
          properties \
          FROM {}.events WHERE {} \
-         ORDER BY server_timestamp DESC \
+         ORDER BY client_timestamp DESC \
          LIMIT ? OFFSET ?",
         db, where_clause
     );
