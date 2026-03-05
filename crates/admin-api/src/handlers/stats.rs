@@ -286,8 +286,10 @@ pub struct EventRow {
     pub event_type: String,
     pub user_id: String,
     pub anonymous_id: String,
-    pub client_timestamp: String,
-    pub server_timestamp: String,
+    #[serde(rename = "client_timestamp")]
+    pub client_ts: String,
+    #[serde(rename = "server_timestamp")]
+    pub server_ts: String,
     pub properties: String,
 }
 
@@ -346,8 +348,8 @@ pub async fn list_events(
         "SELECT toString(event_id) AS event_id, toString(project_id) AS project_id, \
          event_name, event_type, \
          COALESCE(user_id, '') AS user_id, anonymous_id, \
-         formatDateTime(client_timestamp, '%Y-%m-%d %H:%M:%S', 'UTC') AS client_timestamp, \
-         formatDateTime(server_timestamp, '%Y-%m-%d %H:%M:%S', 'UTC') AS server_timestamp, \
+         formatDateTime(client_timestamp, '%Y-%m-%d %H:%M:%S', 'UTC') AS client_ts, \
+         formatDateTime(server_timestamp, '%Y-%m-%d %H:%M:%S', 'UTC') AS server_ts, \
          properties \
          FROM {}.events WHERE {} \
          ORDER BY server_timestamp DESC \
