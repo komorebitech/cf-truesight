@@ -10,6 +10,8 @@ use crate::state::AppState;
 pub fn create_router(state: AppState) -> Router {
     // Authenticated routes
     let api_routes = Router::new()
+        // Auth (requires JWT/token)
+        .route("/v1/auth/me", get(handlers::auth::me))
         // Projects
         .route("/v1/projects", get(handlers::projects::list_projects))
         .route("/v1/projects/{id}", get(handlers::projects::get_project))
@@ -94,13 +96,76 @@ pub fn create_router(state: AppState) -> Router {
             "/v1/projects/{pid}/funnels/{fid}/compare",
             get(handlers::funnels::compare_time_ranges),
         )
+        // Teams
+        .route("/v1/teams", get(handlers::teams::list_teams))
+        .route("/v1/teams", post(handlers::teams::create_team))
+        .route("/v1/teams/{tid}", get(handlers::teams::get_team))
+        .route("/v1/teams/{tid}", patch(handlers::teams::update_team))
+        .route("/v1/teams/{tid}", delete(handlers::teams::delete_team))
+        // Team Members
+        .route(
+            "/v1/teams/{tid}/members",
+            get(handlers::teams::list_members),
+        )
+        .route(
+            "/v1/teams/{tid}/members/{uid}",
+            patch(handlers::teams::update_member),
+        )
+        .route(
+            "/v1/teams/{tid}/members/{uid}",
+            delete(handlers::teams::remove_member),
+        )
+        // Team Projects
+        .route(
+            "/v1/teams/{tid}/projects",
+            get(handlers::teams::list_team_projects),
+        )
+        .route(
+            "/v1/teams/{tid}/projects",
+            post(handlers::teams::link_project),
+        )
+        .route(
+            "/v1/teams/{tid}/projects/{pid}",
+            delete(handlers::teams::unlink_project),
+        )
+        // Team Invitations
+        .route(
+            "/v1/teams/{tid}/invitations",
+            get(handlers::teams::list_invitations),
+        )
+        .route(
+            "/v1/teams/{tid}/invitations",
+            post(handlers::teams::create_invitation),
+        )
+        .route(
+            "/v1/teams/{tid}/invitations/{iid}",
+            delete(handlers::teams::delete_invitation),
+        )
+        .route(
+            "/v1/invitations/accept",
+            post(handlers::invitations::accept_invitation),
+        )
+        // Allowed Domains
+        .route(
+            "/v1/teams/{tid}/allowed-domains",
+            get(handlers::teams::list_allowed_domains),
+        )
+        .route(
+            "/v1/teams/{tid}/allowed-domains",
+            post(handlers::teams::add_allowed_domain),
+        )
+        .route(
+            "/v1/teams/{tid}/allowed-domains/{did}",
+            delete(handlers::teams::remove_allowed_domain),
+        )
         .route_layer(middleware::from_fn_with_state(state.clone(), admin_auth))
         .with_state(state.clone());
 
-    // Public routes
-    let health_route = Router::new()
+    // Public routes (no auth required)
+    let public_routes = Router::new()
         .route("/health", get(handlers::health::health))
+        .route("/v1/auth/google", post(handlers::auth::google_login))
         .with_state(state);
 
-    Router::new().merge(api_routes).merge(health_route)
+    Router::new().merge(api_routes).merge(public_routes)
 }

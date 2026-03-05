@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { cn } from "@/lib/utils";
-import { FolderKanban, Menu, Eye } from "lucide-react";
+import { FolderKanban, Menu, Eye, Users } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { UserMenu } from "@/components/UserMenu";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -25,11 +27,17 @@ const navItems: NavItem[] = [
     href: "/",
     icon: <FolderKanban className="h-4 w-4" />,
   },
+  {
+    label: "Teams",
+    href: "/teams",
+    icon: <Users className="h-4 w-4" />,
+  },
 ];
 
 export function Sidebar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const isActive = (href: string) => {
     if (href === "/") return location.pathname === "/";
@@ -71,11 +79,15 @@ export function Sidebar() {
       <Separator />
 
       {/* Footer */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <p className="text-xs text-muted-foreground">
-          TrueSight v0.1.0
-        </p>
-        <ThemeToggle />
+      <div className="px-2 py-3">
+        {isAuthenticated ? (
+          <UserMenu />
+        ) : (
+          <div className="flex items-center justify-between px-2">
+            <p className="text-xs text-muted-foreground">TrueSight v0.1.0</p>
+            <ThemeToggle />
+          </div>
+        )}
       </div>
     </>
   );

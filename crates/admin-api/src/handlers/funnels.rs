@@ -8,8 +8,11 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use truesight_common::error::AppError;
+use truesight_common::team::TeamRole;
 
 use crate::db::funnels as db;
+use crate::handlers::rbac;
+use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -62,8 +65,10 @@ pub struct UpdateFunnelInput {
 
 pub async fn list_funnels(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(project_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let funnels = db::list_funnels(&state.db_pool, project_id)?;
     let response: Vec<FunnelResponse> = funnels.into_iter().map(FunnelResponse::from).collect();
     Ok(Json(response))
@@ -71,17 +76,21 @@ pub async fn list_funnels(
 
 pub async fn get_funnel(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path((project_id, funnel_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let funnel = db::find_funnel(&state.db_pool, project_id, funnel_id)?;
     Ok(Json(FunnelResponse::from(funnel)))
 }
 
 pub async fn create_funnel(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(project_id): Path<Uuid>,
     Json(input): Json<CreateFunnelInput>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Editor)?;
     let funnel = db::insert_funnel(
         &state.db_pool,
         db::NewFunnel {
@@ -99,9 +108,11 @@ pub async fn create_funnel(
 
 pub async fn update_funnel(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path((project_id, funnel_id)): Path<(Uuid, Uuid)>,
     Json(input): Json<UpdateFunnelInput>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Editor)?;
     let funnel = db::update_funnel(
         &state.db_pool,
         project_id,
@@ -118,8 +129,10 @@ pub async fn update_funnel(
 
 pub async fn delete_funnel(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path((project_id, funnel_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Editor)?;
     db::delete_funnel(&state.db_pool, project_id, funnel_id)?;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
@@ -291,9 +304,11 @@ async fn compute_funnel_results(
 
 pub async fn funnel_results(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path((project_id, funnel_id)): Path<(Uuid, Uuid)>,
     Query(params): Query<FunnelResultsQuery>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let result = compute_funnel_results(
         &state,
         project_id,
@@ -323,9 +338,11 @@ pub struct CompareFunnelsResponse {
 
 pub async fn compare_funnels(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(project_id): Path<Uuid>,
     Query(params): Query<CompareFunnelsQuery>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let funnel_ids: Vec<Uuid> = params
         .funnel_ids
         .split(',')
@@ -361,9 +378,11 @@ pub struct CompareTimeRangesQuery {
 
 pub async fn compare_time_ranges(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path((project_id, funnel_id)): Path<(Uuid, Uuid)>,
     Query(params): Query<CompareTimeRangesQuery>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let result_a = compute_funnel_results(
         &state,
         project_id,

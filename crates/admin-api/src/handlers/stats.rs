@@ -8,7 +8,10 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use truesight_common::error::AppError;
+use truesight_common::team::TeamRole;
 
+use crate::handlers::rbac;
+use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
 // ── Event Count ──────────────────────────────────────────────────────
@@ -30,9 +33,11 @@ pub struct EventCountResponse {
 
 pub async fn event_count(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(project_id): Path<Uuid>,
     Query(params): Query<TimeRangeQuery>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let env_filter = if params.environment.is_some() {
         " AND environment = ?"
     } else {
@@ -95,9 +100,11 @@ pub struct ThroughputResponse {
 
 pub async fn throughput(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(project_id): Path<Uuid>,
     Query(params): Query<ThroughputQuery>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let trunc_fn = match params.granularity.as_str() {
         "minute" => "toStartOfMinute",
         _ => "toStartOfHour",
@@ -173,9 +180,11 @@ pub struct EventTypesResponse {
 
 pub async fn event_types(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(project_id): Path<Uuid>,
     Query(params): Query<EventTypesQuery>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let db = &state.config.clickhouse_database;
     let from_ts = params.from.timestamp_millis() as f64 / 1000.0;
     let to_ts = params.to.timestamp_millis() as f64 / 1000.0;
@@ -297,9 +306,11 @@ pub struct ListEventsResponse {
 
 pub async fn list_events(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(project_id): Path<Uuid>,
     Query(params): Query<ListEventsQuery>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let db = &state.config.clickhouse_database;
     let from_ts = params.from.timestamp_millis() as f64 / 1000.0;
     let to_ts = params.to.timestamp_millis() as f64 / 1000.0;
@@ -435,9 +446,11 @@ pub struct ActiveUsersResponse {
 
 pub async fn active_users(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(project_id): Path<Uuid>,
     Query(params): Query<ActiveUsersQuery>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let db = &state.config.clickhouse_database;
     let from_date = params.from.format("%Y-%m-%d").to_string();
     let to_date = params.to.format("%Y-%m-%d").to_string();
@@ -545,9 +558,11 @@ pub struct LiveUsersResponse {
 
 pub async fn live_users(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(project_id): Path<Uuid>,
     Query(params): Query<LiveUsersQuery>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let db = &state.config.clickhouse_database;
     let env_filter = if params.environment.is_some() {
         " AND environment = ?"

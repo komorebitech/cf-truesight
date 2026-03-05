@@ -74,6 +74,15 @@ pub struct AdminConfig {
 
     #[serde(default)]
     pub sentry_dsn: Option<String>,
+
+    #[serde(default)]
+    pub google_client_id: Option<String>,
+
+    #[serde(default)]
+    pub jwt_secret: Option<String>,
+
+    #[serde(default)]
+    pub jwt_ttl_seconds: Option<u64>,
 }
 
 fn default_admin_port() -> u16 {

@@ -10,13 +10,19 @@ use uuid::Uuid;
 use truesight_common::api_key::{ApiKeyResponse, NewApiKey};
 use truesight_common::auth::hash_api_key;
 use truesight_common::error::AppError;
+use truesight_common::team::TeamRole;
 
+use crate::handlers::rbac;
+use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
 pub async fn list_api_keys(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(project_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
+
     let keys = crate::db::api_keys::list_api_keys_for_project(&state.db_pool, project_id)
         .map_err(|e| AppError::Database(e.to_string()))?;
 
@@ -45,9 +51,12 @@ pub struct GenerateApiKeyResponse {
 
 pub async fn generate_api_key_handler(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(project_id): Path<Uuid>,
     Json(body): Json<GenerateApiKeyRequest>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Editor)?;
+
     // Validate environment
     if body.environment != "live" && body.environment != "test" {
         return Err(AppError::Validation(
@@ -94,8 +103,11 @@ pub async fn generate_api_key_handler(
 
 pub async fn revoke_api_key(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path((project_id, key_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Editor)?;
+
     let revoked = crate::db::api_keys::revoke_api_key(&state.db_pool, project_id, key_id)
         .map_err(|e| AppError::Database(e.to_string()))?;
 

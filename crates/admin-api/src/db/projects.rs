@@ -38,6 +38,43 @@ pub fn list_projects(
     Ok((items, total))
 }
 
+/// Lists projects with optional active filter, pagination, filtered to specific IDs.
+pub fn list_projects_filtered(
+    pool: &DbPool,
+    active_filter: Option<bool>,
+    limit: i64,
+    offset: i64,
+    allowed_ids: &[Uuid],
+) -> Result<(Vec<Project>, i64), diesel::result::Error> {
+    let mut conn = pool.get().map_err(|e| {
+        diesel::result::Error::DatabaseError(
+            diesel::result::DatabaseErrorKind::Unknown,
+            Box::new(e.to_string()),
+        )
+    })?;
+
+    let mut query = projects::table.into_boxed();
+    let mut count_query = projects::table.into_boxed();
+
+    query = query.filter(projects::id.eq_any(allowed_ids));
+    count_query = count_query.filter(projects::id.eq_any(allowed_ids));
+
+    if let Some(active) = active_filter {
+        query = query.filter(projects::active.eq(active));
+        count_query = count_query.filter(projects::active.eq(active));
+    }
+
+    let total: i64 = count_query.count().get_result(&mut conn)?;
+
+    let items = query
+        .order(projects::created_at.desc())
+        .limit(limit)
+        .offset(offset)
+        .load::<Project>(&mut conn)?;
+
+    Ok((items, total))
+}
+
 /// Finds a single project by ID.
 pub fn find_project(pool: &DbPool, id: Uuid) -> Result<Option<Project>, diesel::result::Error> {
     let mut conn = pool.get().map_err(|e| {

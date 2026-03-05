@@ -1,5 +1,9 @@
 pub mod api_keys;
+pub mod auth;
 pub mod funnels;
 pub mod health;
+pub mod invitations;
 pub mod projects;
+pub mod rbac;
 pub mod stats;
+pub mod teams;

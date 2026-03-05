@@ -9,7 +9,10 @@ use uuid::Uuid;
 
 use truesight_common::error::AppError;
 use truesight_common::project::{NewProject, UpdateProject};
+use truesight_common::team::TeamRole;
 
+use crate::handlers::rbac;
+use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
 #[derive(Debug, Deserialize)]
@@ -34,15 +37,29 @@ pub struct PaginatedResponse<T: Serialize> {
 
 pub async fn list_projects(
     State(state): State<AppState>,
+    auth: AuthUser,
     Query(params): Query<ListProjectsQuery>,
 ) -> Result<impl IntoResponse, AppError> {
     let page = params.page.unwrap_or(1).max(1);
     let per_page = params.per_page.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * per_page;
 
-    let (projects, total) =
+    // For JWT users, filter to accessible projects only
+    let accessible = rbac::accessible_project_ids(&state, &auth)?;
+
+    let (projects, total) = if let Some(ref ids) = accessible {
+        crate::db::projects::list_projects_filtered(
+            &state.db_pool,
+            params.active,
+            per_page,
+            offset,
+            ids,
+        )
+        .map_err(|e| AppError::Database(e.to_string()))?
+    } else {
         crate::db::projects::list_projects(&state.db_pool, params.active, per_page, offset)
-            .map_err(|e| AppError::Database(e.to_string()))?;
+            .map_err(|e| AppError::Database(e.to_string()))?
+    };
 
     Ok(Json(PaginatedResponse {
         data: projects,
@@ -56,8 +73,11 @@ pub async fn list_projects(
 
 pub async fn get_project(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, id, TeamRole::Viewer)?;
+
     let project = crate::db::projects::find_project(&state.db_pool, id)
         .map_err(|e| AppError::Database(e.to_string()))?
         .ok_or_else(|| AppError::NotFound(format!("Project {} not found", id)))?;
@@ -72,8 +92,10 @@ pub struct CreateProjectRequest {
 
 pub async fn create_project(
     State(state): State<AppState>,
+    _auth: AuthUser,
     Json(body): Json<CreateProjectRequest>,
 ) -> Result<impl IntoResponse, AppError> {
+    // Any authenticated user can create a project
     let new_project = NewProject { name: body.name };
 
     let project =
@@ -96,9 +118,12 @@ pub struct UpdateProjectRequest {
 
 pub async fn update_project(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateProjectRequest>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, id, TeamRole::Editor)?;
+
     let changes = UpdateProject {
         name: body.name,
         active: body.active,
@@ -119,8 +144,11 @@ pub async fn update_project(
 
 pub async fn delete_project(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, id, TeamRole::Admin)?;
+
     let deleted = crate::db::projects::soft_delete_project(&state.db_pool, id)
         .map_err(|e| AppError::Database(e.to_string()))?;
 

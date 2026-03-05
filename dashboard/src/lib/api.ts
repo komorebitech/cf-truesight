@@ -5,6 +5,8 @@
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
 const configuredToken: string | undefined = import.meta.env.VITE_ADMIN_TOKEN;
 
+const TOKEN_KEY = "truesight_jwt";
+
 // ---------------------------------------------------------------------------
 // Types — aligned with backend responses
 // ---------------------------------------------------------------------------
@@ -147,7 +149,7 @@ async function request<T>(
     "Content-Type": "application/json",
   };
 
-  const token = configuredToken ?? localStorage.getItem("admin_token");
+  const token = localStorage.getItem(TOKEN_KEY) ?? configuredToken;
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
@@ -159,6 +161,13 @@ async function request<T>(
   });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      // Token expired - clear and redirect
+      localStorage.removeItem(TOKEN_KEY);
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login";
+      }
+    }
     const text = await res.text().catch(() => res.statusText);
     throw new ApiError(res.status, text);
   }
@@ -489,4 +498,160 @@ export function getEvents(projectId: string, filters?: EventFilters) {
     "GET",
     `/stats/projects/${projectId}/events${query ? `?${query}` : ""}`,
   );
+}
+
+// ---------------------------------------------------------------------------
+// Auth endpoints
+// ---------------------------------------------------------------------------
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  picture_url?: string;
+}
+
+export interface GoogleLoginResponse {
+  token: string;
+  user: AuthUser;
+}
+
+export interface MeResponse {
+  user: AuthUser;
+  teams: TeamSummary[];
+}
+
+export interface TeamSummary {
+  id: string;
+  name: string;
+  role: "admin" | "editor" | "viewer";
+}
+
+export function googleLogin(credential: string) {
+  return request<GoogleLoginResponse>("POST", "/auth/google", { credential });
+}
+
+export function getMe() {
+  return request<MeResponse>("GET", "/auth/me");
+}
+
+// ---------------------------------------------------------------------------
+// Team endpoints
+// ---------------------------------------------------------------------------
+
+export interface Team {
+  id: string;
+  name: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TeamMember {
+  id: string;
+  team_id: string;
+  user_id: string;
+  role: "admin" | "editor" | "viewer";
+  created_at: string;
+  user: AuthUser;
+}
+
+export interface TeamProject {
+  id: string;
+  team_id: string;
+  project_id: string;
+  created_at: string;
+  project: Project;
+}
+
+export interface Invitation {
+  id: string;
+  team_id: string;
+  email: string;
+  role: "admin" | "editor" | "viewer";
+  invited_by: string;
+  token: string;
+  accepted: boolean;
+  expires_at: string;
+  created_at: string;
+}
+
+export interface AllowedDomain {
+  id: string;
+  team_id: string;
+  domain: string;
+  default_role: "admin" | "editor" | "viewer";
+  created_at: string;
+}
+
+export function getTeams() {
+  return request<Team[]>("GET", "/teams");
+}
+
+export function getTeam(id: string) {
+  return request<Team>("GET", `/teams/${id}`);
+}
+
+export function createTeam(name: string) {
+  return request<Team>("POST", "/teams", { name });
+}
+
+export function updateTeam(id: string, input: { name?: string; active?: boolean }) {
+  return request<Team>("PATCH", `/teams/${id}`, input);
+}
+
+export function deleteTeam(id: string) {
+  return request<void>("DELETE", `/teams/${id}`);
+}
+
+export function getTeamMembers(teamId: string) {
+  return request<TeamMember[]>("GET", `/teams/${teamId}/members`);
+}
+
+export function updateMemberRole(teamId: string, userId: string, role: string) {
+  return request<TeamMember>("PATCH", `/teams/${teamId}/members/${userId}`, { role });
+}
+
+export function removeMember(teamId: string, userId: string) {
+  return request<void>("DELETE", `/teams/${teamId}/members/${userId}`);
+}
+
+export function getTeamProjects(teamId: string) {
+  return request<TeamProject[]>("GET", `/teams/${teamId}/projects`);
+}
+
+export function linkProject(teamId: string, projectId: string) {
+  return request<TeamProject>("POST", `/teams/${teamId}/projects`, { project_id: projectId });
+}
+
+export function unlinkProject(teamId: string, projectId: string) {
+  return request<void>("DELETE", `/teams/${teamId}/projects/${projectId}`);
+}
+
+export function getTeamInvitations(teamId: string) {
+  return request<Invitation[]>("GET", `/teams/${teamId}/invitations`);
+}
+
+export function createInvitation(teamId: string, email: string, role: string) {
+  return request<Invitation>("POST", `/teams/${teamId}/invitations`, { email, role });
+}
+
+export function deleteInvitation(teamId: string, invitationId: string) {
+  return request<void>("DELETE", `/teams/${teamId}/invitations/${invitationId}`);
+}
+
+export function acceptInvitation(token: string) {
+  return request<{ team: Team }>("POST", "/invitations/accept", { token });
+}
+
+export function getAllowedDomains(teamId: string) {
+  return request<AllowedDomain[]>("GET", `/teams/${teamId}/allowed-domains`);
+}
+
+export function addAllowedDomain(teamId: string, domain: string, defaultRole: string) {
+  return request<AllowedDomain>("POST", `/teams/${teamId}/allowed-domains`, { domain, default_role: defaultRole });
+}
+
+export function removeAllowedDomain(teamId: string, domainId: string) {
+  return request<void>("DELETE", `/teams/${teamId}/allowed-domains/${domainId}`);
 }

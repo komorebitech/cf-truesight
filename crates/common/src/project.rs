@@ -5,8 +5,9 @@ use uuid::Uuid;
 
 use crate::schema::projects;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Insertable, AsChangeset)]
+#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Selectable, Insertable, AsChangeset)]
 #[diesel(table_name = projects)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Project {
     pub id: Uuid,
     pub name: String,

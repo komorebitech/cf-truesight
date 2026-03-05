@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use tokio::net::TcpListener;
+use tokio::sync::RwLock;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::info;
@@ -140,6 +141,7 @@ async fn main() -> anyhow::Result<()> {
         db_pool,
         clickhouse_client: Arc::new(ch_client),
         config: Arc::new(config.clone()),
+        google_jwks: Arc::new(RwLock::new(None)),
     };
 
     // Build router
