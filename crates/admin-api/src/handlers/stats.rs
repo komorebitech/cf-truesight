@@ -149,8 +149,8 @@ pub async fn throughput(
 
 #[derive(Debug, Deserialize)]
 pub struct EventTypesQuery {
-    pub from: DateTime<Utc>,
-    pub to: DateTime<Utc>,
+    pub from: Option<DateTime<Utc>>,
+    pub to: Option<DateTime<Utc>>,
     #[serde(default = "default_limit")]
     pub limit: u64,
     pub environment: Option<String>,
@@ -186,8 +186,11 @@ pub async fn event_types(
 ) -> Result<impl IntoResponse, AppError> {
     rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let db = &state.config.clickhouse_database;
-    let from_ts = params.from.timestamp_millis() as f64 / 1000.0;
-    let to_ts = params.to.timestamp_millis() as f64 / 1000.0;
+    let now = Utc::now();
+    let from = params.from.unwrap_or_else(|| now - chrono::Duration::days(90));
+    let to = params.to.unwrap_or(now);
+    let from_ts = from.timestamp_millis() as f64 / 1000.0;
+    let to_ts = to.timestamp_millis() as f64 / 1000.0;
     let env_filter = if params.environment.is_some() {
         " AND environment = ?"
     } else {
