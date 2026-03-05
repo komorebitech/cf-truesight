@@ -1,16 +1,37 @@
 package com.truesight.sdk
 
 import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArrayOf
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.usePinned
+import kotlinx.cinterop.value
+import platform.CoreFoundation.CFDictionaryCreateMutable
+import platform.CoreFoundation.CFDictionarySetValue
+import platform.CoreFoundation.CFMutableDictionaryRef
+import platform.CoreFoundation.CFRelease
+import platform.CoreFoundation.kCFBooleanTrue
+import platform.CoreFoundation.kCFTypeDictionaryKeyCallBacks
+import platform.CoreFoundation.kCFTypeDictionaryValueCallBacks
+import platform.Foundation.CFBridgingRetain
 import platform.Foundation.NSData
-import platform.Foundation.NSMutableData
 import platform.Foundation.create
+import platform.Security.SecItemAdd
+import platform.Security.SecItemCopyMatching
+import platform.Security.SecItemDelete
 import platform.Security.SecRandomCopyBytes
 import platform.Security.errSecSuccess
+import platform.Security.kSecAttrAccount
+import platform.Security.kSecAttrService
+import platform.Security.kSecClass
+import platform.Security.kSecClassGenericPassword
+import platform.Security.kSecMatchLimit
+import platform.Security.kSecMatchLimitOne
 import platform.Security.kSecRandomDefault
-import platform.posix.uint8_tVar
+import platform.Security.kSecReturnData
+import platform.Security.kSecValueData
 
 /**
  * iOS encryption using CommonCrypto-based AES-GCM.
@@ -27,6 +48,8 @@ actual class Encryption {
     companion object {
         private const val IV_LENGTH = 12
         private const val KEY_LENGTH = 32
+        private const val SERVICE_NAME = "com.truesight.sdk.encryption"
+        private const val ACCOUNT_NAME = "encryption_key"
     }
 
     // Derived key - in production, use Keychain-stored key
@@ -90,22 +113,27 @@ actual class Encryption {
         return bytes
     }
 
+    private fun keychainQuery(): CFMutableDictionaryRef {
+        val query = CFDictionaryCreateMutable(
+            null, 6,
+            kCFTypeDictionaryKeyCallBacks.ptr,
+            kCFTypeDictionaryValueCallBacks.ptr
+        )!!
+        CFDictionarySetValue(query, kSecClass, kSecClassGenericPassword)
+        CFDictionarySetValue(query, kSecAttrService, CFBridgingRetain(SERVICE_NAME))
+        CFDictionarySetValue(query, kSecAttrAccount, CFBridgingRetain(ACCOUNT_NAME))
+        return query
+    }
+
     private fun readKeyFromKeychain(): ByteArray? {
-        val query = mapOf<Any?, Any?>(
-            platform.Security.kSecClass to platform.Security.kSecClassGenericPassword,
-            platform.Security.kSecAttrService to "com.truesight.sdk.encryption",
-            platform.Security.kSecAttrAccount to "encryption_key",
-            platform.Security.kSecReturnData to true,
-            platform.Security.kSecMatchLimit to platform.Security.kSecMatchLimitOne
-        )
+        val query = keychainQuery()
+        CFDictionarySetValue(query, kSecReturnData, kCFBooleanTrue)
+        CFDictionarySetValue(query, kSecMatchLimit, kSecMatchLimitOne)
 
         memScoped {
-            val result = kotlinx.cinterop.alloc<kotlinx.cinterop.ObjCObjectVar<Any?>>()
-            @Suppress("UNCHECKED_CAST")
-            val status = platform.Security.SecItemCopyMatching(
-                query as platform.CoreFoundation.CFDictionaryRef,
-                result.ptr
-            )
+            val result = alloc<kotlinx.cinterop.ObjCObjectVar<Any?>>()
+            val status = SecItemCopyMatching(query, result.ptr.reinterpret())
+            CFRelease(query)
             if (status == errSecSuccess) {
                 val data = result.value as? NSData ?: return null
                 return data.toByteArray()
@@ -116,24 +144,16 @@ actual class Encryption {
 
     private fun saveKeyToKeychain(keyBytes: ByteArray) {
         // Delete existing
-        val deleteQuery = mapOf<Any?, Any?>(
-            platform.Security.kSecClass to platform.Security.kSecClassGenericPassword,
-            platform.Security.kSecAttrService to "com.truesight.sdk.encryption",
-            platform.Security.kSecAttrAccount to "encryption_key"
-        )
-        @Suppress("UNCHECKED_CAST")
-        platform.Security.SecItemDelete(deleteQuery as platform.CoreFoundation.CFDictionaryRef)
+        val deleteQuery = keychainQuery()
+        SecItemDelete(deleteQuery)
+        CFRelease(deleteQuery)
 
         val nsData = memScoped {
             NSData.create(bytes = allocArrayOf(keyBytes), length = keyBytes.size.toULong())
         }
-        val addQuery = mapOf<Any?, Any?>(
-            platform.Security.kSecClass to platform.Security.kSecClassGenericPassword,
-            platform.Security.kSecAttrService to "com.truesight.sdk.encryption",
-            platform.Security.kSecAttrAccount to "encryption_key",
-            platform.Security.kSecValueData to nsData
-        )
-        @Suppress("UNCHECKED_CAST")
-        platform.Security.SecItemAdd(addQuery as platform.CoreFoundation.CFDictionaryRef, null)
+        val addQuery = keychainQuery()
+        CFDictionarySetValue(addQuery, kSecValueData, CFBridgingRetain(nsData))
+        SecItemAdd(addQuery, null)
+        CFRelease(addQuery)
     }
 }

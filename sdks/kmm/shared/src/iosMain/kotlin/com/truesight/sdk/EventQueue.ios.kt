@@ -1,17 +1,22 @@
 package com.truesight.sdk
 
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.allocArrayOf
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.usePinned
+import platform.posix.memcpy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import platform.Foundation.NSCachesDirectory
+import platform.Foundation.NSData
+import platform.Foundation.NSDate
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
-import platform.Foundation.NSString
-import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.create
-import platform.Foundation.NSUTF8StringEncoding
-import platform.Foundation.writeToURL
-import platform.Foundation.stringWithContentsOfURL
+import platform.Foundation.dataWithContentsOfFile
+import platform.Foundation.timeIntervalSince1970
+import platform.Foundation.writeToFile
 
 actual class EventQueue {
 
@@ -42,15 +47,12 @@ actual class EventQueue {
         mutex.withLock {
             val jsonString = Serializer.serializeEvent(event)
             val encrypted = encryption.encrypt(jsonString.encodeToByteArray())
-            val timestamp = platform.Foundation.NSDate().timeIntervalSince1970
+            val timestamp = NSDate().timeIntervalSince1970
             val fileName = "${timestamp}_${event.eventId}"
             val filePath = "$queueDirectory/$fileName"
 
-            val nsData = platform.Foundation.NSData.create(
-                bytes = encrypted.toNSData().bytes,
-                length = encrypted.toNSData().length
-            )
-            nsData.writeToFile(filePath, atomically = true)
+            val nsData = encrypted.toNSData()
+            nsData.writeToFile(filePath, true)
         }
     }
 
@@ -65,9 +67,7 @@ actual class EventQueue {
             for (fileName in files) {
                 try {
                     val filePath = "$queueDirectory/$fileName"
-                    val nsData = platform.Foundation.NSData.create(
-                        contentsOfFile = filePath
-                    ) ?: continue
+                    val nsData = NSData.dataWithContentsOfFile(filePath) ?: continue
                     val encrypted = nsData.toByteArray()
                     val decrypted = encryption.decrypt(encrypted)
                     val jsonString = decrypted.decodeToString()
@@ -102,7 +102,7 @@ actual class EventQueue {
     actual suspend fun size(): Int {
         mutex.withLock {
             val files = fileManager.contentsOfDirectoryAtPath(queueDirectory, error = null)
-            return files?.count?.toInt() ?: 0
+            return (files as? List<*>)?.size ?: 0
         }
     }
 
@@ -119,29 +119,21 @@ actual class EventQueue {
 }
 
 // Extension functions for NSData <-> ByteArray conversion
-@Suppress("CAST_NEVER_SUCCEEDS")
-internal fun ByteArray.toNSData(): platform.Foundation.NSData {
-    return kotlinx.cinterop.memScoped {
-        platform.Foundation.NSData.create(
-            bytes = kotlinx.cinterop.allocArrayOf(this@toNSData),
+internal fun ByteArray.toNSData(): NSData {
+    return memScoped {
+        NSData.create(
+            bytes = allocArrayOf(this@toNSData),
             length = this@toNSData.size.toULong()
         )
     }
 }
 
-@Suppress("CAST_NEVER_SUCCEEDS")
-internal fun platform.Foundation.NSData.toByteArray(): ByteArray {
+internal fun NSData.toByteArray(): ByteArray {
     val size = this.length.toInt()
+    if (size == 0) return ByteArray(0)
     val bytes = ByteArray(size)
-    if (size > 0) {
-        kotlinx.cinterop.memScoped {
-            val ptr = this@toByteArray.bytes?.reinterpret<kotlinx.cinterop.ByteVar>()
-            if (ptr != null) {
-                for (i in 0 until size) {
-                    bytes[i] = ptr[i]
-                }
-            }
-        }
+    bytes.usePinned { pinned ->
+        memcpy(pinned.addressOf(0), this.bytes, this.length)
     }
     return bytes
 }

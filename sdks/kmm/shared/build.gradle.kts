@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
@@ -10,10 +12,16 @@ kotlin {
             kotlinOptions { jvmTarget = "17" }
         }
     }
+    val xcf = XCFramework("TrueSightSDK")
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach {
         it.binaries.framework {
             baseName = "TrueSightSDK"
+            xcf.add(this)
         }
+    }
+    sourceSets.all {
+        languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
+        languageSettings.optIn("kotlinx.cinterop.BetaInteropApi")
     }
     sourceSets {
         commonMain.dependencies {

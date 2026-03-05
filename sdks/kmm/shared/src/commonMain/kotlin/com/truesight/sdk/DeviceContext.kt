@@ -16,6 +16,6 @@ data class DeviceContextModel(
     @SerialName("sdk_version") val sdkVersion: String
 )
 
-expect class DeviceContextCollector {
+expect class DeviceContextCollector() {
     fun collect(): DeviceContextModel
 }

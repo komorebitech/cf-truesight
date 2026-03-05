@@ -34,7 +34,7 @@ actual class NetworkClient {
             // Send uncompressed on iOS (NSData compression requires iOS 13+)
             // In production, use platform compression APIs for zstd
 
-            val response = client.post("$endpoint/v1/batch") {
+            val response = client.post("$endpoint/v1/events/batch") {
                 header("X-API-Key", apiKey)
                 header("User-Agent", "TrueSight-KMM/${TrueSight.SDK_VERSION}")
                 contentType(ContentType.Application.Json)

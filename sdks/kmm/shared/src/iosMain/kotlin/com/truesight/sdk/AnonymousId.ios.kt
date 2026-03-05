@@ -3,9 +3,15 @@ package com.truesight.sdk
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.value
-import platform.CoreFoundation.CFDictionaryRef
-import platform.Foundation.CFBridgingRelease
+import platform.CoreFoundation.CFDictionaryCreateMutable
+import platform.CoreFoundation.CFDictionarySetValue
+import platform.CoreFoundation.CFMutableDictionaryRef
+import platform.CoreFoundation.CFRelease
+import platform.CoreFoundation.kCFBooleanTrue
+import platform.CoreFoundation.kCFTypeDictionaryKeyCallBacks
+import platform.CoreFoundation.kCFTypeDictionaryValueCallBacks
 import platform.Foundation.CFBridgingRetain
 import platform.Foundation.NSData
 import platform.Foundation.NSString
@@ -16,9 +22,7 @@ import platform.Foundation.dataUsingEncoding
 import platform.Security.SecItemAdd
 import platform.Security.SecItemCopyMatching
 import platform.Security.SecItemDelete
-import platform.Security.SecItemUpdate
 import platform.Security.errSecSuccess
-import platform.Security.errSecItemNotFound
 import platform.Security.kSecAttrAccount
 import platform.Security.kSecAttrService
 import platform.Security.kSecClass
@@ -51,22 +55,27 @@ actual class AnonymousIdManager {
         return newId
     }
 
+    private fun baseQuery(): CFMutableDictionaryRef {
+        val query = CFDictionaryCreateMutable(
+            null, 6,
+            kCFTypeDictionaryKeyCallBacks.ptr,
+            kCFTypeDictionaryValueCallBacks.ptr
+        )!!
+        CFDictionarySetValue(query, kSecClass, kSecClassGenericPassword)
+        CFDictionarySetValue(query, kSecAttrService, CFBridgingRetain(SERVICE_NAME))
+        CFDictionarySetValue(query, kSecAttrAccount, CFBridgingRetain(ACCOUNT_NAME))
+        return query
+    }
+
     private fun readFromKeychain(): String? {
-        val query = mapOf<Any?, Any?>(
-            kSecClass to kSecClassGenericPassword,
-            kSecAttrService to SERVICE_NAME,
-            kSecAttrAccount to ACCOUNT_NAME,
-            kSecReturnData to true,
-            kSecMatchLimit to kSecMatchLimitOne
-        )
+        val query = baseQuery()
+        CFDictionarySetValue(query, kSecReturnData, kCFBooleanTrue)
+        CFDictionarySetValue(query, kSecMatchLimit, kSecMatchLimitOne)
 
         memScoped {
             val result = alloc<kotlinx.cinterop.ObjCObjectVar<Any?>>()
-            @Suppress("UNCHECKED_CAST")
-            val status = SecItemCopyMatching(
-                query as CFDictionaryRef,
-                result.ptr
-            )
+            val status = SecItemCopyMatching(query, result.ptr.reinterpret())
+            CFRelease(query)
             if (status == errSecSuccess) {
                 val data = result.value as? NSData ?: return null
                 return NSString.create(data = data, encoding = NSUTF8StringEncoding) as? String
@@ -76,30 +85,19 @@ actual class AnonymousIdManager {
     }
 
     private fun saveToKeychain(value: String) {
-        // Delete existing entry first
         deleteFromKeychain()
 
         val nsData = (value as NSString).dataUsingEncoding(NSUTF8StringEncoding) ?: return
 
-        val query = mapOf<Any?, Any?>(
-            kSecClass to kSecClassGenericPassword,
-            kSecAttrService to SERVICE_NAME,
-            kSecAttrAccount to ACCOUNT_NAME,
-            kSecValueData to nsData
-        )
-
-        @Suppress("UNCHECKED_CAST")
-        SecItemAdd(query as CFDictionaryRef, null)
+        val query = baseQuery()
+        CFDictionarySetValue(query, kSecValueData, CFBridgingRetain(nsData))
+        SecItemAdd(query, null)
+        CFRelease(query)
     }
 
     private fun deleteFromKeychain() {
-        val query = mapOf<Any?, Any?>(
-            kSecClass to kSecClassGenericPassword,
-            kSecAttrService to SERVICE_NAME,
-            kSecAttrAccount to ACCOUNT_NAME
-        )
-
-        @Suppress("UNCHECKED_CAST")
-        SecItemDelete(query as CFDictionaryRef)
+        val query = baseQuery()
+        SecItemDelete(query)
+        CFRelease(query)
     }
 }
