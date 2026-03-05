@@ -346,8 +346,8 @@ pub async fn list_events(
         "SELECT toString(event_id) AS event_id, toString(project_id) AS project_id, \
          event_name, event_type, \
          COALESCE(user_id, '') AS user_id, anonymous_id, \
-         formatDateTime64(client_timestamp, 3, 'UTC') AS client_timestamp, \
-         formatDateTime64(server_timestamp, 3, 'UTC') AS server_timestamp, \
+         formatDateTime(client_timestamp, '%Y-%m-%d %H:%M:%S', 'UTC') AS client_timestamp, \
+         formatDateTime(server_timestamp, '%Y-%m-%d %H:%M:%S', 'UTC') AS server_timestamp, \
          properties \
          FROM {}.events WHERE {} \
          ORDER BY server_timestamp DESC \

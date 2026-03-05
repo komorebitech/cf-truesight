@@ -57,7 +57,7 @@ export function EventExplorerPage() {
   };
 
   const { data, isLoading } = useEvents(id, filters);
-  const { data: breakdownData } = useEventTypeBreakdown(id);
+  const { data: breakdownData } = useEventTypeBreakdown(id, timeRange.from, timeRange.to, environment);
 
   const eventTypes = breakdownData?.by_type
     ? Object.keys(breakdownData.by_type)
