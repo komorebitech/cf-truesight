@@ -10,12 +10,13 @@ import {
   type TimeRange,
   getPresetRange,
 } from "@/components/TimeRangeSelector";
-import { SankeyChart } from "@/components/SankeyChart";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { FlowDiagram } from "@/components/FlowDiagram";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Workflow } from "lucide-react";
 
 type Direction = "forward" | "backward";
 
@@ -77,7 +78,6 @@ export function FlowsPage() {
       <div className="flex-1 space-y-6 p-6">
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-3">
-
           <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
         </div>
 
@@ -153,8 +153,9 @@ export function FlowsPage() {
         {!anchorEvent ? (
           <EmptyState
             variant="data"
+            icon={Workflow}
             title="Select an anchor event"
-            description="Choose an anchor event above to visualize user flows"
+            description="Choose an anchor event above to visualize how users move through your product"
           />
         ) : (
           <Card>
@@ -163,9 +164,12 @@ export function FlowsPage() {
                 {direction === "forward" ? "What happens after" : "What happens before"}{" "}
                 &ldquo;{anchorEvent}&rdquo;
               </CardTitle>
+              <CardDescription>
+                Showing top {topPaths} paths across {steps} steps &middot; Drag to pan, scroll to zoom
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <SankeyChart
+            <CardContent className="p-2">
+              <FlowDiagram
                 nodes={flowsData?.nodes ?? []}
                 links={flowsData?.links ?? []}
                 isLoading={isLoading}
