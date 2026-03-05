@@ -12,22 +12,49 @@ echo "ClickHouse Database: $CLICKHOUSE_DATABASE"
 echo "Migrations dir: $MIGRATIONS_DIR"
 echo "---"
 
-run_statement() {
+run_query() {
     local stmt="$1"
-    local file="$2"
     response=$(echo "$stmt" | curl -s -w "\n%{http_code}" --data-binary @- "$CLICKHOUSE_URL")
     http_code=$(echo "$response" | tail -1)
     body=$(echo "$response" | sed '$d')
     if [ "$http_code" != "200" ]; then
-        echo "FAILED (HTTP $http_code)"
+        echo "$body"
+        return 1
+    fi
+    echo "$body"
+}
+
+run_statement() {
+    local stmt="$1"
+    local file="$2"
+    body=$(run_query "$stmt") || {
+        echo "FAILED"
         echo "Error: $body"
         echo "File: $file"
         exit 1
-    fi
+    }
 }
+
+# Create migrations tracking table (idempotent)
+run_query "CREATE TABLE IF NOT EXISTS ${CLICKHOUSE_DATABASE}.schema_migrations (
+    filename String,
+    applied_at DateTime DEFAULT now()
+) ENGINE = MergeTree() ORDER BY filename" > /dev/null || {
+    echo "WARNING: Could not create schema_migrations table, running all migrations"
+}
+
+# Get list of already-applied migrations
+applied=$(run_query "SELECT filename FROM ${CLICKHOUSE_DATABASE}.schema_migrations ORDER BY filename" 2>/dev/null || echo "")
 
 for file in $(ls "$MIGRATIONS_DIR"/*.sql | sort); do
     filename="$(basename "$file")"
+
+    # Skip already-applied migrations
+    if echo "$applied" | grep -qF "$filename"; then
+        echo "Skipping migration: $filename (already applied)"
+        continue
+    fi
+
     echo -n "Running migration: $filename ... "
 
     # Use perl to split SQL file into individual statements on semicolons,
@@ -46,6 +73,9 @@ for file in $(ls "$MIGRATIONS_DIR"/*.sql | sort); do
     ' | while IFS= read -r -d $'\0' stmt; do
         run_statement "$stmt" "$filename"
     done
+
+    # Record migration as applied
+    run_query "INSERT INTO ${CLICKHOUSE_DATABASE}.schema_migrations (filename) VALUES ('${filename}')" > /dev/null
 
     echo "done."
 done

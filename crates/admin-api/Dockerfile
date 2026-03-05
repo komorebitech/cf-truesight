@@ -32,19 +32,17 @@ RUN cargo build --release --package admin-api
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 ca-certificates curl \
+    libpq5 ca-certificates curl perl \
     && rm -rf /var/lib/apt/lists/*
-
-# Create a non-root user.
-RUN groupadd -g 1001 appuser \
-    && useradd -u 1001 -g appuser -s /bin/false -M appuser
 
 WORKDIR /app
 
 COPY --from=builder /app/target/release/admin-api ./admin-api
-
-USER appuser
+COPY scripts/migrate_clickhouse.sh ./scripts/migrate_clickhouse.sh
+COPY clickhouse-migrations ./clickhouse-migrations
+COPY crates/admin-api/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh ./scripts/migrate_clickhouse.sh
 
 EXPOSE 8081
 
-CMD ["./admin-api"]
+CMD ["./entrypoint.sh"]
