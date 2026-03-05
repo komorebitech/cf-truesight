@@ -16,6 +16,7 @@ use crate::consumer::IncomingEvent;
 use crate::dlq::DlqSender;
 use crate::identity::process_identify_event;
 use crate::inserter::ClickHouseInserter;
+use crate::profiles;
 
 /// Receives events from consumer loops, batches them, and flushes to ClickHouse.
 pub struct Batcher {
@@ -170,6 +171,11 @@ impl Batcher {
                                 "failed to process identify event"
                             );
                         }
+                    }
+
+                    // Upsert user profiles.
+                    if let Err(e) = profiles::upsert_profiles(inserter.client(), &events).await {
+                        tracing::error!(error = %e, "failed to upsert user profiles");
                     }
 
                     // Delete successfully processed messages from SQS.

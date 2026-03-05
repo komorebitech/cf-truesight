@@ -4,6 +4,8 @@
 //! using `INSERT ... FORMAT JSONEachRow`. Failed inserts are retried up to 3
 //! times with exponential back-off before the error is propagated to the caller.
 
+use std::collections::HashMap;
+
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
@@ -30,6 +32,7 @@ struct EventRow {
     client_timestamp: String,
     server_timestamp: String,
     properties: String,
+    properties_map: HashMap<String, String>,
     project_id: Uuid,
     environment: String,
     // Flattened DeviceContext fields
@@ -57,6 +60,8 @@ impl EventRow {
             .map(|v| serde_json::to_string(v).unwrap_or_default())
             .unwrap_or_default();
 
+        let properties_map = flatten_properties(&event.properties);
+
         Self {
             event_id: event.event_id,
             event_name: event.event_name.clone(),
@@ -68,6 +73,7 @@ impl EventRow {
             client_timestamp: format_datetime(&event.client_timestamp),
             server_timestamp: format_datetime(&event.server_timestamp),
             properties: properties_json,
+            properties_map,
             project_id: event.project_id,
             environment: event.environment.clone(),
             app_version: event.context.app_version.clone().unwrap_or_default(),
@@ -81,6 +87,29 @@ impl EventRow {
             sdk_version: event.context.sdk_version.clone(),
         }
     }
+}
+
+/// Flatten a JSON Value (expected to be an object) into a `Map<String, String>`.
+///
+/// Primitives are converted with `to_string()`, nested objects/arrays are
+/// serialised as JSON strings so nothing is lost.
+fn flatten_properties(props: &Option<serde_json::Value>) -> HashMap<String, String> {
+    let Some(serde_json::Value::Object(map)) = props else {
+        return HashMap::new();
+    };
+    let mut out = HashMap::with_capacity(map.len());
+    for (k, v) in map {
+        let s = match v {
+            serde_json::Value::String(s) => s.clone(),
+            serde_json::Value::Bool(b) => b.to_string(),
+            serde_json::Value::Number(n) => n.to_string(),
+            serde_json::Value::Null => continue,
+            // Nested objects / arrays — keep as JSON
+            other => serde_json::to_string(other).unwrap_or_default(),
+        };
+        out.insert(k.clone(), s);
+    }
+    out
 }
 
 fn format_datetime(dt: &DateTime<Utc>) -> String {

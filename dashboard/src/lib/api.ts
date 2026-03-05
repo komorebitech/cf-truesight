@@ -655,3 +655,354 @@ export function addAllowedDomain(teamId: string, domain: string, defaultRole: st
 export function removeAllowedDomain(teamId: string, domainId: string) {
   return request<void>("DELETE", `/teams/${teamId}/allowed-domains/${domainId}`);
 }
+
+// ---------------------------------------------------------------------------
+// Property discovery endpoints
+// ---------------------------------------------------------------------------
+
+export interface PropertyKeysResponse {
+  keys: string[];
+}
+
+export interface PropertyValuesResponse {
+  key: string;
+  values: string[];
+}
+
+export function getPropertyKeys(
+  projectId: string,
+  from?: string,
+  to?: string,
+  environment?: string,
+) {
+  const qs = new URLSearchParams();
+  if (from) qs.set("from", from);
+  if (to) qs.set("to", to);
+  if (environment) qs.set("environment", environment);
+  const query = qs.toString();
+  return request<PropertyKeysResponse>(
+    "GET",
+    `/stats/projects/${projectId}/property-keys${query ? `?${query}` : ""}`,
+  );
+}
+
+export function getPropertyValues(
+  projectId: string,
+  key: string,
+  from?: string,
+  to?: string,
+  environment?: string,
+) {
+  const qs = new URLSearchParams();
+  qs.set("key", key);
+  if (from) qs.set("from", from);
+  if (to) qs.set("to", to);
+  if (environment) qs.set("environment", environment);
+  return request<PropertyValuesResponse>(
+    "GET",
+    `/stats/projects/${projectId}/property-values?${qs.toString()}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Insights endpoints
+// ---------------------------------------------------------------------------
+
+export interface InsightsFilter {
+  property: string;
+  operator: string;
+  value?: string | string[];
+}
+
+export interface InsightsRequest {
+  event_name?: string;
+  metric?: string;
+  group_by?: string[];
+  filters?: InsightsFilter[];
+  from: string;
+  to: string;
+  granularity?: string;
+  environment?: string;
+}
+
+export interface InsightsDataPoint {
+  period: string;
+  value: number;
+}
+
+export interface InsightsSeries {
+  group: Record<string, string>;
+  data: InsightsDataPoint[];
+}
+
+export interface InsightsTotal {
+  group: Record<string, string>;
+  value: number;
+}
+
+export interface InsightsResponse {
+  series: InsightsSeries[];
+  totals: InsightsTotal[];
+}
+
+export function getInsights(projectId: string, body: InsightsRequest) {
+  return request<InsightsResponse>(
+    "POST",
+    `/stats/projects/${projectId}/insights`,
+    body,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// User profiles endpoints
+// ---------------------------------------------------------------------------
+
+export interface UserProfile {
+  user_uid: string;
+  email: string;
+  name: string;
+  mobile_number: string;
+  first_seen: string;
+  last_seen: string;
+  event_count: number;
+}
+
+export interface UserDetail extends UserProfile {
+  properties: string;
+}
+
+export interface UsersListResponse {
+  data: UserProfile[];
+  meta: { page: number; per_page: number; has_more: boolean };
+}
+
+export interface UserEventsResponse {
+  data: TrackedEvent[];
+  meta: { page: number; per_page: number; has_more: boolean };
+}
+
+export function getUsers(
+  projectId: string,
+  params?: { search?: string; page?: number; per_page?: number; environment?: string },
+) {
+  const qs = new URLSearchParams();
+  if (params?.search) qs.set("search", params.search);
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.per_page) qs.set("per_page", String(params.per_page));
+  if (params?.environment) qs.set("environment", params.environment);
+  const query = qs.toString();
+  return request<UsersListResponse>(
+    "GET",
+    `/stats/projects/${projectId}/users${query ? `?${query}` : ""}`,
+  );
+}
+
+export function getUser(projectId: string, userId: string, environment?: string) {
+  const qs = new URLSearchParams();
+  if (environment) qs.set("environment", environment);
+  const query = qs.toString();
+  return request<UserDetail>(
+    "GET",
+    `/stats/projects/${projectId}/users/${encodeURIComponent(userId)}${query ? `?${query}` : ""}`,
+  );
+}
+
+export function getUserEvents(
+  projectId: string,
+  userId: string,
+  params?: { page?: number; per_page?: number; from?: string; to?: string; environment?: string },
+) {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.per_page) qs.set("per_page", String(params.per_page));
+  if (params?.from) qs.set("from", params.from);
+  if (params?.to) qs.set("to", params.to);
+  if (params?.environment) qs.set("environment", params.environment);
+  const query = qs.toString();
+  return request<UserEventsResponse>(
+    "GET",
+    `/stats/projects/${projectId}/users/${encodeURIComponent(userId)}/events${query ? `?${query}` : ""}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Retention endpoints
+// ---------------------------------------------------------------------------
+
+export interface RetentionFilter {
+  property: string;
+  operator: string;
+  value?: string | string[];
+}
+
+export interface RetentionRequest {
+  start_event: string;
+  return_event?: string;
+  retention_type?: string;
+  num_periods?: number;
+  filters?: RetentionFilter[];
+  from: string;
+  to: string;
+  environment?: string;
+}
+
+export interface RetentionCohort {
+  cohort_date: string;
+  cohort_size: number;
+  retention: number[];
+}
+
+export interface RetentionResponse {
+  cohorts: RetentionCohort[];
+}
+
+export function getRetention(projectId: string, body: RetentionRequest) {
+  return request<RetentionResponse>(
+    "POST",
+    `/stats/projects/${projectId}/retention`,
+    body,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Cohort endpoints
+// ---------------------------------------------------------------------------
+
+export interface CohortRule {
+  type: "event" | "property";
+  event_name?: string;
+  op?: string;
+  count?: number;
+  time_window?: string;
+  property?: string;
+  value?: string;
+}
+
+export interface CohortDefinition {
+  operator: "and" | "or";
+  rules: CohortRule[];
+}
+
+export interface Cohort {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string | null;
+  definition: CohortDefinition;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateCohortInput {
+  name: string;
+  description?: string;
+  definition: CohortDefinition;
+}
+
+export interface UpdateCohortInput {
+  name?: string;
+  description?: string;
+  definition?: CohortDefinition;
+}
+
+export interface CohortUsersResponse {
+  data: string[];
+  meta: { page: number; per_page: number; has_more: boolean };
+}
+
+export interface CohortSizeResponse {
+  cohort_id: string;
+  size: number;
+}
+
+export function getCohorts(projectId: string) {
+  return request<Cohort[]>("GET", `/projects/${projectId}/cohorts`);
+}
+
+export function getCohort(projectId: string, cohortId: string) {
+  return request<Cohort>("GET", `/projects/${projectId}/cohorts/${cohortId}`);
+}
+
+export function createCohort(projectId: string, input: CreateCohortInput) {
+  return request<Cohort>("POST", `/projects/${projectId}/cohorts`, input);
+}
+
+export function updateCohort(projectId: string, cohortId: string, input: UpdateCohortInput) {
+  return request<Cohort>("PATCH", `/projects/${projectId}/cohorts/${cohortId}`, input);
+}
+
+export function deleteCohort(projectId: string, cohortId: string) {
+  return request<void>("DELETE", `/projects/${projectId}/cohorts/${cohortId}`);
+}
+
+export function getCohortUsers(
+  projectId: string,
+  cohortId: string,
+  params?: { page?: number; per_page?: number; environment?: string },
+) {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.per_page) qs.set("per_page", String(params.per_page));
+  if (params?.environment) qs.set("environment", params.environment);
+  const query = qs.toString();
+  return request<CohortUsersResponse>(
+    "GET",
+    `/projects/${projectId}/cohorts/${cohortId}/users${query ? `?${query}` : ""}`,
+  );
+}
+
+export function getCohortSize(projectId: string, cohortId: string, environment?: string) {
+  const qs = new URLSearchParams();
+  if (environment) qs.set("environment", environment);
+  const query = qs.toString();
+  return request<CohortSizeResponse>(
+    "GET",
+    `/projects/${projectId}/cohorts/${cohortId}/size${query ? `?${query}` : ""}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Flows endpoints
+// ---------------------------------------------------------------------------
+
+export interface FlowsFilter {
+  property: string;
+  operator: string;
+  value?: string | string[];
+}
+
+export interface FlowsRequest {
+  anchor_event: string;
+  direction?: "forward" | "backward";
+  steps?: number;
+  filters?: FlowsFilter[];
+  from: string;
+  to: string;
+  environment?: string;
+  top_paths?: number;
+}
+
+export interface FlowNode {
+  id: string;
+  name: string;
+  step: number;
+}
+
+export interface FlowLink {
+  source: string;
+  target: string;
+  value: number;
+}
+
+export interface FlowsResponse {
+  nodes: FlowNode[];
+  links: FlowLink[];
+}
+
+export function getFlows(projectId: string, body: FlowsRequest) {
+  return request<FlowsResponse>(
+    "POST",
+    `/stats/projects/${projectId}/flows`,
+    body,
+  );
+}

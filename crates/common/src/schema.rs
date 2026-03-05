@@ -38,6 +38,19 @@ diesel::table! {
 }
 
 diesel::table! {
+    cohorts (id) {
+        id -> Uuid,
+        project_id -> Uuid,
+        #[max_length = 255]
+        name -> Varchar,
+        description -> Nullable<Text>,
+        definition -> Jsonb,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     funnels (id) {
         id -> Uuid,
         project_id -> Uuid,
@@ -132,6 +145,7 @@ diesel::table! {
 
 diesel::joinable!(api_keys -> projects (project_id));
 diesel::joinable!(allowed_domains -> teams (team_id));
+diesel::joinable!(cohorts -> projects (project_id));
 diesel::joinable!(funnels -> projects (project_id));
 diesel::joinable!(invitations -> teams (team_id));
 diesel::joinable!(invitations -> users (invited_by));
@@ -143,6 +157,7 @@ diesel::joinable!(team_projects -> projects (project_id));
 diesel::allow_tables_to_appear_in_same_query!(
     api_keys,
     allowed_domains,
+    cohorts,
     funnels,
     invitations,
     projects,

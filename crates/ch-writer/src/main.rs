@@ -12,6 +12,7 @@ mod dlq;
 mod health;
 mod identity;
 mod inserter;
+mod profiles;
 
 use std::sync::Arc;
 

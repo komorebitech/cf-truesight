@@ -63,6 +63,71 @@ pub fn create_router(state: AppState) -> Router {
             "/v1/stats/projects/{pid}/live-users",
             get(handlers::stats::live_users),
         )
+        // Property Discovery & Insights
+        .route(
+            "/v1/stats/projects/{pid}/property-keys",
+            get(handlers::properties::property_keys),
+        )
+        .route(
+            "/v1/stats/projects/{pid}/property-values",
+            get(handlers::properties::property_values),
+        )
+        .route(
+            "/v1/stats/projects/{pid}/insights",
+            post(handlers::properties::insights),
+        )
+        // User Profiles
+        .route(
+            "/v1/stats/projects/{pid}/users",
+            get(handlers::users_ch::list_users),
+        )
+        .route(
+            "/v1/stats/projects/{pid}/users/{uid}",
+            get(handlers::users_ch::get_user),
+        )
+        .route(
+            "/v1/stats/projects/{pid}/users/{uid}/events",
+            get(handlers::users_ch::user_events),
+        )
+        // Retention
+        .route(
+            "/v1/stats/projects/{pid}/retention",
+            post(handlers::retention::retention),
+        )
+        // Flows
+        .route(
+            "/v1/stats/projects/{pid}/flows",
+            post(handlers::flows::flows),
+        )
+        // Cohorts
+        .route(
+            "/v1/projects/{pid}/cohorts",
+            get(handlers::cohorts::list_cohorts),
+        )
+        .route(
+            "/v1/projects/{pid}/cohorts",
+            post(handlers::cohorts::create_cohort),
+        )
+        .route(
+            "/v1/projects/{pid}/cohorts/{cid}",
+            get(handlers::cohorts::get_cohort),
+        )
+        .route(
+            "/v1/projects/{pid}/cohorts/{cid}",
+            patch(handlers::cohorts::update_cohort),
+        )
+        .route(
+            "/v1/projects/{pid}/cohorts/{cid}",
+            delete(handlers::cohorts::delete_cohort),
+        )
+        .route(
+            "/v1/projects/{pid}/cohorts/{cid}/users",
+            get(handlers::cohorts::cohort_users),
+        )
+        .route(
+            "/v1/projects/{pid}/cohorts/{cid}/size",
+            get(handlers::cohorts::cohort_size),
+        )
         // Funnels
         .route(
             "/v1/projects/{pid}/funnels",

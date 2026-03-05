@@ -27,6 +27,11 @@ import {
   ExternalLink,
   TrendingUp,
   GitBranch,
+  Lightbulb,
+  Users,
+  RotateCcw,
+  UsersRound,
+  Workflow,
 } from "lucide-react";
 
 export function ProjectDetailPage() {
@@ -175,6 +180,41 @@ export function ProjectDetailPage() {
             >
               <GitBranch className="h-3.5 w-3.5" />
               Funnels
+            </Link>
+            <Link
+              to={`/projects/${id}/insights${envSuffix}`}
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              <Lightbulb className="h-3.5 w-3.5" />
+              Insights
+            </Link>
+            <Link
+              to={`/projects/${id}/users${envSuffix}`}
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              <Users className="h-3.5 w-3.5" />
+              Users
+            </Link>
+            <Link
+              to={`/projects/${id}/retention${envSuffix}`}
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Retention
+            </Link>
+            <Link
+              to={`/projects/${id}/cohorts${envSuffix}`}
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              <UsersRound className="h-3.5 w-3.5" />
+              Cohorts
+            </Link>
+            <Link
+              to={`/projects/${id}/flows${envSuffix}`}
+              className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              <Workflow className="h-3.5 w-3.5" />
+              Flows
             </Link>
           </div>
           <div className="flex items-center gap-3">

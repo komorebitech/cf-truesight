@@ -6,9 +6,16 @@ import { ProjectsListPage } from "@/pages/ProjectsListPage";
 import { ProjectDetailPage } from "@/pages/ProjectDetailPage";
 import { EventExplorerPage } from "@/pages/EventExplorerPage";
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
+import { InsightsPage } from "@/pages/InsightsPage";
 import { FunnelsPage } from "@/pages/FunnelsPage";
 import { FunnelDetailPage } from "@/pages/FunnelDetailPage";
 import { FunnelComparePage } from "@/pages/FunnelComparePage";
+import { UsersPage } from "@/pages/UsersPage";
+import { UserDetailPage } from "@/pages/UserDetailPage";
+import { RetentionPage } from "@/pages/RetentionPage";
+import { CohortsPage } from "@/pages/CohortsPage";
+import { CohortDetailPage } from "@/pages/CohortDetailPage";
+import { FlowsPage } from "@/pages/FlowsPage";
 import { TeamsListPage } from "@/pages/TeamsListPage";
 import { TeamDetailPage } from "@/pages/TeamDetailPage";
 import { AcceptInvitationPage } from "@/pages/AcceptInvitationPage";
@@ -58,6 +65,34 @@ export const router = createBrowserRouter([
       {
         path: "projects/:id/funnels/:funnelId",
         element: <FunnelDetailPage />,
+      },
+      {
+        path: "projects/:id/insights",
+        element: <InsightsPage />,
+      },
+      {
+        path: "projects/:id/users",
+        element: <UsersPage />,
+      },
+      {
+        path: "projects/:id/users/:userId",
+        element: <UserDetailPage />,
+      },
+      {
+        path: "projects/:id/retention",
+        element: <RetentionPage />,
+      },
+      {
+        path: "projects/:id/cohorts",
+        element: <CohortsPage />,
+      },
+      {
+        path: "projects/:id/cohorts/:cohortId",
+        element: <CohortDetailPage />,
+      },
+      {
+        path: "projects/:id/flows",
+        element: <FlowsPage />,
       },
       {
         path: "teams",
