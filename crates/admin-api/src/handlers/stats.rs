@@ -304,10 +304,7 @@ pub async fn event_names(
          GROUP BY name ORDER BY count DESC LIMIT ?"
     );
 
-    let mut q = state
-        .clickhouse_client
-        .query(&query)
-        .bind(project_id);
+    let mut q = state.clickhouse_client.query(&query).bind(project_id);
     if let Some(search) = params.q.as_ref().filter(|s| !s.is_empty()) {
         q = q.bind(search.as_str());
     }
