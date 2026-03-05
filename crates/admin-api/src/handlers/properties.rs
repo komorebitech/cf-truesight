@@ -227,10 +227,10 @@ struct TotalsRawRow {
 
 fn metric_expr(metric: &str) -> Result<&'static str, AppError> {
     match metric {
-        "total" => Ok("count()"),
-        "unique_users" => Ok("uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id))"),
+        "total" => Ok("toFloat64(count())"),
+        "unique_users" => Ok("toFloat64(uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))"),
         "avg_per_user" => {
-            Ok("count() / max(1, uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))")
+            Ok("toFloat64(count()) / max(1, uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))")
         }
         other => Err(AppError::Validation(format!("Unknown metric: {}", other))),
     }

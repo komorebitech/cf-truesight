@@ -2,11 +2,13 @@
 set -euo pipefail
 
 CLICKHOUSE_URL="${CLICKHOUSE_URL:-http://localhost:8123}"
+CLICKHOUSE_DATABASE="${CLICKHOUSE_DATABASE:-truesight_local}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MIGRATIONS_DIR="$SCRIPT_DIR/../clickhouse-migrations"
 
 echo "ClickHouse URL: $CLICKHOUSE_URL"
+echo "ClickHouse Database: $CLICKHOUSE_DATABASE"
 echo "Migrations dir: $MIGRATIONS_DIR"
 echo "---"
 
@@ -29,7 +31,9 @@ for file in $(ls "$MIGRATIONS_DIR"/*.sql | sort); do
     echo -n "Running migration: $filename ... "
 
     # Use perl to split SQL file into individual statements on semicolons,
-    # preserving content within strings
+    # preserving content within strings.
+    # Also replace the hardcoded database name with the configured one.
+    perl -0777 -pe "s/truesight_local/$ENV{CLICKHOUSE_DATABASE}/g" "$file" | \
     perl -0777 -ne '
         # Split on semicolons followed by optional whitespace
         my @stmts = split(/;\s*/, $_);
@@ -39,7 +43,7 @@ for file in $(ls "$MIGRATIONS_DIR"/*.sql | sort); do
             # Print each statement followed by a NUL byte delimiter
             print "$s\0";
         }
-    ' "$file" | while IFS= read -r -d $'\0' stmt; do
+    ' | while IFS= read -r -d $'\0' stmt; do
         run_statement "$stmt" "$filename"
     done
 
