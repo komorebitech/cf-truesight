@@ -116,7 +116,7 @@ pub async fn throughput(
         ""
     };
     let query = format!(
-        "SELECT toUnixTimestamp({}(server_timestamp)) AS timestamp, count() AS count \
+        "SELECT toFloat64(toUnixTimestamp({}(server_timestamp))) AS timestamp, count() AS count \
          FROM {}.events \
          WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{} \
          GROUP BY timestamp \

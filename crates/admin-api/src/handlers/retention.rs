@@ -171,12 +171,12 @@ pub async fn retention(
           ) \
         SELECT \
           toString(c.cohort_period) AS cohort_date, \
-          count(DISTINCT c.user_uid) AS cohort_size, \
-          dateDiff('{diff_unit}', c.cohort_period, a.activity_period) AS period_offset, \
-          count(DISTINCT a.user_uid) AS retained_users \
+          toUInt64(count(DISTINCT c.user_uid)) AS cohort_size, \
+          toInt32(dateDiff('{diff_unit}', c.cohort_period, a.activity_period)) AS period_offset, \
+          toUInt64(count(DISTINCT a.user_uid)) AS retained_users \
         FROM cohort_users c \
         LEFT JOIN user_activity a ON c.user_uid = a.user_uid \
-        WHERE dateDiff('{diff_unit}', c.cohort_period, a.activity_period) BETWEEN 0 AND ? \
+        WHERE toInt32(dateDiff('{diff_unit}', c.cohort_period, a.activity_period)) BETWEEN 0 AND ? \
         GROUP BY cohort_date, period_offset \
         ORDER BY cohort_date, period_offset",
         pfn_alias = pfn,

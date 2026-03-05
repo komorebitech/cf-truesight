@@ -181,11 +181,11 @@ pub async fn flows(
             WHERE {sequenced_filter} \
         ) \
         SELECT \
-            s1.step_offset AS from_step, \
+            toInt32(s1.step_offset) AS from_step, \
             s1.event_name AS from_event, \
-            s2.step_offset AS to_step, \
+            toInt32(s2.step_offset) AS to_step, \
             s2.event_name AS to_event, \
-            count(DISTINCT s1.user_uid) AS users \
+            toUInt64(count(DISTINCT s1.user_uid)) AS users \
         FROM sequenced s1 \
         INNER JOIN sequenced s2 ON s1.user_uid = s2.user_uid AND s2.step_offset = s1.step_offset + 1 \
         GROUP BY from_step, from_event, to_step, to_event \
