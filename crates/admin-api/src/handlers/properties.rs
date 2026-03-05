@@ -229,9 +229,9 @@ fn metric_expr(metric: &str) -> Result<&'static str, AppError> {
     match metric {
         "total" => Ok("toFloat64(count())"),
         "unique_users" => Ok("toFloat64(uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))"),
-        "avg_per_user" => {
-            Ok("toFloat64(count()) / max(1, uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))")
-        }
+        "avg_per_user" => Ok(
+            "toFloat64(count()) / max(1, uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))",
+        ),
         other => Err(AppError::Validation(format!("Unknown metric: {}", other))),
     }
 }
@@ -326,8 +326,7 @@ pub async fn insights(
     }
 
     // Build filter conditions using shared helper
-    let (filter_conditions, filter_bind_values) =
-        build_property_filter_clauses(&req.filters)?;
+    let (filter_conditions, filter_bind_values) = build_property_filter_clauses(&req.filters)?;
     conditions.extend(filter_conditions);
 
     let where_clause = conditions.join(" AND ");

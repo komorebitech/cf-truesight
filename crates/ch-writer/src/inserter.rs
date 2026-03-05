@@ -150,6 +150,7 @@ impl ClickHouseInserter {
     ///
     /// Returns `Ok(())` on success, or the last encountered error after all
     /// retries are exhausted.
+    #[tracing::instrument(name = "ch.insert_batch", skip(self, events), fields(event_count = events.len()))]
     pub async fn insert_batch(&self, events: &[EnrichedEvent]) -> Result<()> {
         if events.is_empty() {
             return Ok(());

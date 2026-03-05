@@ -110,7 +110,13 @@ async fn main() -> anyhow::Result<()> {
     let config = AdminConfig::from_env()?;
 
     // Init telemetry
-    let _sentry_guard = init_telemetry("admin-api", &config.sentry_dsn);
+    let _telemetry = init_telemetry(
+        "admin-api",
+        &config.sentry_dsn,
+        config.dd_enabled,
+        &config.dd_agent_host,
+        &config.dd_env,
+    );
 
     info!("Starting admin-api");
 

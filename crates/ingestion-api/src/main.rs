@@ -28,8 +28,14 @@ async fn main() -> anyhow::Result<()> {
     // Parse configuration from environment variables.
     let config = IngestionConfig::from_env()?;
 
-    // Initialize tracing and Sentry.
-    let _sentry_guard = init_telemetry("ingestion-api", &config.sentry_dsn);
+    // Initialize tracing, Sentry, and Datadog.
+    let _telemetry = init_telemetry(
+        "ingestion-api",
+        &config.sentry_dsn,
+        config.dd_enabled,
+        &config.dd_agent_host,
+        &config.dd_env,
+    );
 
     info!(port = config.port(), "Starting ingestion-api");
 

@@ -42,6 +42,7 @@ impl DlqSender {
     /// The original `message_body` is preserved as-is. An additional message
     /// attribute `error_reason` is attached so operators can quickly triage
     /// failures without parsing the body.
+    #[tracing::instrument(name = "dlq.send", skip(self, message_body))]
     pub async fn send_to_dlq(
         &self,
         queue_url: &str,

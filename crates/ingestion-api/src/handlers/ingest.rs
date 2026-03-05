@@ -18,6 +18,7 @@ use crate::validation::{validate_batch, validate_event};
 ///
 /// Returns 202 Accepted on success with the count of accepted events and
 /// the request ID for tracing.
+#[tracing::instrument(name = "ingest_batch", skip(state, batch_request), fields(project_id = %project_id.0, request_id = %request_id.0))]
 pub async fn ingest_batch(
     State(state): State<AppState>,
     project_id: ProjectId,
