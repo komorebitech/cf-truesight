@@ -49,5 +49,6 @@ export class TimeOnPageTracker implements AutoTracker {
       page_url: location.href,
       duration_seconds: durationSeconds,
     });
+    this.entryTime = 0;
   }
 }

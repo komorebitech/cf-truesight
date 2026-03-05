@@ -24,14 +24,15 @@ export class PageLoadTracker implements AutoTracker {
       this.loadHandler = null;
     }
     this.trackFn = null;
+    this.fired = false;
   }
 
   private fireMetrics(): void {
     if (this.fired || !this.trackFn) return;
-    this.fired = true;
 
     const entries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
     if (!entries.length) return;
+    this.fired = true;
 
     const nav = entries[0];
     this.trackFn('$page_load', {

@@ -25,8 +25,9 @@ export class ClickTracker implements AutoTracker {
       const analyticsId = target.getAttribute('data-analytics-id');
       if (analyticsId) props.data_analytics_id = analyticsId;
 
-      if (target.tagName === 'A') {
-        props.href = (target as HTMLAnchorElement).href;
+      const anchor = target.closest('a');
+      if (anchor) {
+        props.href = (anchor as HTMLAnchorElement).href;
       }
 
       this.trackFn('$click', props);

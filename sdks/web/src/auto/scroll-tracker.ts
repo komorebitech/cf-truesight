@@ -9,10 +9,12 @@ export class ScrollTracker implements AutoTracker {
   private popstateHandler: (() => void) | null = null;
   private firedThresholds: Set<number> = new Set();
   private throttleTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastUrl: string | null = null;
 
   start(trackFn: (eventName: string, properties: Record<string, unknown>) => void): void {
     this.trackFn = trackFn;
     if (typeof window === 'undefined') return;
+    this.lastUrl = location.href;
 
     this.scrollHandler = () => {
       if (this.throttleTimer) return;
@@ -49,6 +51,11 @@ export class ScrollTracker implements AutoTracker {
 
   private checkScroll(): void {
     if (!this.trackFn) return;
+
+    if (this.lastUrl !== location.href) {
+      this.firedThresholds.clear();
+      this.lastUrl = location.href;
+    }
 
     const scrollHeight = document.documentElement.scrollHeight;
     const viewportHeight = window.innerHeight;

@@ -7,6 +7,8 @@ export class DeadClickTracker implements AutoTracker {
   name = 'dead-click';
   private trackFn: ((eventName: string, properties: Record<string, unknown>) => void) | null = null;
   private handler: ((e: Event) => void) | null = null;
+  private timeouts = new Set<ReturnType<typeof setTimeout>>();
+  private observers = new Set<MutationObserver>();
 
   start(trackFn: (eventName: string, properties: Record<string, unknown>) => void): void {
     this.trackFn = trackFn;
@@ -18,13 +20,14 @@ export class DeadClickTracker implements AutoTracker {
       if (shouldIgnoreElement(target)) return;
       if (EXCLUDED_TAGS.has(target.tagName)) return;
 
-      const trackRef = this.trackFn;
       let mutationDetected = false;
 
       const observer = new MutationObserver(() => {
         mutationDetected = true;
         observer.disconnect();
+        this.observers.delete(observer);
       });
+      this.observers.add(observer);
 
       observer.observe(document.body, {
         subtree: true,
@@ -33,10 +36,12 @@ export class DeadClickTracker implements AutoTracker {
         characterData: true,
       });
 
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         observer.disconnect();
+        this.observers.delete(observer);
+        this.timeouts.delete(timeoutId);
         if (!mutationDetected) {
-          trackRef('$dead_click', {
+          this.trackFn?.('$dead_click', {
             element_tag: target.tagName.toLowerCase(),
             element_id: (target as HTMLElement).id || null,
             element_classes: (target as HTMLElement).className || null,
@@ -44,6 +49,7 @@ export class DeadClickTracker implements AutoTracker {
           });
         }
       }, 1000);
+      this.timeouts.add(timeoutId);
     };
 
     document.addEventListener('click', this.handler, true);
@@ -54,6 +60,10 @@ export class DeadClickTracker implements AutoTracker {
       document.removeEventListener('click', this.handler, true);
       this.handler = null;
     }
+    for (const timeoutId of this.timeouts) clearTimeout(timeoutId);
+    this.timeouts.clear();
+    for (const observer of this.observers) observer.disconnect();
+    this.observers.clear();
     this.trackFn = null;
   }
 }

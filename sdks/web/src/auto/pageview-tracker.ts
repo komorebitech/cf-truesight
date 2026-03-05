@@ -11,6 +11,9 @@ export class PageviewTracker implements AutoTracker {
   start(trackFn: (eventName: string, properties: Record<string, unknown>) => void): void {
     this.trackFn = trackFn;
     if (typeof window === 'undefined' || typeof history === 'undefined') return;
+    if (this.origPushState || this.origReplaceState || this.popstateHandler || this.hashchangeHandler) {
+      return;
+    }
 
     // Monkey-patch pushState/replaceState
     this.origPushState = history.pushState;

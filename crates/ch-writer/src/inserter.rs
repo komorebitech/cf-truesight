@@ -35,7 +35,7 @@ struct EventRow {
     properties_map: HashMap<String, String>,
     project_id: Uuid,
     environment: String,
-    session_id: String,
+    session_id: Option<String>,
     // Flattened DeviceContext fields
     app_version: String,
     os_name: String,
@@ -77,7 +77,7 @@ impl EventRow {
             properties_map,
             project_id: event.project_id,
             environment: event.environment.clone(),
-            session_id: event.session_id.clone().unwrap_or_default(),
+            session_id: event.session_id.clone(),
             app_version: event.context.app_version.clone().unwrap_or_default(),
             os_name: event.context.os_name.clone(),
             os_version: event.context.os_version.clone(),

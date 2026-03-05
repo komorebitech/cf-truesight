@@ -156,9 +156,12 @@ object TrueSight {
     }
 
     fun onAppForeground() {
+        val oldSessionId = sessionManager?.currentSessionId()
         val result = sessionManager?.onForeground() ?: return
         if (result.second) {
-            track("\$session_end", emptyMap())
+            if (oldSessionId != null) {
+                track("\$session_end", mapOf("session_id" to oldSessionId))
+            }
             track("\$session_start", mapOf("session_id" to result.first))
         }
     }
@@ -241,7 +244,7 @@ object TrueSight {
             eventType = eventType,
             userId = userId,
             anonymousId = anonymousId,
-            sessionId = sessionManager?.currentSessionId(),
+            sessionId = sessionManager?.getOrStartSession(),
             mobileNumber = mobileNumber,
             email = email,
             clientTimestamp = timestamp,

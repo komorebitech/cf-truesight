@@ -16,6 +16,7 @@ actual class SessionManager actual constructor() {
         private var timeoutMs: Long = 30 * 60 * 1000L
 
         fun initialize(context: Context, sessionTimeoutMs: Long = 30 * 60 * 1000L) {
+            require(sessionTimeoutMs > 0) { "sessionTimeoutMs must be > 0" }
             appContext = context.applicationContext
             timeoutMs = sessionTimeoutMs
         }

@@ -79,14 +79,32 @@ async function generateDeviceId(): Promise<string> {
     components.push('no-canvas');
   }
 
-  // Hash everything with SHA-256
-  const encoder = new TextEncoder();
-  const data = encoder.encode(components.join('|'));
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = new Uint8Array(hashBuffer);
-  return Array.from(hashArray)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  // Hash everything with SHA-256 (with fallback for non-browser environments)
+  if (typeof globalThis.crypto === 'undefined' || !globalThis.crypto.subtle) {
+    let h = 0;
+    const raw = components.join('|');
+    for (let i = 0; i < raw.length; i++) {
+      h = ((h << 5) - h + raw.charCodeAt(i)) | 0;
+    }
+    return `fallback-${Math.abs(h)}`;
+  }
+
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(components.join('|'));
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = new Uint8Array(hashBuffer);
+    return Array.from(hashArray)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  } catch {
+    let h = 0;
+    const raw = components.join('|');
+    for (let i = 0; i < raw.length; i++) {
+      h = ((h << 5) - h + raw.charCodeAt(i)) | 0;
+    }
+    return `fallback-${Math.abs(h)}`;
+  }
 }
 
 // Device-level fields are cached (they don't change during a session).

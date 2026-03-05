@@ -62,7 +62,9 @@ export class TrueSightSDK {
     this.sessionManager = new SessionManager(
       this.config.sessionTimeout,
       (eventName, properties) => {
-        this.enqueueEvent('track', eventName, properties);
+        void this.enqueueEvent('track', eventName, properties).catch((error) => {
+          logger.warn(`Failed to enqueue session event "${eventName}": ${String(error)}`);
+        });
       }
     );
 
@@ -73,7 +75,9 @@ export class TrueSightSDK {
     this.autoTrackManager = new AutoTrackManager(
       this.config.autoTrack,
       (eventName, properties) => {
-        this.track(eventName, properties);
+        void this.track(eventName, properties).catch((error) => {
+          logger.warn(`Failed to auto-track event "${eventName}": ${String(error)}`);
+        });
       }
     );
     this.autoTrackManager.start();

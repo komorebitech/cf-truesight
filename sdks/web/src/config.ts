@@ -41,7 +41,7 @@ export const DEFAULT_CONFIG: Omit<Config, 'apiKey' | 'endpoint'> = {
   maxEventSize: 32768,
   debug: false,
   sessionTimeout: 1_800_000,
-  autoTrack: DEFAULT_AUTO_TRACK,
+  autoTrack: { ...DEFAULT_AUTO_TRACK },
 };
 
 export function buildConfig(init: {
@@ -49,10 +49,15 @@ export function buildConfig(init: {
   endpoint: string;
   options?: Partial<Config>;
 }): Config {
+  const options = init.options ?? {};
   return {
+    ...DEFAULT_CONFIG,
+    ...options,
     apiKey: init.apiKey,
     endpoint: init.endpoint,
-    ...DEFAULT_CONFIG,
-    ...init.options,
+    autoTrack: {
+      ...DEFAULT_AUTO_TRACK,
+      ...(options.autoTrack ?? {}),
+    },
   };
 }

@@ -1,5 +1,6 @@
 const SESSION_ID_KEY = 'truesight_session_id';
 const LAST_ACTIVITY_KEY = 'truesight_last_activity';
+const SESSION_START_KEY = 'truesight_session_start';
 
 export class SessionManager {
   private sessionTimeout: number;
@@ -21,12 +22,14 @@ export class SessionManager {
     if (typeof sessionStorage === 'undefined') return;
     const storedId = sessionStorage.getItem(SESSION_ID_KEY);
     const storedActivity = sessionStorage.getItem(LAST_ACTIVITY_KEY);
+    const storedStart = sessionStorage.getItem(SESSION_START_KEY);
     if (storedId && storedActivity) {
       const lastActivity = parseInt(storedActivity, 10);
       if (Date.now() - lastActivity < this.sessionTimeout) {
         this.sessionId = storedId;
         this.lastActivityTime = lastActivity;
-        this.sessionStartTime = lastActivity;
+        const startTs = storedStart ? parseInt(storedStart, 10) : NaN;
+        this.sessionStartTime = Number.isFinite(startTs) ? startTs : lastActivity;
         return;
       }
     }
@@ -61,6 +64,7 @@ export class SessionManager {
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.removeItem(SESSION_ID_KEY);
       sessionStorage.removeItem(LAST_ACTIVITY_KEY);
+      sessionStorage.removeItem(SESSION_START_KEY);
     }
   }
 
@@ -89,6 +93,7 @@ export class SessionManager {
     if (this.sessionId) {
       sessionStorage.setItem(SESSION_ID_KEY, this.sessionId);
       sessionStorage.setItem(LAST_ACTIVITY_KEY, this.lastActivityTime.toString());
+      sessionStorage.setItem(SESSION_START_KEY, this.sessionStartTime.toString());
     }
   }
 }

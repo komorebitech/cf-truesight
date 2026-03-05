@@ -9,8 +9,9 @@ interface ClickRecord {
 function getElementSelector(el: Element): string {
   const tag = el.tagName.toLowerCase();
   const id = (el as HTMLElement).id ? `#${(el as HTMLElement).id}` : '';
-  const classes = (el as HTMLElement).className
-    ? '.' + (el as HTMLElement).className.trim().split(/\s+/).join('.')
+  const classAttr = (el.getAttribute('class') ?? '').trim();
+  const classes = classAttr
+    ? '.' + classAttr.split(/\s+/).join('.')
     : '';
   return `${tag}${id}${classes}`;
 }
@@ -46,7 +47,7 @@ export class RageClickTracker implements AutoTracker {
           click_count: sameElement.length,
           element_tag: target.tagName.toLowerCase(),
           element_id: (target as HTMLElement).id || null,
-          element_classes: (target as HTMLElement).className || null,
+          element_classes: target.getAttribute('class') || null,
           element_text: (target.textContent?.trim() || '').slice(0, 255) || null,
         });
         // Reset to avoid duplicate fires

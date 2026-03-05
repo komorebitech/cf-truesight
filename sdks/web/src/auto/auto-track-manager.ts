@@ -12,6 +12,7 @@ import { PageLoadTracker } from './page-load-tracker.js';
 export class AutoTrackManager {
   private trackers: AutoTracker[] = [];
   private trackFn: (eventName: string, properties: Record<string, unknown>) => void;
+  private started = false;
 
   constructor(
     config: AutoTrackConfig,
@@ -30,10 +31,18 @@ export class AutoTrackManager {
   }
 
   start(): void {
-    this.trackers.forEach((t) => t.start(this.trackFn));
+    if (this.started) return;
+    this.started = true;
+    for (const tracker of this.trackers) {
+      tracker.start(this.trackFn);
+    }
   }
 
   stop(): void {
-    this.trackers.forEach((t) => t.stop());
+    if (!this.started) return;
+    this.started = false;
+    for (const tracker of this.trackers) {
+      tracker.stop();
+    }
   }
 }
