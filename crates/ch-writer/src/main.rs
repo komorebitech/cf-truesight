@@ -44,8 +44,14 @@ async fn main() -> Result<()> {
     // Load configuration from environment variables.
     let config = WriterConfig::from_env()?;
 
-    // Initialise tracing + optional Sentry integration.
-    let _sentry_guard = init_telemetry("ch-writer", &config.sentry_dsn);
+    // Initialise tracing + optional Sentry + optional Datadog integration.
+    let _telemetry = init_telemetry(
+        "ch-writer",
+        &config.sentry_dsn,
+        config.dd_enabled,
+        &config.dd_agent_host,
+        &config.dd_env,
+    );
 
     tracing::info!("ch-writer starting");
     tracing::info!(dedup = crate::dedup::dedup_note(), "dedup strategy");

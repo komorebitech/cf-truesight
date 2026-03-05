@@ -24,7 +24,10 @@
       "environment": [
         { "name": "INGESTION_API_PORT", "value": "8080" },
         { "name": "AWS_REGION", "value": "ap-south-1" },
-        { "name": "RUST_LOG", "value": "info,truesight=debug" }
+        { "name": "RUST_LOG", "value": "info,truesight=debug" },
+        { "name": "DD_ENABLED", "value": "true" },
+        { "name": "DD_AGENT_HOST", "value": "dd.cityflo.net" },
+        { "name": "DD_ENV", "value": "production" }
       ],
       "secrets": [
         {

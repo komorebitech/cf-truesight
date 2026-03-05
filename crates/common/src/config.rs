@@ -8,6 +8,18 @@ fn default_empty_string() -> String {
     String::new()
 }
 
+fn default_dd_agent_host() -> String {
+    "localhost".to_string()
+}
+
+fn default_dd_service() -> String {
+    "truesight".to_string()
+}
+
+fn default_dd_env() -> String {
+    "local".to_string()
+}
+
 // ---------------------------------------------------------------------------
 // Ingestion API
 // ---------------------------------------------------------------------------
@@ -29,6 +41,18 @@ pub struct IngestionConfig {
 
     #[serde(default)]
     pub sqs_endpoint_url: Option<String>,
+
+    #[serde(default)]
+    pub dd_enabled: bool,
+
+    #[serde(default = "default_dd_agent_host")]
+    pub dd_agent_host: String,
+
+    #[serde(default = "default_dd_service")]
+    pub dd_service: String,
+
+    #[serde(default = "default_dd_env")]
+    pub dd_env: String,
 }
 
 fn default_ingestion_port() -> u16 {
@@ -83,6 +107,18 @@ pub struct AdminConfig {
 
     #[serde(default)]
     pub jwt_ttl_seconds: Option<u64>,
+
+    #[serde(default)]
+    pub dd_enabled: bool,
+
+    #[serde(default = "default_dd_agent_host")]
+    pub dd_agent_host: String,
+
+    #[serde(default = "default_dd_service")]
+    pub dd_service: String,
+
+    #[serde(default = "default_dd_env")]
+    pub dd_env: String,
 }
 
 fn default_admin_port() -> u16 {
@@ -139,6 +175,18 @@ pub struct WriterConfig {
 
     #[serde(default)]
     pub sentry_dsn: Option<String>,
+
+    #[serde(default)]
+    pub dd_enabled: bool,
+
+    #[serde(default = "default_dd_agent_host")]
+    pub dd_agent_host: String,
+
+    #[serde(default = "default_dd_service")]
+    pub dd_service: String,
+
+    #[serde(default = "default_dd_env")]
+    pub dd_env: String,
 }
 
 fn default_batch_size() -> usize {

@@ -11,10 +11,7 @@ use truesight_common::event::{EnrichedEvent, EventType};
 ///
 /// For each event, inserts a row with `last_seen` updated. Because the table
 /// uses `ReplacingMergeTree(last_seen)`, the most recent row wins after merge.
-pub async fn upsert_profiles(
-    client: &clickhouse::Client,
-    events: &[EnrichedEvent],
-) -> Result<()> {
+pub async fn upsert_profiles(client: &clickhouse::Client, events: &[EnrichedEvent]) -> Result<()> {
     if events.is_empty() {
         return Ok(());
     }
