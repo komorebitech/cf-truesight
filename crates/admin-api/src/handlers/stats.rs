@@ -256,6 +256,71 @@ pub async fn event_types(
     }))
 }
 
+// ── Event Name Search ───────────────────────────────────────────────
+
+#[derive(Debug, Deserialize)]
+pub struct EventNamesQuery {
+    pub q: Option<String>,
+    #[serde(default = "default_event_names_limit")]
+    pub limit: u64,
+    pub environment: Option<String>,
+}
+
+fn default_event_names_limit() -> u64 {
+    25
+}
+
+#[derive(Debug, Serialize)]
+pub struct EventNamesResponse {
+    pub event_names: Vec<TopEvent>,
+}
+
+pub async fn event_names(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(project_id): Path<Uuid>,
+    Query(params): Query<EventNamesQuery>,
+) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
+    let db = &state.config.clickhouse_database;
+    let limit = params.limit.clamp(1, 100);
+
+    let search_filter = if params.q.as_ref().is_some_and(|q| !q.is_empty()) {
+        " AND positionCaseInsensitive(event_name, ?) > 0"
+    } else {
+        ""
+    };
+    let env_filter = if params.environment.is_some() {
+        " AND environment = ?"
+    } else {
+        ""
+    };
+
+    let query = format!(
+        "SELECT event_name AS name, count() AS count FROM {db}.events \
+         WHERE project_id = ?{search_filter}{env_filter} \
+         GROUP BY name ORDER BY count DESC LIMIT ?"
+    );
+
+    let mut q = state
+        .clickhouse_client
+        .query(&query)
+        .bind(project_id);
+    if let Some(search) = params.q.as_ref().filter(|s| !s.is_empty()) {
+        q = q.bind(search.as_str());
+    }
+    if let Some(ref env) = params.environment {
+        q = q.bind(env.as_str());
+    }
+    let rows = q
+        .bind(limit)
+        .fetch_all::<TopEvent>()
+        .await
+        .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
+
+    Ok(Json(EventNamesResponse { event_names: rows }))
+}
+
 // ── List Events ──────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]

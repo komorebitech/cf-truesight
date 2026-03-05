@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams } from "react-router";
 import { useInsights } from "@/hooks/use-insights";
-import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import { usePropertyKeys } from "@/hooks/use-properties";
 import { Header } from "@/components/Header";
 import { PropertyFilter } from "@/components/PropertyFilter";
@@ -16,8 +15,8 @@ import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { EventCombobox } from "@/components/EventCombobox";
 import {
   Table,
   TableHeader,
@@ -54,15 +53,6 @@ export function InsightsPage() {
   const [chartType, setChartType] = useState<ChartType>("area");
 
   const { environment } = useEnvironment();
-
-  // Fetch event types for the selector
-  const { data: breakdownData } = useEventTypeBreakdown(
-    id,
-    timeRange.from,
-    timeRange.to,
-    environment,
-  );
-  const eventNames = breakdownData?.top_events?.map((e) => e.name) ?? [];
 
   // Fetch property keys for filters and breakdown
   const { data: propertyKeysData } = usePropertyKeys(
@@ -122,18 +112,16 @@ export function InsightsPage() {
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">
                   Event
                 </Label>
-                <Select
+                <EventCombobox
+                  projectId={id}
                   value={eventName}
-                  onChange={(e) => setEventName(e.target.value)}
+                  onChange={setEventName}
+                  placeholder="All Events"
+                  allowEmpty
+                  emptyLabel="All Events"
+                  environment={environment}
                   className="w-52"
-                >
-                  <option value="">All Events</option>
-                  {eventNames.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </Select>
+                />
               </div>
 
               <div className="space-y-1.5">

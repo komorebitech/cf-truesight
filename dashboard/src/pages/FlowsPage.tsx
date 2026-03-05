@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
 import { useParams } from "react-router";
 import { useFlows } from "@/hooks/use-flows";
-import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import type { FlowsRequest } from "@/lib/api";
 import { Header } from "@/components/Header";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
+import { EventCombobox } from "@/components/EventCombobox";
 import {
   TimeRangeSelector,
   type TimeRange,
@@ -12,7 +12,6 @@ import {
 } from "@/components/TimeRangeSelector";
 import { FlowDiagram } from "@/components/FlowDiagram";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -30,17 +29,6 @@ export function FlowsPage() {
   const [direction, setDirection] = useState<Direction>("forward");
   const [steps, setSteps] = useState(5);
   const [topPaths, setTopPaths] = useState(10);
-
-  const { data: breakdownData } = useEventTypeBreakdown(
-    id,
-    timeRange.from,
-    timeRange.to,
-    environment,
-  );
-
-  const eventNames = useMemo(() => {
-    return breakdownData?.top_events?.map((e) => e.name) ?? [];
-  }, [breakdownData]);
 
   const flowsRequest: FlowsRequest | null = useMemo(() => {
     if (!anchorEvent) return null;
@@ -92,17 +80,13 @@ export function FlowsPage() {
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">
                   Anchor Event
                 </label>
-                <Select
+                <EventCombobox
+                  projectId={id}
                   value={anchorEvent}
-                  onChange={(e) => setAnchorEvent(e.target.value)}
-                >
-                  <option value="">Select an event...</option>
-                  {eventNames.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </Select>
+                  onChange={setAnchorEvent}
+                  placeholder="Select an event..."
+                  environment={environment}
+                />
               </div>
 
               <div>

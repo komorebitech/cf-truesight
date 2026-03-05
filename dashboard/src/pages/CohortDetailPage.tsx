@@ -7,11 +7,10 @@ import {
   useCohortSize,
   useCohortUsers,
 } from "@/hooks/use-cohorts";
-import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import { usePropertyKeys } from "@/hooks/use-properties";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Header } from "@/components/Header";
 import { CohortBuilder } from "@/components/CohortBuilder";
-import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,7 +85,6 @@ export function CohortDetailPage() {
 
   const updateCohort = useUpdateCohort();
   const deleteCohort = useDeleteCohort();
-  const { data: breakdownData } = useEventTypeBreakdown(id);
   const { data: propertyData } = usePropertyKeys(id);
 
   const [showEdit, setShowEdit] = useState(false);
@@ -101,7 +99,6 @@ export function CohortDetailPage() {
   });
   const [editError, setEditError] = useState("");
 
-  const eventNames = breakdownData?.top_events?.map((e) => e.name) ?? [];
   const propertyKeys = propertyData?.keys ?? [];
 
   const openEditDialog = () => {
@@ -380,7 +377,8 @@ export function CohortDetailPage() {
               <CohortBuilder
                 definition={editDefinition}
                 onChange={setEditDefinition}
-                eventNames={eventNames}
+                projectId={id}
+                environment={environment}
                 propertyKeys={propertyKeys}
               />
             </div>

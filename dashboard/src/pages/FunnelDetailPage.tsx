@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useFunnel, useFunnelResults, useUpdateFunnel, useDeleteFunnel } from "@/hooks/use-funnels";
-import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import { Header } from "@/components/Header";
 import { FunnelChart } from "@/components/FunnelChart";
 import { FunnelBuilder } from "@/components/FunnelBuilder";
@@ -61,11 +60,8 @@ export function FunnelDetailPage() {
   );
   const updateFunnel = useUpdateFunnel(id, funnelId);
   const deleteFunnel = useDeleteFunnel(id);
-  const { data: breakdownData } = useEventTypeBreakdown(id);
   const [showEdit, setShowEdit] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  const eventNames = breakdownData?.top_events?.map((e) => e.name) ?? [];
 
   if (funnelLoading) {
     return (
@@ -240,7 +236,8 @@ export function FunnelDetailPage() {
             initialName={funnel.name}
             initialSteps={Array.isArray(funnel.steps) ? funnel.steps : []}
             initialWindow={funnel.window_seconds}
-            eventNames={eventNames}
+            projectId={id}
+            environment={environment}
             onSubmit={async (name, steps, windowSeconds) => {
               await updateFunnel.mutateAsync({
                 name,

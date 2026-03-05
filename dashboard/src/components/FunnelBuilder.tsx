@@ -3,6 +3,7 @@ import type { FunnelStep } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { EventCombobox } from "@/components/EventCombobox";
 import { Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -18,7 +19,8 @@ interface FunnelBuilderProps {
   initialName?: string;
   initialSteps?: FunnelStep[];
   initialWindow?: number;
-  eventNames?: string[];
+  projectId: string | undefined;
+  environment?: string;
   onSubmit: (name: string, steps: FunnelStep[], windowSeconds: number) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
@@ -29,7 +31,8 @@ export function FunnelBuilder({
   initialName = "",
   initialSteps,
   initialWindow = 86400,
-  eventNames = [],
+  projectId,
+  environment,
   onSubmit,
   onCancel,
   isSubmitting = false,
@@ -116,25 +119,13 @@ export function FunnelBuilder({
                   {i + 1}
                 </span>
                 <div className="flex-1">
-                  {eventNames.length > 0 ? (
-                    <Select
-                      value={step.event_name}
-                      onChange={(e) => updateStep(i, e.target.value)}
-                    >
-                      <option value="">Select event...</option>
-                      {eventNames.map((en) => (
-                        <option key={en} value={en}>
-                          {en}
-                        </option>
-                      ))}
-                    </Select>
-                  ) : (
-                    <Input
-                      value={step.event_name}
-                      onChange={(e) => updateStep(i, e.target.value)}
-                      placeholder="Event name"
-                    />
-                  )}
+                  <EventCombobox
+                    projectId={projectId}
+                    value={step.event_name}
+                    onChange={(val) => updateStep(i, val)}
+                    placeholder="Select event..."
+                    environment={environment}
+                  />
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <Button

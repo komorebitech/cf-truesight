@@ -286,6 +286,36 @@ export function getEventTypes(projectId: string, from?: string, to?: string, env
 }
 
 // ---------------------------------------------------------------------------
+// Event name search endpoint
+// ---------------------------------------------------------------------------
+
+export interface EventNameSearchResult {
+  name: string;
+  count: number;
+}
+
+export interface EventNamesResponse {
+  event_names: EventNameSearchResult[];
+}
+
+export function searchEventNames(
+  projectId: string,
+  q?: string,
+  limit?: number,
+  environment?: string,
+) {
+  const qs = new URLSearchParams();
+  if (q) qs.set("q", q);
+  if (limit) qs.set("limit", String(limit));
+  if (environment) qs.set("environment", environment);
+  const query = qs.toString();
+  return request<EventNamesResponse>(
+    "GET",
+    `/stats/projects/${projectId}/event-names${query ? `?${query}` : ""}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Active users endpoints
 // ---------------------------------------------------------------------------
 

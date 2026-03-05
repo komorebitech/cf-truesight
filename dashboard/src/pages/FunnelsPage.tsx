@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useFunnels, useCreateFunnel, useDeleteFunnel } from "@/hooks/use-funnels";
-import { useEventTypeBreakdown } from "@/hooks/use-stats";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Header } from "@/components/Header";
 import { FunnelBuilder } from "@/components/FunnelBuilder";
 import { Button } from "@/components/ui/button";
@@ -34,11 +34,9 @@ export function FunnelsPage() {
   const { data: funnels, isLoading } = useFunnels(id);
   const createFunnel = useCreateFunnel(id);
   const deleteFunnel = useDeleteFunnel(id);
-  const { data: breakdownData } = useEventTypeBreakdown(id);
+  const { environment } = useEnvironment();
   const [showCreate, setShowCreate] = useState(false);
   const [deleteFunnelId, setDeleteFunnelId] = useState<string | null>(null);
-
-  const eventNames = breakdownData?.top_events?.map((e) => e.name) ?? [];
 
   return (
     <div className="flex flex-1 flex-col">
@@ -75,7 +73,7 @@ export function FunnelsPage() {
         ) : !funnels || funnels.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <GitBranch className="mb-4 h-12 w-12 text-muted-foreground/40" />
-            <h3 className="mb-1 font-serif text-lg font-medium">
+            <h3 className="mb-1 font-heading text-lg font-medium">
               No funnels yet
             </h3>
             <p className="mb-6 text-sm text-muted-foreground">
@@ -107,7 +105,7 @@ export function FunnelsPage() {
                   >
                     <CardContent className="p-5">
                       <div className="mb-3 flex items-start justify-between">
-                        <h3 className="font-serif text-base font-semibold">
+                        <h3 className="font-heading text-base font-semibold">
                           {funnel.name}
                         </h3>
                         <Badge variant="secondary">
@@ -169,7 +167,8 @@ export function FunnelsPage() {
             </DialogDescription>
           </DialogHeader>
           <FunnelBuilder
-            eventNames={eventNames}
+            projectId={id}
+            environment={environment}
             onSubmit={async (name, steps, windowSeconds) => {
               await createFunnel.mutateAsync({
                 name,

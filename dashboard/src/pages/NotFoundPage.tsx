@@ -8,7 +8,7 @@ export function NotFoundPage() {
       <h1 className="mb-2 text-6xl font-bold text-muted">
         404
       </h1>
-      <h2 className="mb-2 font-serif text-xl font-semibold">
+      <h2 className="mb-2 font-heading text-xl font-semibold">
         Page Not Found
       </h2>
       <p className="mb-6 text-muted-foreground">

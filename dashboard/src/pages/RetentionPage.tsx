@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
 import { useParams } from "react-router";
 import { useRetention } from "@/hooks/use-retention";
-import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import type { RetentionRequest } from "@/lib/api";
 import { Header } from "@/components/Header";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
+import { EventCombobox } from "@/components/EventCombobox";
 import {
   TimeRangeSelector,
   type TimeRange,
@@ -13,7 +13,6 @@ import {
 import { RetentionMatrix } from "@/components/RetentionMatrix";
 import { RetentionChart } from "@/components/RetentionChart";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,17 +30,6 @@ export function RetentionPage() {
   const [returnEvent, setReturnEvent] = useState("");
   const [retentionType, setRetentionType] = useState<RetentionType>("day");
   const [numPeriods, setNumPeriods] = useState(8);
-
-  const { data: breakdownData } = useEventTypeBreakdown(
-    id,
-    timeRange.from,
-    timeRange.to,
-    environment,
-  );
-
-  const eventNames = useMemo(() => {
-    return breakdownData?.top_events?.map((e) => e.name) ?? [];
-  }, [breakdownData]);
 
   // Build RetentionRequest only when a start event is selected
   const retentionRequest: RetentionRequest | null = useMemo(() => {
@@ -90,34 +78,28 @@ export function RetentionPage() {
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">
                   Start Event
                 </label>
-                <Select
+                <EventCombobox
+                  projectId={id}
                   value={startEvent}
-                  onChange={(e) => setStartEvent(e.target.value)}
-                >
-                  <option value="">Select an event...</option>
-                  {eventNames.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </Select>
+                  onChange={setStartEvent}
+                  placeholder="Select an event..."
+                  environment={environment}
+                />
               </div>
 
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">
                   Return Event
                 </label>
-                <Select
+                <EventCombobox
+                  projectId={id}
                   value={returnEvent}
-                  onChange={(e) => setReturnEvent(e.target.value)}
-                >
-                  <option value="">Any Event</option>
-                  {eventNames.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </Select>
+                  onChange={setReturnEvent}
+                  placeholder="Any Event"
+                  allowEmpty
+                  emptyLabel="Any Event"
+                  environment={environment}
+                />
               </div>
 
               <div>

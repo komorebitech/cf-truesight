@@ -51,6 +51,10 @@ pub fn create_router(state: AppState) -> Router {
             get(handlers::stats::event_types),
         )
         .route(
+            "/v1/stats/projects/{pid}/event-names",
+            get(handlers::stats::event_names),
+        )
+        .route(
             "/v1/stats/projects/{pid}/events",
             get(handlers::stats::list_events),
         )

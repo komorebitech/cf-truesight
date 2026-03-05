@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useCohorts, useCreateCohort, useDeleteCohort } from "@/hooks/use-cohorts";
-import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import { usePropertyKeys } from "@/hooks/use-properties";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Header } from "@/components/Header";
 import { CohortBuilder } from "@/components/CohortBuilder";
 import { Button } from "@/components/ui/button";
@@ -54,8 +54,8 @@ export function CohortsPage() {
   const { data: cohorts, isLoading } = useCohorts(id);
   const createCohort = useCreateCohort();
   const deleteCohort = useDeleteCohort();
-  const { data: breakdownData } = useEventTypeBreakdown(id);
   const { data: propertyData } = usePropertyKeys(id);
+  const { environment } = useEnvironment();
 
   const [showCreate, setShowCreate] = useState(false);
   const [deleteCohortId, setDeleteCohortId] = useState<string | null>(null);
@@ -66,7 +66,6 @@ export function CohortsPage() {
   const [definition, setDefinition] = useState<CohortDefinition>(DEFAULT_DEFINITION);
   const [error, setError] = useState("");
 
-  const eventNames = breakdownData?.top_events?.map((e) => e.name) ?? [];
   const propertyKeys = propertyData?.keys ?? [];
 
   const resetForm = () => {
@@ -128,7 +127,7 @@ export function CohortsPage() {
         ) : !cohorts || cohorts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Users className="mb-4 h-12 w-12 text-muted-foreground/40" />
-            <h3 className="mb-1 font-serif text-lg font-medium">
+            <h3 className="mb-1 font-heading text-lg font-medium">
               No cohorts yet
             </h3>
             <p className="mb-6 text-sm text-muted-foreground">
@@ -268,7 +267,8 @@ export function CohortsPage() {
               <CohortBuilder
                 definition={definition}
                 onChange={setDefinition}
-                eventNames={eventNames}
+                projectId={id}
+                environment={environment}
                 propertyKeys={propertyKeys}
               />
             </div>

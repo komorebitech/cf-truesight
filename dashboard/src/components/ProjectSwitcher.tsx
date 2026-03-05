@@ -56,7 +56,7 @@ export function ProjectSwitcher({
           )}
         >
           <div className="flex items-center gap-2 truncate">
-            <FolderKanban className="h-4 w-4 shrink-0 text-primary" />
+            <FolderKanban className="h-4 w-4 shrink-0 text-foreground" />
             {!collapsed && (
               <span className="truncate text-sm font-medium">
                 {currentProject?.name ?? "Select project"}

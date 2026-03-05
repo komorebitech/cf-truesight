@@ -170,7 +170,7 @@ export function Sidebar() {
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
           active
-            ? "border-l-2 border-primary bg-sidebar-active text-primary"
+            ? "border-l-2 border-foreground bg-sidebar-active text-foreground"
             : "border-l-2 border-transparent text-muted-foreground hover:bg-sidebar-active/50 hover:text-foreground",
           collapsed && "justify-center px-2",
         )}
@@ -214,7 +214,7 @@ export function Sidebar() {
           collapsed && "justify-center px-2",
         )}
       >
-        <Eye className="h-6 w-6 text-primary" />
+        <Eye className="h-6 w-6 text-foreground" />
         {!collapsed && (
           <span className="font-heading text-lg font-bold">TrueSight</span>
         )}

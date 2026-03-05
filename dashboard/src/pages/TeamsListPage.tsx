@@ -77,7 +77,7 @@ export function TeamsListPage() {
         ) : !teams || teams.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Users className="mb-4 h-12 w-12 text-muted-foreground/40" />
-            <h3 className="mb-1 font-serif text-lg font-medium">
+            <h3 className="mb-1 font-heading text-lg font-medium">
               No teams yet
             </h3>
             <p className="mb-6 text-sm text-muted-foreground">

@@ -42,7 +42,7 @@ export function AcceptInvitationPage() {
       <div className="flex h-screen items-center justify-center bg-muted/30">
         <Card className="w-full max-w-sm">
           <CardHeader className="items-center space-y-4 pb-2">
-            <Eye className="h-8 w-8 text-primary" />
+            <Eye className="h-8 w-8 text-foreground" />
             <p className="text-sm text-destructive">Invalid invitation link.</p>
           </CardHeader>
           <CardContent className="flex justify-center pb-8">
@@ -57,7 +57,7 @@ export function AcceptInvitationPage() {
     <div className="flex h-screen items-center justify-center bg-muted/30">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center space-y-4 pb-2">
-          <Eye className="h-8 w-8 text-primary" />
+          <Eye className="h-8 w-8 text-foreground" />
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4 pb-8">
           {acceptInvitation.isPending && (

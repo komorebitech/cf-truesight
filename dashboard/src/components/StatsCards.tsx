@@ -1,7 +1,6 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { cn, formatNumber } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, TrendingDown } from "lucide-react";
 import { motion } from "motion/react";
 
 export interface StatCardData {
@@ -10,7 +9,7 @@ export interface StatCardData {
   icon: ReactNode;
   trend?: {
     value: number;
-    direction: "up" | "down";
+    direction: "up" | "down" | "flat";
   };
 }
 
@@ -95,16 +94,18 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
                 className={cn(
                   "inline-flex items-center gap-0.5 text-xs font-medium",
                   stat.trend.direction === "up"
-                    ? "text-success"
-                    : "text-destructive",
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : stat.trend.direction === "down"
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-amber-600 dark:text-amber-400",
                 )}
               >
-                {stat.trend.direction === "up" ? (
-                  <TrendingUp className="h-3 w-3" />
-                ) : (
-                  <TrendingDown className="h-3 w-3" />
-                )}
-                {stat.trend.value}%
+                {stat.trend.direction === "up"
+                  ? "▲"
+                  : stat.trend.direction === "down"
+                    ? "▼"
+                    : "■"}
+                {" "}{stat.trend.value}%
               </span>
             )}
           </div>

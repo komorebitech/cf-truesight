@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EventCombobox } from "@/components/EventCombobox";
 import { X, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -24,7 +25,8 @@ const PROPERTY_OPERATORS = [
 interface CohortBuilderProps {
   definition: CohortDefinition;
   onChange: (def: CohortDefinition) => void;
-  eventNames: string[];
+  projectId: string | undefined;
+  environment?: string;
   propertyKeys: string[];
 }
 
@@ -39,7 +41,8 @@ function makeDefaultPropertyRule(): CohortRule {
 export function CohortBuilder({
   definition,
   onChange,
-  eventNames,
+  projectId,
+  environment,
   propertyKeys,
 }: CohortBuilderProps) {
   const { operator, rules } = definition;
@@ -125,20 +128,16 @@ export function CohortBuilder({
                       {rule.type === "event" ? (
                         <div className="flex flex-wrap items-center gap-2">
                           {/* Event name */}
-                          <Select
+                          <EventCombobox
+                            projectId={projectId}
                             value={rule.event_name ?? ""}
-                            onChange={(e) =>
-                              updateRule(i, { ...rule, event_name: e.target.value })
+                            onChange={(val) =>
+                              updateRule(i, { ...rule, event_name: val })
                             }
+                            placeholder="Select event..."
+                            environment={environment}
                             className="w-44"
-                          >
-                            <option value="">Select event...</option>
-                            {eventNames.map((en) => (
-                              <option key={en} value={en}>
-                                {en}
-                              </option>
-                            ))}
-                          </Select>
+                          />
 
                           {/* Operator */}
                           <Select

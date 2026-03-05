@@ -27,8 +27,8 @@ export function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center space-y-4 pb-2">
           <div className="flex items-center gap-2">
-            <Eye className="h-8 w-8 text-primary" />
-            <span className="font-serif text-2xl font-bold">TrueSight</span>
+            <Eye className="h-8 w-8 text-foreground" />
+            <span className="font-heading text-2xl font-bold">TrueSight</span>
           </div>
           <p className="text-sm text-muted-foreground">
             Sign in to your account
