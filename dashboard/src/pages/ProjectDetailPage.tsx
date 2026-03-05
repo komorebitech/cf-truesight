@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams } from "react-router";
+import { useParams } from "react-router";
 import { useProject } from "@/hooks/use-projects";
 import { useLastProject } from "@/hooks/use-last-project";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { useEventCount, useThroughput, useEventTypeBreakdown, useLiveUsers } from "@/hooks/use-stats";
 import { Header } from "@/components/Header";
 import { StatsCards, type StatCardData } from "@/components/StatsCards";
@@ -11,7 +12,6 @@ import {
   type TimeRange,
   getPresetRange,
 } from "@/components/TimeRangeSelector";
-import { EnvironmentSelector } from "@/components/EnvironmentSelector";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,16 +22,8 @@ export function ProjectDetailPage() {
   const { data: project, isLoading: projectLoading } = useProject(id);
   const { setLastProject } = useLastProject();
 
+  const { environment } = useEnvironment();
   const [timeRange, setTimeRange] = useState<TimeRange>(getPresetRange("7d"));
-
-  const [searchParams, setSearchParams] = useSearchParams();
-  const environment = (searchParams.get("env") as "live" | "test") || "live";
-  const setEnvironment = (env: "live" | "test") => {
-    setSearchParams((prev) => {
-      if (env === "live") { prev.delete("env"); } else { prev.set("env", env); }
-      return prev;
-    });
-  };
 
   // Persist last opened project
   useEffect(() => {
@@ -123,7 +115,7 @@ export function ProjectDetailPage() {
             {project.active ? "active" : "inactive"}
           </Badge>
           <div className="flex items-center gap-3">
-            <EnvironmentSelector value={environment} onChange={setEnvironment} />
+
             <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
           </div>
         </div>

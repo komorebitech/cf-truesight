@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams, Link } from "react-router";
+import { useParams, Link } from "react-router";
 import { useUsers } from "@/hooks/use-users-ch";
 import { Header } from "@/components/Header";
-import { EnvironmentSelector } from "@/components/EnvironmentSelector";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,14 +33,7 @@ const PAGE_SIZE = 25;
 export function UsersPage() {
   const { id } = useParams<{ id: string }>();
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const environment = (searchParams.get("env") as "live" | "test") || "live";
-  const setEnvironment = (env: "live" | "test") => {
-    setSearchParams((prev) => {
-      if (env === "live") { prev.delete("env"); } else { prev.set("env", env); }
-      return prev;
-    });
-  };
+  const { environment } = useEnvironment();
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -69,7 +62,7 @@ export function UsersPage() {
       <div className="flex-1 space-y-6 p-6">
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-3">
-          <EnvironmentSelector value={environment} onChange={setEnvironment} />
+
           <div className="relative ml-auto w-72">
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input

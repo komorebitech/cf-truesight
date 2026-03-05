@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams } from "react-router";
+import { useParams } from "react-router";
 import { useEvents } from "@/hooks/use-events";
 import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import { Header } from "@/components/Header";
-import { EnvironmentSelector } from "@/components/EnvironmentSelector";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { TimeRangeSelector, getPresetRange } from "@/components/TimeRangeSelector";
 import type { TimeRange } from "@/components/TimeRangeSelector";
 import { EventsTable } from "@/components/EventsTable";
@@ -27,14 +27,7 @@ const PAGE_SIZE = 25;
 export function EventExplorerPage() {
   const { id } = useParams<{ id: string }>();
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const environment = (searchParams.get("env") as "live" | "test") || "live";
-  const setEnvironment = (env: "live" | "test") => {
-    setSearchParams((prev) => {
-      if (env === "live") { prev.delete("env"); } else { prev.set("env", env); }
-      return prev;
-    });
-  };
+  const { environment } = useEnvironment();
 
   const [timeRange, setTimeRange] = useState<TimeRange>(() => getPresetRange("7d"));
   const [eventType, setEventType] = useState("");
@@ -79,7 +72,7 @@ export function EventExplorerPage() {
         {/* Filters */}
         <div className="mb-6 rounded-lg border bg-card p-4">
           <div className="mb-4 flex flex-wrap items-center gap-3">
-            <EnvironmentSelector value={environment} onChange={setEnvironment} />
+
             <TimeRangeSelector
               value={timeRange}
               onChange={(range) => {

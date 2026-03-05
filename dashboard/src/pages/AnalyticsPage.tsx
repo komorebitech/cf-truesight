@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, useSearchParams } from "react-router";
+import { useParams } from "react-router";
 import { formatISO, startOfDay, format } from "date-fns";
 import { useActiveUsers, useLiveUsers, useEventCount } from "@/hooks/use-stats";
 import { Header } from "@/components/Header";
@@ -9,7 +9,7 @@ import {
   type TimeRange,
   getPresetRange,
 } from "@/components/TimeRangeSelector";
-import { EnvironmentSelector } from "@/components/EnvironmentSelector";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,14 +32,7 @@ export function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>(getPresetRange("30d"));
   const [granularity, setGranularity] = useState<Granularity>("day");
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const environment = (searchParams.get("env") as "live" | "test") || "live";
-  const setEnvironment = (env: "live" | "test") => {
-    setSearchParams((prev) => {
-      if (env === "live") { prev.delete("env"); } else { prev.set("env", env); }
-      return prev;
-    });
-  };
+  const { environment } = useEnvironment();
 
   const { data: activeData, isLoading: activeLoading } = useActiveUsers(
     id,
@@ -101,7 +94,7 @@ export function AnalyticsPage() {
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <EnvironmentSelector value={environment} onChange={setEnvironment} />
+
             <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
           </div>
 

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import {
   useCohort,
   useUpdateCohort,
@@ -11,7 +11,7 @@ import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import { usePropertyKeys } from "@/hooks/use-properties";
 import { Header } from "@/components/Header";
 import { CohortBuilder } from "@/components/CohortBuilder";
-import { EnvironmentSelector } from "@/components/EnvironmentSelector";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,18 +68,7 @@ export function CohortDetailPage() {
   const navigate = useNavigate();
   const { data: cohort, isLoading: cohortLoading } = useCohort(id, cohortId);
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const environment = (searchParams.get("env") as "live" | "test") || "live";
-  const setEnvironment = (env: "live" | "test") => {
-    setSearchParams((prev) => {
-      if (env === "live") {
-        prev.delete("env");
-      } else {
-        prev.set("env", env);
-      }
-      return prev;
-    });
-  };
+  const { environment } = useEnvironment();
 
   const [page, setPage] = useState(1);
   const perPage = 25;
@@ -195,7 +184,7 @@ export function CohortDetailPage() {
               <ChevronLeft className="h-4 w-4" />
               Back
             </Button>
-            <EnvironmentSelector value={environment} onChange={setEnvironment} />
+
             {sizeLoading ? (
               <Skeleton className="h-6 w-24" />
             ) : sizeData ? (

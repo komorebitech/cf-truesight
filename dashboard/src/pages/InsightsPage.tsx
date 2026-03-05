@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, useSearchParams } from "react-router";
+import { useParams } from "react-router";
 import { useInsights } from "@/hooks/use-insights";
 import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import { usePropertyKeys } from "@/hooks/use-properties";
@@ -12,7 +12,7 @@ import {
   type TimeRange,
   getPresetRange,
 } from "@/components/TimeRangeSelector";
-import { EnvironmentSelector } from "@/components/EnvironmentSelector";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -53,14 +53,7 @@ export function InsightsPage() {
   const [filters, setFilters] = useState<InsightsFilter[]>([]);
   const [chartType, setChartType] = useState<ChartType>("area");
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const environment = (searchParams.get("env") as "live" | "test") || "live";
-  const setEnvironment = (env: "live" | "test") => {
-    setSearchParams((prev) => {
-      if (env === "live") { prev.delete("env"); } else { prev.set("env", env); }
-      return prev;
-    });
-  };
+  const { environment } = useEnvironment();
 
   // Fetch event types for the selector
   const { data: breakdownData } = useEventTypeBreakdown(
@@ -112,7 +105,7 @@ export function InsightsPage() {
         {/* Controls row */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <EnvironmentSelector value={environment} onChange={setEnvironment} />
+
             <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
           </div>
         </div>

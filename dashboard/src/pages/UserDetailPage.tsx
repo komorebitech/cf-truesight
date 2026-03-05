@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
-import { useParams, useSearchParams, Link } from "react-router";
+import { useParams, Link } from "react-router";
 import { useUser, useUserEvents } from "@/hooks/use-users-ch";
 import { Header } from "@/components/Header";
-import { EnvironmentSelector } from "@/components/EnvironmentSelector";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import {
   TimeRangeSelector,
   type TimeRange,
@@ -53,14 +53,7 @@ const EVENT_PAGE_SIZE = 25;
 export function UserDetailPage() {
   const { id, userId } = useParams<{ id: string; userId: string }>();
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const environment = (searchParams.get("env") as "live" | "test") || "live";
-  const setEnvironment = (env: "live" | "test") => {
-    setSearchParams((prev) => {
-      if (env === "live") { prev.delete("env"); } else { prev.set("env", env); }
-      return prev;
-    });
-  };
+  const { environment } = useEnvironment();
 
   const [timeRange, setTimeRange] = useState<TimeRange>(() => getPresetRange("30d"));
   const [eventPage, setEventPage] = useState(1);
@@ -285,7 +278,7 @@ export function UserDetailPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <CardTitle>Event Timeline</CardTitle>
                 <div className="flex items-center gap-3">
-                  <EnvironmentSelector value={environment} onChange={setEnvironment} />
+
                   <TimeRangeSelector value={timeRange} onChange={(range) => {
                     setTimeRange(range);
                     setEventPage(1);

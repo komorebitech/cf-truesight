@@ -22,6 +22,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserMenu } from "@/components/UserMenu";
 import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -67,6 +68,7 @@ export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(getInitialCollapsed);
   const { isAuthenticated } = useAuth();
+  const { environment, setEnvironment } = useEnvironment();
 
   const projectId = extractProjectId(location.pathname);
 
@@ -220,12 +222,71 @@ export function Sidebar() {
 
       <Separator />
 
-      {/* Project Switcher */}
-      <div className="px-2 py-2">
+      {/* Project Switcher + Environment */}
+      <div className="px-2 py-2 space-y-1.5">
         <ProjectSwitcher
           currentProjectId={projectId}
           collapsed={collapsed}
         />
+        {/* Environment toggle */}
+        <div
+          className={cn(
+            "flex items-center rounded-md",
+            collapsed && "justify-center",
+          )}
+        >
+          {collapsed ? (
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-7 w-full px-2 text-[11px] font-semibold uppercase",
+                    environment === "live"
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-amber-600 dark:text-amber-400",
+                  )}
+                  onClick={() =>
+                    setEnvironment(environment === "live" ? "test" : "live")
+                  }
+                >
+                  {environment === "live" ? "L" : "T"}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                {environment === "live" ? "Live" : "Test"} — click to switch
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <div className="flex w-full rounded-md border bg-muted/50 p-0.5">
+              <button
+                type="button"
+                onClick={() => setEnvironment("live")}
+                className={cn(
+                  "flex-1 rounded-sm px-2 py-1 text-xs font-medium transition-colors",
+                  environment === "live"
+                    ? "bg-card text-green-600 shadow-sm dark:text-green-400"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Live
+              </button>
+              <button
+                type="button"
+                onClick={() => setEnvironment("test")}
+                className={cn(
+                  "flex-1 rounded-sm px-2 py-1 text-xs font-medium transition-colors",
+                  environment === "test"
+                    ? "bg-card text-amber-600 shadow-sm dark:text-amber-400"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                Test
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <Separator />

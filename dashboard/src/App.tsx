@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "react-router";
 import { Sidebar } from "@/components/Sidebar";
+import { EnvironmentProvider } from "@/contexts/EnvironmentContext";
 import { AnimatePresence, motion } from "motion/react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +9,7 @@ export function App() {
   const location = useLocation();
 
   return (
+    <EnvironmentProvider>
     <TooltipProvider>
       <div className="flex h-screen overflow-hidden">
         <Sidebar />
@@ -28,5 +30,6 @@ export function App() {
       </div>
       <Toaster />
     </TooltipProvider>
+    </EnvironmentProvider>
   );
 }

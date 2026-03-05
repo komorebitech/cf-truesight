@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
-import { useParams, useSearchParams } from "react-router";
+import { useParams } from "react-router";
 import { useFlows } from "@/hooks/use-flows";
 import { useEventTypeBreakdown } from "@/hooks/use-stats";
 import type { FlowsRequest } from "@/lib/api";
 import { Header } from "@/components/Header";
-import { EnvironmentSelector } from "@/components/EnvironmentSelector";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import {
   TimeRangeSelector,
   type TimeRange,
@@ -22,14 +22,7 @@ type Direction = "forward" | "backward";
 export function FlowsPage() {
   const { id } = useParams<{ id: string }>();
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const environment = (searchParams.get("env") as "live" | "test") || "live";
-  const setEnvironment = (env: "live" | "test") => {
-    setSearchParams((prev) => {
-      if (env === "live") { prev.delete("env"); } else { prev.set("env", env); }
-      return prev;
-    });
-  };
+  const { environment } = useEnvironment();
 
   const [timeRange, setTimeRange] = useState<TimeRange>(() => getPresetRange("30d"));
   const [anchorEvent, setAnchorEvent] = useState("");
@@ -84,7 +77,7 @@ export function FlowsPage() {
       <div className="flex-1 space-y-6 p-6">
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-3">
-          <EnvironmentSelector value={environment} onChange={setEnvironment} />
+
           <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
         </div>
 
