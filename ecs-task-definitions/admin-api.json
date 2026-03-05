@@ -51,11 +51,11 @@
         },
         {
           "name": "GOOGLE_CLIENT_ID",
-          "valueFrom": "arn:aws:secretsmanager:ap-south-1:581933458044:secret:truesight/google-client-id"
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:581933458044:secret:truesight/google-client-id-zlnWGV"
         },
         {
           "name": "JWT_SECRET",
-          "valueFrom": "arn:aws:secretsmanager:ap-south-1:581933458044:secret:truesight/jwt-secret"
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:581933458044:secret:truesight/jwt-secret-l4Xnbp"
         }
       ],
       "logConfiguration": {
