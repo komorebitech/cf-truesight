@@ -15,7 +15,6 @@ import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
 import { EventCombobox } from "@/components/EventCombobox";
 import {
   Table,
@@ -92,115 +91,84 @@ export function InsightsPage() {
       <Header title="Insights" />
 
       <div className="flex-1 space-y-6 p-6">
-        {/* Controls row */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        {/* Query controls */}
+        <div className="flex flex-wrap items-center gap-2">
+          <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
 
-            <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+          <div className="h-6 w-px bg-border" />
+
+          <EventCombobox
+            projectId={id}
+            value={eventName}
+            onChange={setEventName}
+            placeholder="All Events"
+            allowEmpty
+            emptyLabel="All Events"
+            environment={environment}
+            className="w-44"
+          />
+
+          <Tabs
+            value={metric}
+            onValueChange={(v) => setMetric(v as Metric)}
+          >
+            <TabsList>
+              {METRIC_OPTIONS.map((opt) => (
+                <TabsTrigger key={opt.value} value={opt.value}>
+                  {opt.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+
+          <div className="h-6 w-px bg-border" />
+
+          <Tabs
+            value={granularity}
+            onValueChange={(v) => setGranularity(v as Granularity)}
+          >
+            <TabsList>
+              <TabsTrigger value="day">Day</TabsTrigger>
+              <TabsTrigger value="week">Week</TabsTrigger>
+              <TabsTrigger value="month">Month</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant={chartType === "area" ? "default" : "outline"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setChartType("area")}
+              title="Area chart"
+            >
+              <AreaChartIcon className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={chartType === "bar" ? "default" : "outline"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setChartType("bar")}
+              title="Bar chart"
+            >
+              <BarChart3 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
-        {/* Query builder */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Query</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {/* First row: Event + Metric */}
-            <div className="flex flex-wrap items-end gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Event
-                </Label>
-                <EventCombobox
-                  projectId={id}
-                  value={eventName}
-                  onChange={setEventName}
-                  placeholder="All Events"
-                  allowEmpty
-                  emptyLabel="All Events"
-                  environment={environment}
-                  className="w-52"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Metric
-                </Label>
-                <Tabs
-                  value={metric}
-                  onValueChange={(v) => setMetric(v as Metric)}
-                >
-                  <TabsList>
-                    {METRIC_OPTIONS.map((opt) => (
-                      <TabsTrigger key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </Tabs>
-              </div>
-            </div>
-
-            {/* Second row: Granularity + Chart type */}
-            <div className="flex flex-wrap items-end gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Granularity
-                </Label>
-                <Tabs
-                  value={granularity}
-                  onValueChange={(v) => setGranularity(v as Granularity)}
-                >
-                  <TabsList>
-                    <TabsTrigger value="day">Day</TabsTrigger>
-                    <TabsTrigger value="week">Week</TabsTrigger>
-                    <TabsTrigger value="month">Month</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Chart Type
-                </Label>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant={chartType === "area" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setChartType("area")}
-                  >
-                    <AreaChartIcon className="h-4 w-4" />
-                    Area
-                  </Button>
-                  <Button
-                    variant={chartType === "bar" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setChartType("bar")}
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                    Bar
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Filters */}
-            <PropertyFilter
-              filters={filters}
-              onChange={setFilters}
-              propertyKeys={propertyKeys}
-            />
-
-            {/* Breakdown */}
-            <BreakdownSelector
-              value={groupBy}
-              onChange={setGroupBy}
-              propertyKeys={propertyKeys}
-            />
-          </CardContent>
-        </Card>
+        {/* Filters + Breakdown */}
+        <div className="flex flex-wrap items-start gap-6">
+          <PropertyFilter
+            filters={filters}
+            onChange={setFilters}
+            propertyKeys={propertyKeys}
+          />
+          <BreakdownSelector
+            value={groupBy}
+            onChange={setGroupBy}
+            propertyKeys={propertyKeys}
+          />
+        </div>
 
         {/* Chart results */}
         <Card>

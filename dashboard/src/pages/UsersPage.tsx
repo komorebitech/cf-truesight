@@ -61,8 +61,7 @@ export function UsersPage() {
 
       <div className="flex-1 space-y-6 p-6">
         {/* Controls */}
-        <div className="flex flex-wrap items-center gap-3">
-
+        <div className="flex flex-wrap items-center gap-2">
           <div className="relative ml-auto w-72">
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input

@@ -75,118 +75,108 @@ export function FunnelComparePage() {
       <Header title="Compare Funnels" />
 
       <div className="flex-1 space-y-6 p-6">
-        {/* Mode selector */}
-        <div className="flex flex-wrap items-center gap-4">
-
-          <Tabs value={mode} onValueChange={(v) => setMode(v as CompareMode)}>
-            <TabsList>
-              <TabsTrigger value="funnels">Compare Funnels</TabsTrigger>
-              <TabsTrigger value="time-ranges">Compare Time Ranges</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-
-        {/* Funnel comparison controls */}
+        {/* Controls */}
         {mode === "funnels" && (
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="min-w-[200px]">
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                Funnel A
-              </label>
-              <Select value={funnelA} onChange={(e) => setFunnelA(e.target.value)}>
-                <option value="">Select funnel...</option>
-                {funnels?.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="min-w-[200px]">
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                Funnel B
-              </label>
-              <Select value={funnelB} onChange={(e) => setFunnelB(e.target.value)}>
-                <option value="">Select funnel...</option>
-                {funnels?.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Tabs value={mode} onValueChange={(v) => setMode(v as CompareMode)}>
+              <TabsList>
+                <TabsTrigger value="funnels">Compare Funnels</TabsTrigger>
+                <TabsTrigger value="time-ranges">Compare Time Ranges</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <div className="h-6 w-px bg-border" />
+
+            <Select value={funnelA} onChange={(e) => setFunnelA(e.target.value)} className="w-48">
+              <option value="">Funnel A...</option>
+              {funnels?.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
+              ))}
+            </Select>
+            <Select value={funnelB} onChange={(e) => setFunnelB(e.target.value)} className="w-48">
+              <option value="">Funnel B...</option>
+              {funnels?.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
+              ))}
+            </Select>
+
+            <div className="h-6 w-px bg-border" />
+
             <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
           </div>
         )}
 
         {/* Time range comparison controls */}
         {mode === "time-ranges" && (
-          <div className="space-y-4">
-            <div className="min-w-[200px] max-w-xs">
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                Funnel
-              </label>
-              <Select
-                value={selectedFunnelId}
-                onChange={(e) => setSelectedFunnelId(e.target.value)}
-              >
-                <option value="">Select funnel...</option>
-                {funnels?.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            <Tabs value={mode} onValueChange={(v) => setMode(v as CompareMode)}>
+              <TabsList>
+                <TabsTrigger value="funnels">Compare Funnels</TabsTrigger>
+                <TabsTrigger value="time-ranges">Compare Time Ranges</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <div className="h-6 w-px bg-border" />
+
+            <Select
+              value={selectedFunnelId}
+              onChange={(e) => setSelectedFunnelId(e.target.value)}
+              className="w-48"
+            >
+              <option value="">Select funnel...</option>
+              {funnels?.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
+              ))}
+            </Select>
+
+            <div className="h-6 w-px bg-border" />
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">A:</span>
+              <Input
+                type="date"
+                value={rangeA.from.slice(0, 10)}
+                onChange={(e) =>
+                  setRangeA({ ...rangeA, from: new Date(e.target.value).toISOString() })
+                }
+                className="w-32"
+              />
+              <span className="text-xs text-muted-foreground">–</span>
+              <Input
+                type="date"
+                value={rangeA.to.slice(0, 10)}
+                onChange={(e) =>
+                  setRangeA({ ...rangeA, to: new Date(e.target.value).toISOString() })
+                }
+                className="w-32"
+              />
             </div>
-            <div className="flex flex-wrap gap-6">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  Period A
-                </label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="date"
-                    value={rangeA.from.slice(0, 10)}
-                    onChange={(e) =>
-                      setRangeA({ ...rangeA, from: new Date(e.target.value).toISOString() })
-                    }
-                    className="w-36"
-                  />
-                  <span className="text-xs text-muted-foreground">to</span>
-                  <Input
-                    type="date"
-                    value={rangeA.to.slice(0, 10)}
-                    onChange={(e) =>
-                      setRangeA({ ...rangeA, to: new Date(e.target.value).toISOString() })
-                    }
-                    className="w-36"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  Period B
-                </label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="date"
-                    value={rangeB.from.slice(0, 10)}
-                    onChange={(e) =>
-                      setRangeB({ ...rangeB, from: new Date(e.target.value).toISOString() })
-                    }
-                    className="w-36"
-                  />
-                  <span className="text-xs text-muted-foreground">to</span>
-                  <Input
-                    type="date"
-                    value={rangeB.to.slice(0, 10)}
-                    onChange={(e) =>
-                      setRangeB({ ...rangeB, to: new Date(e.target.value).toISOString() })
-                    }
-                    className="w-36"
-                  />
-                </div>
-              </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">B:</span>
+              <Input
+                type="date"
+                value={rangeB.from.slice(0, 10)}
+                onChange={(e) =>
+                  setRangeB({ ...rangeB, from: new Date(e.target.value).toISOString() })
+                }
+                className="w-32"
+              />
+              <span className="text-xs text-muted-foreground">–</span>
+              <Input
+                type="date"
+                value={rangeB.to.slice(0, 10)}
+                onChange={(e) =>
+                  setRangeB({ ...rangeB, to: new Date(e.target.value).toISOString() })
+                }
+                className="w-32"
+              />
             </div>
           </div>
         )}

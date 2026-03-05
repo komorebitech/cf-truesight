@@ -65,73 +65,56 @@ export function FlowsPage() {
 
       <div className="flex-1 space-y-6 p-6">
         {/* Controls */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+
+          <div className="h-6 w-px bg-border" />
+
+          <EventCombobox
+            projectId={id}
+            value={anchorEvent}
+            onChange={setAnchorEvent}
+            placeholder="Anchor event..."
+            environment={environment}
+            className="w-48"
+          />
+
+          <Tabs
+            value={direction}
+            onValueChange={(v) => setDirection(v as Direction)}
+          >
+            <TabsList>
+              <TabsTrigger value="forward">Forward</TabsTrigger>
+              <TabsTrigger value="backward">Backward</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="h-6 w-px bg-border" />
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">Steps</span>
+            <Input
+              type="number"
+              min={2}
+              max={7}
+              value={steps}
+              onChange={handleStepsChange}
+              className="w-16"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">Paths</span>
+            <Input
+              type="number"
+              min={1}
+              max={20}
+              value={topPaths}
+              onChange={handleTopPathsChange}
+              className="w-16"
+            />
+          </div>
         </div>
-
-        {/* Configuration card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Flow Configuration</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  Anchor Event
-                </label>
-                <EventCombobox
-                  projectId={id}
-                  value={anchorEvent}
-                  onChange={setAnchorEvent}
-                  placeholder="Select an event..."
-                  environment={environment}
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  Direction
-                </label>
-                <Tabs
-                  value={direction}
-                  onValueChange={(v) => setDirection(v as Direction)}
-                >
-                  <TabsList className="w-full">
-                    <TabsTrigger value="forward" className="flex-1">Forward</TabsTrigger>
-                    <TabsTrigger value="backward" className="flex-1">Backward</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  Steps (2-7)
-                </label>
-                <Input
-                  type="number"
-                  min={2}
-                  max={7}
-                  value={steps}
-                  onChange={handleStepsChange}
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  Top Paths
-                </label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={topPaths}
-                  onChange={handleTopPathsChange}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Results */}
         {!anchorEvent ? (

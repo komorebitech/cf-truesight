@@ -171,8 +171,8 @@ export function CohortDetailPage() {
 
       <div className="flex-1 space-y-6 p-6">
         {/* Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"

@@ -275,15 +275,12 @@ export function UserDetailPage() {
         >
           <Card>
             <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <CardTitle>Event Timeline</CardTitle>
-                <div className="flex items-center gap-3">
-
-                  <TimeRangeSelector value={timeRange} onChange={(range) => {
-                    setTimeRange(range);
-                    setEventPage(1);
-                  }} />
-                </div>
+                <TimeRangeSelector value={timeRange} onChange={(range) => {
+                  setTimeRange(range);
+                  setEventPage(1);
+                }} />
               </div>
             </CardHeader>
             <CardContent className="p-0">

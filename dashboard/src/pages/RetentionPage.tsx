@@ -62,77 +62,56 @@ export function RetentionPage() {
 
       <div className="flex-1 space-y-6 p-6">
         {/* Controls */}
-        <div className="flex flex-wrap items-center gap-3">
-
+        <div className="flex flex-wrap items-center gap-2">
           <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+
+          <div className="h-6 w-px bg-border" />
+
+          <EventCombobox
+            projectId={id}
+            value={startEvent}
+            onChange={setStartEvent}
+            placeholder="Start event..."
+            environment={environment}
+            className="w-44"
+          />
+
+          <EventCombobox
+            projectId={id}
+            value={returnEvent}
+            onChange={setReturnEvent}
+            placeholder="Return event (any)"
+            allowEmpty
+            emptyLabel="Any Event"
+            environment={environment}
+            className="w-44"
+          />
+
+          <div className="h-6 w-px bg-border" />
+
+          <Tabs
+            value={retentionType}
+            onValueChange={(v) => setRetentionType(v as RetentionType)}
+          >
+            <TabsList>
+              <TabsTrigger value="day">Day</TabsTrigger>
+              <TabsTrigger value="week">Week</TabsTrigger>
+              <TabsTrigger value="month">Month</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">Periods</span>
+            <Input
+              type="number"
+              min={1}
+              max={12}
+              value={numPeriods}
+              onChange={handleNumPeriodsChange}
+              className="w-16"
+            />
+          </div>
         </div>
-
-        {/* Configuration card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Retention Configuration</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  Start Event
-                </label>
-                <EventCombobox
-                  projectId={id}
-                  value={startEvent}
-                  onChange={setStartEvent}
-                  placeholder="Select an event..."
-                  environment={environment}
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  Return Event
-                </label>
-                <EventCombobox
-                  projectId={id}
-                  value={returnEvent}
-                  onChange={setReturnEvent}
-                  placeholder="Any Event"
-                  allowEmpty
-                  emptyLabel="Any Event"
-                  environment={environment}
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  Retention Type
-                </label>
-                <Tabs
-                  value={retentionType}
-                  onValueChange={(v) => setRetentionType(v as RetentionType)}
-                >
-                  <TabsList className="w-full">
-                    <TabsTrigger value="day" className="flex-1">Day</TabsTrigger>
-                    <TabsTrigger value="week" className="flex-1">Week</TabsTrigger>
-                    <TabsTrigger value="month" className="flex-1">Month</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  Number of Periods
-                </label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={12}
-                  value={numPeriods}
-                  onChange={handleNumPeriodsChange}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Results */}
         {!startEvent ? (

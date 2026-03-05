@@ -70,78 +70,65 @@ export function EventExplorerPage() {
 
       <div className="flex-1 p-6">
         {/* Filters */}
-        <div className="mb-6 rounded-lg border bg-card p-4">
-          <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <TimeRangeSelector
+            value={timeRange}
+            onChange={(range) => {
+              setTimeRange(range);
+              setPage(1);
+            }}
+          />
 
-            <TimeRangeSelector
-              value={timeRange}
-              onChange={(range) => {
-                setTimeRange(range);
+          <div className="h-6 w-px bg-border" />
+
+          <Select
+            value={eventType}
+            onChange={(e) => {
+              setEventType(e.target.value);
+              setPage(1);
+            }}
+            className="w-36"
+          >
+            <option value="">All types</option>
+            {eventTypes.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </Select>
+
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={eventName}
+              onChange={(e) => {
+                setEventName(e.target.value);
                 setPage(1);
               }}
+              placeholder="Search events..."
+              className="w-44 pl-8"
             />
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                Event Type
-              </label>
-              <Select
-                value={eventType}
-                onChange={(e) => {
-                  setEventType(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="">All types</option>
-                {eventTypes.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                Event Name
-              </label>
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={eventName}
-                  onChange={(e) => {
-                    setEventName(e.target.value);
-                    setPage(1);
-                  }}
-                  placeholder="Search events..."
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                User ID
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  value={userId}
-                  onChange={(e) => {
-                    setUserId(e.target.value);
-                    setPage(1);
-                  }}
-                  placeholder="Filter by user..."
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleReset}
-                  title="Reset filters"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
+
+          <Input
+            value={userId}
+            onChange={(e) => {
+              setUserId(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Filter by user..."
+            className="w-40"
+          />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleReset}
+            title="Reset filters"
+            className="shrink-0"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Events table */}

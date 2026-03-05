@@ -43,7 +43,7 @@ export function TimeRangeSelector({ value, onChange }: TimeRangeSelectorProps) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-2">
       <Tabs value={activePreset} onValueChange={handlePreset}>
         <TabsList>
           <TabsTrigger value="7d">7d</TabsTrigger>

@@ -45,21 +45,22 @@ export function UnifiedFilterBar({
     projectId !== undefined && onCohortChange !== undefined;
 
   return (
-    <div className="space-y-4">
-      {/* Top bar: environment, time range, and optionally cohort */}
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
         <EnvironmentSelector value={environment} onChange={onEnvironmentChange} />
         <TimeRangeSelector value={timeRange} onChange={onTimeRangeChange} />
         {showCohortFilter && (
-          <CohortFilter
-            projectId={projectId}
-            value={cohortId}
-            onChange={onCohortChange}
-          />
+          <>
+            <div className="h-6 w-px bg-border" />
+            <CohortFilter
+              projectId={projectId}
+              value={cohortId}
+              onChange={onCohortChange}
+            />
+          </>
         )}
       </div>
 
-      {/* Property filters section */}
       {showPropertyFilters && (
         <PropertyFilter
           filters={filters}
