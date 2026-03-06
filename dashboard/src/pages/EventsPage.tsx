@@ -3,19 +3,25 @@ import { Header } from "@/components/Header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { EventExplorerContent } from "@/components/EventExplorerContent";
 import { LiveEventsContent } from "@/components/LiveEventsContent";
-import { List, Radio } from "lucide-react";
+import { EventCatalogContent } from "@/components/EventCatalogContent";
+import { List, Radio, BookOpen } from "lucide-react";
 
 export function EventsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isLive = location.pathname.endsWith("/live");
-  const activeTab = isLive ? "live" : "explorer";
+  const activeTab = location.pathname.endsWith("/live")
+    ? "live"
+    : location.pathname.endsWith("/catalog")
+      ? "catalog"
+      : "explorer";
 
   const handleTabChange = (value: string) => {
     if (value === "live") {
       navigate(`/projects/${id}/events/live`);
+    } else if (value === "catalog") {
+      navigate(`/projects/${id}/events/catalog`);
     } else {
       navigate(`/projects/${id}/events`);
     }
@@ -36,6 +42,10 @@ export function EventsPage() {
               <Radio className="h-3.5 w-3.5" />
               Live
             </TabsTrigger>
+            <TabsTrigger value="catalog" className="gap-1.5">
+              <BookOpen className="h-3.5 w-3.5" />
+              Catalog
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="explorer">
@@ -44,6 +54,10 @@ export function EventsPage() {
 
           <TabsContent value="live">
             <LiveEventsContent />
+          </TabsContent>
+
+          <TabsContent value="catalog">
+            <EventCatalogContent />
           </TabsContent>
         </Tabs>
       </div>

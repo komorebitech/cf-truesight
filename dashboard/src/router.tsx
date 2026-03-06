@@ -17,7 +17,6 @@ import { RetentionPage } from "@/pages/RetentionPage";
 import { CohortsPage } from "@/pages/CohortsPage";
 import { CohortDetailPage } from "@/pages/CohortDetailPage";
 import { FlowsPage } from "@/pages/FlowsPage";
-import { EventCatalogPage } from "@/pages/EventCatalogPage";
 import { TeamsListPage } from "@/pages/TeamsListPage";
 import { TeamDetailPage } from "@/pages/TeamDetailPage";
 import { AcceptInvitationPage } from "@/pages/AcceptInvitationPage";
@@ -83,8 +82,12 @@ export const router = createBrowserRouter([
         element: <EventsPage />,
       },
       {
+        path: "projects/:id/events/catalog",
+        element: <EventsPage />,
+      },
+      {
         path: "projects/:id/event-catalog",
-        element: <EventCatalogPage />,
+        element: <Navigate to="../events/catalog" replace />,
       },
       {
         path: "projects/:id/analytics",

@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { GoogleLogin } from "@react-oauth/google";
-import { Eye } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -26,10 +25,7 @@ export function LoginPage() {
     <div className="flex h-screen items-center justify-center bg-muted/30">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center space-y-4 pb-2">
-          <div className="flex items-center gap-2">
-            <Eye className="h-8 w-8 text-foreground" />
-            <span className="font-heading text-2xl font-bold">TrueSight</span>
-          </div>
+          <span className="text-2xl font-semibold" style={{ fontFamily: "'Chillax', sans-serif" }}>truesight</span>
           <p className="text-sm text-muted-foreground">
             Sign in to your account
           </p>

@@ -2,12 +2,10 @@ import { useState, useCallback, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import { cn } from "@/lib/utils";
 import {
-  Eye,
   Menu,
   LayoutDashboard,
   TrendingUp,
   List,
-  BookOpen,
   Lightbulb,
   GitBranch,
   RotateCcw,
@@ -111,11 +109,6 @@ export function Sidebar() {
           icon: <List className="h-4 w-4" />,
         },
         {
-          label: "Event Catalog",
-          href: `/projects/${projectId}/event-catalog`,
-          icon: <BookOpen className="h-4 w-4" />,
-        },
-        {
           label: "Insights",
           href: `/projects/${projectId}/insights`,
           icon: <Lightbulb className="h-4 w-4" />,
@@ -214,16 +207,8 @@ export function Sidebar() {
   const sidebarContent = (closeMobile?: () => void) => (
     <>
       {/* Brand */}
-      <div
-        className={cn(
-          "flex items-center gap-2 px-4 py-5",
-          collapsed && "justify-center px-2",
-        )}
-      >
-        <Eye className="h-6 w-6 text-sidebar-foreground" />
-        {!collapsed && (
-          <span className="font-heading text-lg font-bold text-sidebar-foreground">TrueSight</span>
-        )}
+      <div className="flex justify-center px-4 py-5">
+        <span className="text-[1.6rem] font-bold tracking-[0.08em] bg-gradient-to-r from-[#D4A373] via-[#a38a5e] to-[#8a9a6b] bg-clip-text text-transparent" style={{ fontFamily: "'Chillax', sans-serif" }}>truesight</span>
       </div>
 
       <Separator className="bg-sidebar-border" />
