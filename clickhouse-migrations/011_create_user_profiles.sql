@@ -1,7 +1,7 @@
 -- User profiles table: stores aggregated user data from events and identify calls.
 -- ReplacingMergeTree deduplicates by last_seen so we always get the latest profile.
 
-CREATE TABLE IF NOT EXISTS truesight_local.user_profiles (
+CREATE TABLE IF NOT EXISTS truesight.user_profiles (
     project_id UUID,
     user_uid String,
     properties Map(String, String),

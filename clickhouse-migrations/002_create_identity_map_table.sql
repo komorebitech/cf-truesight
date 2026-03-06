@@ -1,6 +1,6 @@
-CREATE DATABASE IF NOT EXISTS truesight_local;
+CREATE DATABASE IF NOT EXISTS truesight;
 
-CREATE TABLE IF NOT EXISTS truesight_local.identity_map
+CREATE TABLE IF NOT EXISTS truesight.identity_map
 (
     project_id UUID,
     anonymous_id String,

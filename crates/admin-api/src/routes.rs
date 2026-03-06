@@ -37,6 +37,15 @@ pub fn create_router(state: AppState) -> Router {
             "/v1/projects/{pid}/api-keys/{kid}",
             delete(handlers::api_keys::revoke_api_key),
         )
+        // Event Catalog
+        .route(
+            "/v1/stats/projects/{pid}/event-catalog",
+            get(handlers::event_catalog::event_catalog),
+        )
+        .route(
+            "/v1/stats/projects/{pid}/event-catalog/{event_name}/properties",
+            get(handlers::event_catalog::event_properties),
+        )
         // Stats
         .route(
             "/v1/stats/projects/{pid}/event-count",

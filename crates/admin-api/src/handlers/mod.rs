@@ -1,6 +1,7 @@
 pub mod api_keys;
 pub mod auth;
 pub mod cohorts;
+pub mod event_catalog;
 pub mod flows;
 pub mod funnels;
 pub mod health;

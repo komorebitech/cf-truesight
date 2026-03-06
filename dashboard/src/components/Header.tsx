@@ -9,6 +9,7 @@ interface Crumb {
 
 const sectionNames: Record<string, string> = {
   events: "Events",
+  "event-catalog": "Event Catalog",
   live: "Live Events",
   analytics: "Analytics",
   funnels: "Funnels",
@@ -70,6 +71,7 @@ function useBreadcrumbs(): Crumb[] {
 const sectionColors: Record<string, string> = {
   analytics: "bg-blue-500",
   events: "bg-neutral-900 dark:bg-neutral-100",
+  "event-catalog": "bg-indigo-500",
   live: "bg-green-500",
   insights: "bg-emerald-500",
   funnels: "bg-orange-500",

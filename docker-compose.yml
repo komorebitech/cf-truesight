@@ -23,7 +23,7 @@ services:
     volumes:
       - clickhouse_data:/var/lib/clickhouse
     environment:
-      CLICKHOUSE_DB: truesight_local
+      CLICKHOUSE_DB: truesight
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     healthcheck:
       test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]

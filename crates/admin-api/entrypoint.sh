@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "Running ClickHouse migrations..."
-export CLICKHOUSE_DATABASE="${CLICKHOUSE_DATABASE:-truesight_local}"
+export CLICKHOUSE_DATABASE="${CLICKHOUSE_DATABASE:-truesight}"
 export CLICKHOUSE_URL="${CLICKHOUSE_URL:-http://localhost:8123}"
 
 # ClickHouse Cloud requires HTTPS + user/password auth
