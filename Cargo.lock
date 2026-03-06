@@ -29,6 +29,7 @@ dependencies = [
  "diesel_migrations",
  "dotenvy",
  "envy",
+ "futures",
  "jsonwebtoken",
  "rand 0.8.5",
  "reqwest",

@@ -6,6 +6,7 @@ import { ProjectsListPage } from "@/pages/ProjectsListPage";
 import { ProjectDetailPage } from "@/pages/ProjectDetailPage";
 import { ProjectSettingsPage } from "@/pages/ProjectSettingsPage";
 import { EventExplorerPage } from "@/pages/EventExplorerPage";
+import { LiveEventsPage } from "@/pages/LiveEventsPage";
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
 import { InsightsPage } from "@/pages/InsightsPage";
 import { FunnelsPage } from "@/pages/FunnelsPage";
@@ -76,6 +77,10 @@ export const router = createBrowserRouter([
       {
         path: "projects/:id/events",
         element: <EventExplorerPage />,
+      },
+      {
+        path: "projects/:id/live",
+        element: <LiveEventsPage />,
       },
       {
         path: "projects/:id/analytics",
