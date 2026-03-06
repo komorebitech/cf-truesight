@@ -95,9 +95,27 @@ impl EventRow {
             locale: event.context.locale.clone(),
             timezone: event.context.timezone.clone(),
             sdk_version: event.context.sdk_version.clone(),
-            platform: event.context.platform.clone().unwrap_or_default(),
+            platform: event
+                .context
+                .platform
+                .clone()
+                .filter(|p| !p.is_empty())
+                .unwrap_or_else(|| infer_platform(&event.context.os_name)),
         }
     }
+}
+
+fn infer_platform(os_name: &str) -> String {
+    match os_name.to_lowercase().as_str() {
+        "web" => "web",
+        "android" => "android",
+        "ios" => "ios",
+        "macos" | "mac os" | "mac os x" => "macos",
+        "windows" => "windows",
+        "linux" => "linux",
+        _ => "unknown",
+    }
+    .to_string()
 }
 
 /// Strip `AnyDecodable("...")` wrappers from property values.
