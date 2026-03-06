@@ -8,7 +8,6 @@ import {
   TrendingUp,
   List,
   BookOpen,
-  Radio,
   Lightbulb,
   GitBranch,
   RotateCcw,
@@ -115,11 +114,6 @@ export function Sidebar() {
           label: "Event Catalog",
           href: `/projects/${projectId}/event-catalog`,
           icon: <BookOpen className="h-4 w-4" />,
-        },
-        {
-          label: "Live",
-          href: `/projects/${projectId}/live`,
-          icon: <Radio className="h-4 w-4" />,
         },
         {
           label: "Insights",

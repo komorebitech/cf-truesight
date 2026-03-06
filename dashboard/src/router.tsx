@@ -5,8 +5,7 @@ import { LoginPage } from "@/pages/LoginPage";
 import { ProjectsListPage } from "@/pages/ProjectsListPage";
 import { ProjectDetailPage } from "@/pages/ProjectDetailPage";
 import { ProjectSettingsPage } from "@/pages/ProjectSettingsPage";
-import { EventExplorerPage } from "@/pages/EventExplorerPage";
-import { LiveEventsPage } from "@/pages/LiveEventsPage";
+import { EventsPage } from "@/pages/EventsPage";
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
 import { InsightsPage } from "@/pages/InsightsPage";
 import { FunnelsPage } from "@/pages/FunnelsPage";
@@ -77,15 +76,15 @@ export const router = createBrowserRouter([
       },
       {
         path: "projects/:id/events",
-        element: <EventExplorerPage />,
+        element: <EventsPage />,
+      },
+      {
+        path: "projects/:id/events/live",
+        element: <EventsPage />,
       },
       {
         path: "projects/:id/event-catalog",
         element: <EventCatalogPage />,
-      },
-      {
-        path: "projects/:id/live",
-        element: <LiveEventsPage />,
       },
       {
         path: "projects/:id/analytics",
