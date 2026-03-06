@@ -1,5 +1,5 @@
 import type { AutoTracker } from './tracker.js';
-import { shouldIgnoreElement } from './tracker.js';
+import { shouldIgnoreElement, isAnonymousElement } from './tracker.js';
 
 interface ClickRecord {
   timestamp: number;
@@ -32,6 +32,7 @@ export class RageClickTracker implements AutoTracker {
       const target = e.target as Element | null;
       if (!target || !this.trackFn) return;
       if (shouldIgnoreElement(target)) return;
+      if (isAnonymousElement(target)) return;
 
       const now = Date.now();
       const selector = getElementSelector(target);

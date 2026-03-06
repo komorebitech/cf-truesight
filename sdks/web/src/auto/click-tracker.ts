@@ -1,5 +1,5 @@
 import type { AutoTracker } from './tracker.js';
-import { shouldIgnoreElement } from './tracker.js';
+import { shouldIgnoreElement, isAnonymousElement } from './tracker.js';
 
 export class ClickTracker implements AutoTracker {
   name = 'click';
@@ -14,6 +14,7 @@ export class ClickTracker implements AutoTracker {
       const target = e.target as Element | null;
       if (!target || !this.trackFn) return;
       if (shouldIgnoreElement(target)) return;
+      if (isAnonymousElement(target)) return;
 
       const props: Record<string, unknown> = {
         element_tag: target.tagName.toLowerCase(),

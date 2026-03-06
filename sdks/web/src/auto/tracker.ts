@@ -7,3 +7,20 @@ export interface AutoTracker {
 export function shouldIgnoreElement(el: Element): boolean {
   return el.closest('[data-ts-ignore]') !== null;
 }
+
+/** Returns true if the element has no useful identifying info for analytics. */
+export function isAnonymousElement(el: Element): boolean {
+  const id = (el as HTMLElement).id;
+  if (id) return false;
+
+  const className = (el as HTMLElement).className;
+  if (typeof className === 'string' && className.trim()) return false;
+
+  const text = el.textContent?.trim();
+  if (text) return false;
+
+  if (el.getAttribute('data-analytics-id')) return false;
+  if (el.closest('a')) return false;
+
+  return true;
+}

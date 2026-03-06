@@ -1,5 +1,5 @@
 import type { AutoTracker } from './tracker.js';
-import { shouldIgnoreElement } from './tracker.js';
+import { shouldIgnoreElement, isAnonymousElement } from './tracker.js';
 
 const EXCLUDED_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
 
@@ -19,6 +19,7 @@ export class DeadClickTracker implements AutoTracker {
       if (!target || !this.trackFn) return;
       if (shouldIgnoreElement(target)) return;
       if (EXCLUDED_TAGS.has(target.tagName)) return;
+      if (isAnonymousElement(target)) return;
 
       let mutationDetected = false;
 
