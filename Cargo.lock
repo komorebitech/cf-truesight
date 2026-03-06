@@ -713,6 +713,7 @@ dependencies = [
  "clickhouse",
  "dotenvy",
  "envy",
+ "regex",
  "sentry",
  "serde",
  "serde_json",
