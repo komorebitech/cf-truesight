@@ -32,7 +32,7 @@ pub async fn upsert_profiles(client: &clickhouse::Client, events: &[EnrichedEven
         let (email, name, mobile_number, props_map) = if event.event_type == EventType::Identify {
             extract_identify_fields(event)
         } else {
-            (None, None, None, String::new())
+            (event.email.clone(), None, event.mobile_number.clone(), String::new())
         };
 
         let email_val = nullable_str(&email);
