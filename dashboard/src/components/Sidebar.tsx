@@ -272,7 +272,7 @@ export function Sidebar() {
                 className={cn(
                   "flex-1 rounded-sm px-2 py-1 text-xs font-medium transition-colors",
                   environment === "live"
-                    ? "bg-sidebar-active text-green-700 shadow-sm dark:text-green-400"
+                    ? "bg-emerald-700 text-white shadow-sm dark:bg-emerald-600"
                     : "text-sidebar-muted-foreground hover:text-sidebar-foreground",
                 )}
               >
@@ -284,7 +284,7 @@ export function Sidebar() {
                 className={cn(
                   "flex-1 rounded-sm px-2 py-1 text-xs font-medium transition-colors",
                   environment === "test"
-                    ? "bg-sidebar-active text-amber-700 shadow-sm dark:text-amber-400"
+                    ? "bg-orange-600 text-white shadow-sm dark:bg-orange-500"
                     : "text-sidebar-muted-foreground hover:text-sidebar-foreground",
                 )}
               >

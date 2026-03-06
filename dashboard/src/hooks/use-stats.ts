@@ -5,6 +5,7 @@ import {
   getEventTypes,
   getActiveUsers,
   getLiveUsers,
+  getPlatformDistribution,
 } from "@/lib/api";
 
 export function useEventCount(
@@ -67,5 +68,18 @@ export function useLiveUsers(projectId: string | undefined, environment?: string
     queryFn: () => getLiveUsers(projectId!, environment),
     enabled: !!projectId,
     refetchInterval: 30_000,
+  });
+}
+
+export function usePlatformDistribution(
+  projectId: string | undefined,
+  from?: string,
+  to?: string,
+  environment?: string,
+) {
+  return useQuery({
+    queryKey: ["platform-distribution", projectId, from, to, environment],
+    queryFn: () => getPlatformDistribution(projectId!, from, to, environment),
+    enabled: !!projectId && !!from && !!to,
   });
 }

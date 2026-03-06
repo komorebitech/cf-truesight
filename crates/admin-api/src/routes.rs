@@ -76,6 +76,10 @@ pub fn create_router(state: AppState) -> Router {
             "/v1/stats/projects/{pid}/live-users",
             get(handlers::stats::live_users),
         )
+        .route(
+            "/v1/stats/projects/{pid}/platform-distribution",
+            get(handlers::stats::platform_distribution),
+        )
         // Property Discovery & Insights
         .route(
             "/v1/stats/projects/{pid}/property-keys",

@@ -683,3 +683,61 @@ pub async fn live_users(
         active_users_30m: active_30m,
     }))
 }
+
+// ── Platform Distribution ────────────────────────────────────────────
+
+#[derive(Debug, Serialize, clickhouse::Row, Deserialize)]
+pub struct PlatformRow {
+    pub platform: String,
+    pub users: u64,
+    pub events: u64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PlatformDistributionResponse {
+    pub project_id: Uuid,
+    pub data: Vec<PlatformRow>,
+}
+
+pub async fn platform_distribution(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(project_id): Path<Uuid>,
+    Query(params): Query<TimeRangeQuery>,
+) -> Result<impl IntoResponse, AppError> {
+    rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
+    let db = &state.config.clickhouse_database;
+    let env_filter = if params.environment.is_some() {
+        " AND environment = ?"
+    } else {
+        ""
+    };
+
+    let query = format!(
+        "SELECT platform, \
+         uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)) AS users, \
+         count() AS events \
+         FROM {db}.events \
+         WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{env_filter} \
+         GROUP BY platform ORDER BY events DESC"
+    );
+
+    let mut q = state
+        .clickhouse_client
+        .query(&query)
+        .bind(project_id)
+        .bind(params.from.timestamp_millis() as f64 / 1000.0)
+        .bind(params.to.timestamp_millis() as f64 / 1000.0);
+    if let Some(ref env) = params.environment {
+        q = q.bind(env.as_str());
+    }
+    let rows = q
+        .fetch_all::<PlatformRow>()
+        .await
+        .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
+
+    Ok(Json(PlatformDistributionResponse {
+        project_id,
+        data: rows,
+    }))
+}

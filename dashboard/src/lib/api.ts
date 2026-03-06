@@ -511,6 +511,38 @@ export function compareFunnelTimeRanges(
 }
 
 // ---------------------------------------------------------------------------
+// Platform distribution endpoint
+// ---------------------------------------------------------------------------
+
+export interface PlatformDistributionEntry {
+  platform: string;
+  users: number;
+  events: number;
+}
+
+export interface PlatformDistributionResponse {
+  project_id: string;
+  data: PlatformDistributionEntry[];
+}
+
+export function getPlatformDistribution(
+  projectId: string,
+  from?: string,
+  to?: string,
+  environment?: string,
+) {
+  const qs = new URLSearchParams();
+  if (from) qs.set("from", from);
+  if (to) qs.set("to", to);
+  if (environment) qs.set("environment", environment);
+  const query = qs.toString();
+  return request<PlatformDistributionResponse>(
+    "GET",
+    `/stats/projects/${projectId}/platform-distribution${query ? `?${query}` : ""}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Live events (SSE) types
 // ---------------------------------------------------------------------------
 
