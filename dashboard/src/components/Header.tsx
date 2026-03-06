@@ -90,7 +90,7 @@ export function Header({ title }: { title?: string }) {
   const sectionSlug = params.id ? segments[2] : undefined;
 
   return (
-    <header className="border-b bg-card">
+    <header className="sticky top-0 z-10 border-b bg-card">
       <div className="px-6 py-4">
         {/* Breadcrumbs */}
         {crumbs.length > 0 && (
@@ -115,7 +115,7 @@ export function Header({ title }: { title?: string }) {
 
         {/* Title */}
         {title && (
-          <h1 className="font-heading text-3xl font-extrabold">{title}</h1>
+          <h1 className="font-heading text-3xl font-extrabold tracking-wide">{title}</h1>
         )}
       </div>
 

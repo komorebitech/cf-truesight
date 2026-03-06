@@ -1,31 +1,17 @@
-import { Outlet, useLocation } from "react-router";
+import { Outlet } from "react-router";
 import { Sidebar } from "@/components/Sidebar";
 import { EnvironmentProvider } from "@/contexts/EnvironmentContext";
-import { AnimatePresence, motion } from "motion/react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function App() {
-  const location = useLocation();
-
   return (
     <EnvironmentProvider>
     <TooltipProvider>
       <div className="flex h-screen overflow-hidden">
         <Sidebar />
         <main className="flex flex-1 flex-col overflow-auto bg-background">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
-              className="flex flex-1 flex-col"
-            >
-              <Outlet />
-            </motion.div>
-          </AnimatePresence>
+          <Outlet />
         </main>
       </div>
       <Toaster />
