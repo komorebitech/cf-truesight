@@ -5,11 +5,9 @@ use truesight_common::db::DbPool;
 use truesight_common::error::AppError;
 use truesight_common::schema::segments;
 
-// Cohort types are aliases over the segments table for backward compatibility.
-
 #[derive(Debug, Queryable, Selectable)]
 #[diesel(table_name = segments)]
-pub struct Cohort {
+pub struct Segment {
     pub id: Uuid,
     pub project_id: Uuid,
     pub name: String,
@@ -17,13 +15,12 @@ pub struct Cohort {
     pub definition: serde_json::Value,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
-    #[allow(dead_code)]
     pub segment_type: String,
 }
 
 #[derive(Debug, Insertable)]
 #[diesel(table_name = segments)]
-pub struct NewCohort {
+pub struct NewSegment {
     pub project_id: Uuid,
     pub name: String,
     pub description: Option<String>,
@@ -33,74 +30,74 @@ pub struct NewCohort {
 
 #[derive(Debug, AsChangeset)]
 #[diesel(table_name = segments)]
-pub struct UpdateCohort {
+pub struct UpdateSegment {
     pub name: Option<String>,
     pub description: Option<String>,
     pub definition: Option<serde_json::Value>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-pub fn list_cohorts(pool: &DbPool, pid: Uuid) -> Result<Vec<Cohort>, AppError> {
+pub fn list_segments(pool: &DbPool, pid: Uuid) -> Result<Vec<Segment>, AppError> {
     let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
     segments::table
         .filter(segments::project_id.eq(pid))
         .order(segments::created_at.desc())
-        .load::<Cohort>(&mut conn)
+        .load::<Segment>(&mut conn)
         .map_err(|e| AppError::Database(e.to_string()))
 }
 
-pub fn find_cohort(pool: &DbPool, pid: Uuid, cid: Uuid) -> Result<Cohort, AppError> {
+pub fn find_segment(pool: &DbPool, pid: Uuid, sid: Uuid) -> Result<Segment, AppError> {
     let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
     segments::table
         .filter(segments::project_id.eq(pid))
-        .filter(segments::id.eq(cid))
-        .first::<Cohort>(&mut conn)
+        .filter(segments::id.eq(sid))
+        .first::<Segment>(&mut conn)
         .map_err(|e| match e {
-            diesel::result::Error::NotFound => AppError::NotFound("Cohort not found".into()),
+            diesel::result::Error::NotFound => AppError::NotFound("Segment not found".into()),
             _ => AppError::Database(e.to_string()),
         })
 }
 
-pub fn insert_cohort(pool: &DbPool, new: NewCohort) -> Result<Cohort, AppError> {
+pub fn insert_segment(pool: &DbPool, new: NewSegment) -> Result<Segment, AppError> {
     let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
     diesel::insert_into(segments::table)
         .values(&new)
-        .get_result::<Cohort>(&mut conn)
+        .get_result::<Segment>(&mut conn)
         .map_err(|e| AppError::Database(e.to_string()))
 }
 
-pub fn update_cohort(
+pub fn update_segment(
     pool: &DbPool,
     pid: Uuid,
-    cid: Uuid,
-    changes: UpdateCohort,
-) -> Result<Cohort, AppError> {
+    sid: Uuid,
+    changes: UpdateSegment,
+) -> Result<Segment, AppError> {
     let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
     diesel::update(
         segments::table
             .filter(segments::project_id.eq(pid))
-            .filter(segments::id.eq(cid)),
+            .filter(segments::id.eq(sid)),
     )
     .set(&changes)
-    .get_result::<Cohort>(&mut conn)
+    .get_result::<Segment>(&mut conn)
     .map_err(|e| match e {
-        diesel::result::Error::NotFound => AppError::NotFound("Cohort not found".into()),
+        diesel::result::Error::NotFound => AppError::NotFound("Segment not found".into()),
         _ => AppError::Database(e.to_string()),
     })
 }
 
-pub fn delete_cohort(pool: &DbPool, pid: Uuid, cid: Uuid) -> Result<(), AppError> {
+pub fn delete_segment(pool: &DbPool, pid: Uuid, sid: Uuid) -> Result<(), AppError> {
     let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
     let rows = diesel::delete(
         segments::table
             .filter(segments::project_id.eq(pid))
-            .filter(segments::id.eq(cid)),
+            .filter(segments::id.eq(sid)),
     )
     .execute(&mut conn)
     .map_err(|e| AppError::Database(e.to_string()))?;
 
     if rows == 0 {
-        return Err(AppError::NotFound("Cohort not found".into()));
+        return Err(AppError::NotFound("Segment not found".into()));
     }
     Ok(())
 }

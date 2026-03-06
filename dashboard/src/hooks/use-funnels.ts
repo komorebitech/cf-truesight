@@ -74,10 +74,11 @@ export function useFunnelResults(
   from?: string,
   to?: string,
   environment?: string,
+  segmentId?: string,
 ) {
   return useQuery({
-    queryKey: ["funnel-results", projectId, funnelId, from, to, environment],
-    queryFn: () => getFunnelResults(projectId!, funnelId!, from, to, environment),
+    queryKey: ["funnel-results", projectId, funnelId, from, to, environment, segmentId],
+    queryFn: () => getFunnelResults(projectId!, funnelId!, from, to, environment, segmentId),
     enabled: !!projectId && !!funnelId && !!from && !!to,
   });
 }

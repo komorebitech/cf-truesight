@@ -95,6 +95,7 @@ pub async fn create_cohort(
             name: input.name,
             description: input.description,
             definition: input.definition,
+            segment_type: "manual".to_string(),
         },
     )?;
     Ok((

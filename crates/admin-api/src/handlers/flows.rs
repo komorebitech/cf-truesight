@@ -36,6 +36,8 @@ pub struct FlowsRequest {
     pub environment: Option<String>,
     #[serde(default = "default_top_paths")]
     pub top_paths: u32,
+    #[allow(dead_code)]
+    pub segment_id: Option<Uuid>,
 }
 
 fn default_direction() -> String {

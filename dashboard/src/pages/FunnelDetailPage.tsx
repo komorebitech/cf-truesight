@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/table";
 import { Pencil, Trash2, Clock } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
+import { SegmentFilter } from "@/components/SegmentFilter";
 import { motion } from "motion/react";
 
 export function FunnelDetailPage() {
@@ -48,6 +49,7 @@ export function FunnelDetailPage() {
   const navigate = useNavigate();
   const { data: funnel, isLoading: funnelLoading } = useFunnel(id, funnelId);
   const [timeRange, setTimeRange] = useState<TimeRange>(getPresetRange("30d"));
+  const [segmentId, setSegmentId] = useState<string | undefined>();
 
   const { environment } = useEnvironment();
 
@@ -57,6 +59,7 @@ export function FunnelDetailPage() {
     timeRange.from,
     timeRange.to,
     environment,
+    segmentId,
   );
   const updateFunnel = useUpdateFunnel(id, funnelId);
   const deleteFunnel = useDeleteFunnel(id);
@@ -102,6 +105,11 @@ export function FunnelDetailPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+            <SegmentFilter
+              projectId={id}
+              value={segmentId}
+              onChange={setSegmentId}
+            />
             <Badge variant="secondary" className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {funnel.window_seconds >= 86400

@@ -15,6 +15,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SegmentFilter } from "@/components/SegmentFilter";
 import { Workflow } from "lucide-react";
 
 type Direction = "forward" | "backward";
@@ -29,6 +30,7 @@ export function FlowsPage() {
   const [direction, setDirection] = useState<Direction>("forward");
   const [steps, setSteps] = useState(5);
   const [topPaths, setTopPaths] = useState(10);
+  const [segmentId, setSegmentId] = useState<string | undefined>();
 
   const flowsRequest: FlowsRequest | null = useMemo(() => {
     if (!anchorEvent) return null;
@@ -40,8 +42,9 @@ export function FlowsPage() {
       from: timeRange.from,
       to: timeRange.to,
       environment,
+      segment_id: segmentId,
     };
-  }, [anchorEvent, direction, steps, topPaths, timeRange, environment]);
+  }, [anchorEvent, direction, steps, topPaths, timeRange, environment, segmentId]);
 
   const { data: flowsData, isLoading } = useFlows(id, flowsRequest);
 
@@ -67,6 +70,12 @@ export function FlowsPage() {
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-2">
           <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+
+          <SegmentFilter
+            projectId={id}
+            value={segmentId}
+            onChange={setSegmentId}
+          />
 
           <div className="h-6 w-px bg-border" />
 

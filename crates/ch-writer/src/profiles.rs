@@ -99,11 +99,23 @@ fn extract_profile_fields(
     let is_identify = event.event_type == EventType::Identify;
 
     let Some(serde_json::Value::Object(props)) = &event.properties else {
-        return (event.email.clone(), None, event.mobile_number.clone(), String::new());
+        return (
+            event.email.clone(),
+            None,
+            event.mobile_number.clone(),
+            String::new(),
+        );
     };
 
     let email_keys = ["email", "$email"];
-    let name_keys = ["name", "$name", "first name", "first_name", "full_name", "fullname"];
+    let name_keys = [
+        "name",
+        "$name",
+        "first name",
+        "first_name",
+        "full_name",
+        "fullname",
+    ];
     let mobile_keys = ["mobile_number", "$phone", "phone", "mobile", "phone_number"];
 
     let email = get_ci(props, &email_keys)
@@ -117,7 +129,8 @@ fn extract_profile_fields(
         .or_else(|| event.mobile_number.clone());
 
     // Only build the properties map for identify events
-    let all_skip_keys: Vec<&str> = email_keys.iter()
+    let all_skip_keys: Vec<&str> = email_keys
+        .iter()
         .chain(name_keys.iter())
         .chain(mobile_keys.iter())
         .copied()

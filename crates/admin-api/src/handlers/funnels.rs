@@ -144,6 +144,8 @@ pub struct FunnelResultsQuery {
     pub from: DateTime<Utc>,
     pub to: DateTime<Utc>,
     pub environment: Option<String>,
+    #[allow(dead_code)]
+    pub segment_id: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize)]

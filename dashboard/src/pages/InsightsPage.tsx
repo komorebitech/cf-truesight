@@ -27,6 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { AreaChart as AreaChartIcon, BarChart3 } from "lucide-react";
 import { motion } from "motion/react";
+import { SegmentFilter } from "@/components/SegmentFilter";
 import type { InsightsFilter, InsightsRequest } from "@/lib/api";
 import { formatNumber } from "@/lib/utils";
 
@@ -50,6 +51,7 @@ export function InsightsPage() {
   const [groupBy, setGroupBy] = useState<string[]>([]);
   const [filters, setFilters] = useState<InsightsFilter[]>([]);
   const [chartType, setChartType] = useState<ChartType>("area");
+  const [segmentId, setSegmentId] = useState<string | undefined>();
 
   const { environment } = useEnvironment();
 
@@ -78,8 +80,9 @@ export function InsightsPage() {
       const validFilters = filters.filter((f) => f.property && f.operator);
       if (validFilters.length > 0) req.filters = validFilters;
     }
+    if (segmentId) req.segment_id = segmentId;
     return req;
-  }, [timeRange, granularity, metric, eventName, groupBy, filters, environment]);
+  }, [timeRange, granularity, metric, eventName, groupBy, filters, environment, segmentId]);
 
   const { data: insightsData, isLoading } = useInsights(id, insightsRequest);
 
@@ -94,6 +97,12 @@ export function InsightsPage() {
         {/* Query controls */}
         <div className="flex flex-wrap items-center gap-2">
           <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+
+          <SegmentFilter
+            projectId={id}
+            value={segmentId}
+            onChange={setSegmentId}
+          />
 
           <div className="h-6 w-px bg-border" />
 

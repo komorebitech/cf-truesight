@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SegmentFilter } from "@/components/SegmentFilter";
 
 type RetentionType = "day" | "week" | "month";
 
@@ -30,6 +31,7 @@ export function RetentionPage() {
   const [returnEvent, setReturnEvent] = useState("");
   const [retentionType, setRetentionType] = useState<RetentionType>("day");
   const [numPeriods, setNumPeriods] = useState(8);
+  const [segmentId, setSegmentId] = useState<string | undefined>();
 
   // Build RetentionRequest only when a start event is selected
   const retentionRequest: RetentionRequest | null = useMemo(() => {
@@ -42,8 +44,9 @@ export function RetentionPage() {
       from: timeRange.from,
       to: timeRange.to,
       environment,
+      segment_id: segmentId,
     };
-  }, [startEvent, returnEvent, retentionType, numPeriods, timeRange, environment]);
+  }, [startEvent, returnEvent, retentionType, numPeriods, timeRange, environment, segmentId]);
 
   const { data: retentionData, isLoading } = useRetention(id, retentionRequest);
 
@@ -64,6 +67,12 @@ export function RetentionPage() {
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-2">
           <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+
+          <SegmentFilter
+            projectId={id}
+            value={segmentId}
+            onChange={setSegmentId}
+          />
 
           <div className="h-6 w-px bg-border" />
 
