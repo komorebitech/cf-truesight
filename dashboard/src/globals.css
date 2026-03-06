@@ -6,21 +6,7 @@
   font-style: normal;
 }
 
-@font-face {
-  font-family: 'GeneralSans';
-  src: url('/fonts/GeneralSans/GeneralSans-Variable.woff2') format('woff2');
-  font-weight: 200 700;
-  font-display: swap;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'GeneralSans';
-  src: url('/fonts/GeneralSans/GeneralSans-VariableItalic.woff2') format('woff2');
-  font-weight: 200 700;
-  font-display: swap;
-  font-style: italic;
-}
+@import url('https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,100..900;1,100..900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -72,8 +58,8 @@
 }
 
 :root {
-  --font-sans: 'GeneralSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
-  --font-heading: 'GeneralSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Asap', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  --font-heading: 'Asap', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* Palette: #CCD5AE #E9EDC9 #FEFAE0 #FAEDCD #D4A373 */
   --background: 52 55% 97%;
