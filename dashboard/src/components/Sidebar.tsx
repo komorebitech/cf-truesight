@@ -4,9 +4,12 @@ import { cn } from "@/lib/utils";
 import {
   Menu,
   LayoutDashboard,
+  LayoutGrid,
   TrendingUp,
   List,
   Lightbulb,
+  LineChart,
+  Grid3X3,
   GitBranch,
   RotateCcw,
   UsersRound,
@@ -99,6 +102,11 @@ export function Sidebar() {
           icon: <LayoutDashboard className="h-4 w-4" />,
         },
         {
+          label: "Boards",
+          href: `/projects/${projectId}/boards`,
+          icon: <LayoutGrid className="h-4 w-4" />,
+        },
+        {
           label: "Analytics",
           href: `/projects/${projectId}/analytics`,
           icon: <TrendingUp className="h-4 w-4" />,
@@ -114,6 +122,16 @@ export function Sidebar() {
           icon: <Lightbulb className="h-4 w-4" />,
         },
         {
+          label: "Trends",
+          href: `/projects/${projectId}/trends`,
+          icon: <LineChart className="h-4 w-4" />,
+        },
+        {
+          label: "Pivots",
+          href: `/projects/${projectId}/pivots`,
+          icon: <Grid3X3 className="h-4 w-4" />,
+        },
+        {
           label: "Funnels",
           href: `/projects/${projectId}/funnels`,
           icon: <GitBranch className="h-4 w-4" />,
@@ -124,8 +142,8 @@ export function Sidebar() {
           icon: <RotateCcw className="h-4 w-4" />,
         },
         {
-          label: "Cohorts",
-          href: `/projects/${projectId}/cohorts`,
+          label: "Segments",
+          href: `/projects/${projectId}/segments`,
           icon: <UsersRound className="h-4 w-4" />,
         },
         {

@@ -459,11 +459,13 @@ export function getFunnelResults(
   from?: string,
   to?: string,
   environment?: string,
+  segmentId?: string,
 ) {
   const qs = new URLSearchParams();
   if (from) qs.set("from", from);
   if (to) qs.set("to", to);
   if (environment) qs.set("environment", environment);
+  if (segmentId) qs.set("segment_id", segmentId);
   const query = qs.toString();
   return request<FunnelResultsResponse>(
     "GET",
@@ -838,6 +840,7 @@ export interface InsightsRequest {
   to: string;
   granularity?: string;
   environment?: string;
+  segment_id?: string;
 }
 
 export interface InsightsDataPoint {
@@ -959,6 +962,7 @@ export interface RetentionRequest {
   from: string;
   to: string;
   environment?: string;
+  segment_id?: string;
 }
 
 export interface RetentionCohort {
@@ -1077,6 +1081,137 @@ export function getCohortSize(projectId: string, cohortId: string, environment?:
 }
 
 // ---------------------------------------------------------------------------
+// Segment endpoints
+// ---------------------------------------------------------------------------
+
+export interface SegmentPropertyFilter {
+  property: string;
+  operator: string;
+  value?: string | string[];
+}
+
+export interface SegmentTimeWindow {
+  type: "relative" | "absolute" | "ever";
+  value?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface SegmentRule {
+  type: "event" | "property";
+  event_name?: string;
+  action?: "did" | "did_not";
+  op?: string;
+  count?: number;
+  time_window?: string | SegmentTimeWindow;
+  property_filters?: SegmentPropertyFilter[];
+  property?: string;
+  value?: string;
+  source?: "user" | "event";
+}
+
+export interface SegmentDefinition {
+  operator: "and" | "or";
+  rules: SegmentRule[];
+}
+
+export interface Segment {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string | null;
+  definition: SegmentDefinition;
+  segment_type: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSegmentInput {
+  name: string;
+  description?: string;
+  definition: SegmentDefinition;
+  segment_type?: string;
+}
+
+export interface UpdateSegmentInput {
+  name?: string;
+  description?: string;
+  definition?: SegmentDefinition;
+}
+
+export interface SegmentUsersResponse {
+  data: string[];
+  meta: { page: number; per_page: number; has_more: boolean };
+}
+
+export interface SegmentSizeResponse {
+  segment_id: string;
+  size: number;
+}
+
+export interface SegmentPreviewResponse {
+  size: number;
+}
+
+export function getSegments(projectId: string) {
+  return request<Segment[]>("GET", `/projects/${projectId}/segments`);
+}
+
+export function getSegment(projectId: string, segmentId: string) {
+  return request<Segment>("GET", `/projects/${projectId}/segments/${segmentId}`);
+}
+
+export function createSegment(projectId: string, input: CreateSegmentInput) {
+  return request<Segment>("POST", `/projects/${projectId}/segments`, input);
+}
+
+export function updateSegment(projectId: string, segmentId: string, input: UpdateSegmentInput) {
+  return request<Segment>("PATCH", `/projects/${projectId}/segments/${segmentId}`, input);
+}
+
+export function deleteSegment(projectId: string, segmentId: string) {
+  return request<void>("DELETE", `/projects/${projectId}/segments/${segmentId}`);
+}
+
+export function getSegmentUsers(
+  projectId: string,
+  segmentId: string,
+  params?: { page?: number; per_page?: number; environment?: string },
+) {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.per_page) qs.set("per_page", String(params.per_page));
+  if (params?.environment) qs.set("environment", params.environment);
+  const query = qs.toString();
+  return request<SegmentUsersResponse>(
+    "GET",
+    `/projects/${projectId}/segments/${segmentId}/users${query ? `?${query}` : ""}`,
+  );
+}
+
+export function getSegmentSize(projectId: string, segmentId: string, environment?: string) {
+  const qs = new URLSearchParams();
+  if (environment) qs.set("environment", environment);
+  const query = qs.toString();
+  return request<SegmentSizeResponse>(
+    "GET",
+    `/projects/${projectId}/segments/${segmentId}/size${query ? `?${query}` : ""}`,
+  );
+}
+
+export function previewSegment(
+  projectId: string,
+  definition: SegmentDefinition,
+  environment?: string,
+) {
+  return request<SegmentPreviewResponse>(
+    "POST",
+    `/projects/${projectId}/segments/preview`,
+    { definition, environment },
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Event Catalog endpoints
 // ---------------------------------------------------------------------------
 
@@ -1152,6 +1287,7 @@ export interface FlowsRequest {
   to: string;
   environment?: string;
   top_paths?: number;
+  segment_id?: string;
 }
 
 export interface FlowNode {
@@ -1177,4 +1313,192 @@ export function getFlows(projectId: string, body: FlowsRequest) {
     `/stats/projects/${projectId}/flows`,
     body,
   );
+}
+
+// ---------------------------------------------------------------------------
+// Pivots endpoints
+// ---------------------------------------------------------------------------
+
+export interface PivotsFilter {
+  property: string;
+  operator: string;
+  value?: string | string[];
+}
+
+export interface PivotsRequest {
+  event_name?: string;
+  row_dimension: string;
+  column_dimension: string;
+  metric?: string;
+  filters?: PivotsFilter[];
+  from: string;
+  to: string;
+  environment?: string;
+  row_limit?: number;
+  column_limit?: number;
+}
+
+export interface PivotsResponse {
+  rows: string[];
+  columns: string[];
+  cells: number[][];
+  row_totals: number[];
+  column_totals: number[];
+  grand_total: number;
+}
+
+export function getPivots(projectId: string, body: PivotsRequest) {
+  return request<PivotsResponse>(
+    "POST",
+    `/stats/projects/${projectId}/pivots`,
+    body,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Trends endpoints
+// ---------------------------------------------------------------------------
+
+export interface TrendsEventQuery {
+  event_name: string;
+  metric?: string;
+  filters?: InsightsFilter[];
+}
+
+export interface TrendsRequest {
+  events: TrendsEventQuery[];
+  granularity?: string;
+  group_by?: string[];
+  filters?: InsightsFilter[];
+  from: string;
+  to: string;
+  environment?: string;
+}
+
+export interface TrendsDataPoint {
+  period: string;
+  value: number;
+}
+
+export interface TrendSeries {
+  event_name: string;
+  group: Record<string, string>;
+  data: TrendsDataPoint[];
+}
+
+export interface TrendTotal {
+  event_name: string;
+  group: Record<string, string>;
+  value: number;
+}
+
+export interface TrendsResponse {
+  series: TrendSeries[];
+  totals: TrendTotal[];
+}
+
+export function getTrends(projectId: string, body: TrendsRequest) {
+  return request<TrendsResponse>(
+    "POST",
+    `/stats/projects/${projectId}/trends`,
+    body,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Board endpoints
+// ---------------------------------------------------------------------------
+
+export interface Board {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string | null;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BoardWidget {
+  id: string;
+  board_id: string;
+  widget_type: string;
+  title: string;
+  config: Record<string, unknown>;
+  layout: { x: number; y: number; w: number; h: number };
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BoardDetail extends Board {
+  widgets: BoardWidget[];
+}
+
+export interface CreateBoardInput {
+  name: string;
+  description?: string;
+  is_default?: boolean;
+}
+
+export interface UpdateBoardInput {
+  name?: string;
+  description?: string;
+  is_default?: boolean;
+}
+
+export interface CreateWidgetInput {
+  widget_type: string;
+  title: string;
+  config: Record<string, unknown>;
+  layout: { x: number; y: number; w: number; h: number };
+  position?: number;
+}
+
+export interface UpdateWidgetInput {
+  title?: string;
+  config?: Record<string, unknown>;
+  layout?: { x: number; y: number; w: number; h: number };
+  position?: number;
+}
+
+export interface BatchLayoutItem {
+  widget_id: string;
+  layout: { x: number; y: number; w: number; h: number };
+}
+
+export function getBoards(projectId: string) {
+  return request<Board[]>("GET", `/projects/${projectId}/boards`);
+}
+
+export function getBoard(projectId: string, boardId: string) {
+  return request<BoardDetail>("GET", `/projects/${projectId}/boards/${boardId}`);
+}
+
+export function createBoard(projectId: string, input: CreateBoardInput) {
+  return request<Board>("POST", `/projects/${projectId}/boards`, input);
+}
+
+export function updateBoard(projectId: string, boardId: string, input: UpdateBoardInput) {
+  return request<Board>("PATCH", `/projects/${projectId}/boards/${boardId}`, input);
+}
+
+export function deleteBoard(projectId: string, boardId: string) {
+  return request<void>("DELETE", `/projects/${projectId}/boards/${boardId}`);
+}
+
+export function createWidget(projectId: string, boardId: string, input: CreateWidgetInput) {
+  return request<BoardWidget>("POST", `/projects/${projectId}/boards/${boardId}/widgets`, input);
+}
+
+export function updateWidget(projectId: string, boardId: string, widgetId: string, input: UpdateWidgetInput) {
+  return request<BoardWidget>("PATCH", `/projects/${projectId}/boards/${boardId}/widgets/${widgetId}`, input);
+}
+
+export function deleteWidget(projectId: string, boardId: string, widgetId: string) {
+  return request<void>("DELETE", `/projects/${projectId}/boards/${boardId}/widgets/${widgetId}`);
+}
+
+export function batchUpdateLayouts(projectId: string, boardId: string, layouts: BatchLayoutItem[]) {
+  return request<void>("PATCH", `/projects/${projectId}/boards/${boardId}/layouts`, { layouts });
 }

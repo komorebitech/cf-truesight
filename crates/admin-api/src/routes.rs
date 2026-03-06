@@ -93,6 +93,11 @@ pub fn create_router(state: AppState) -> Router {
             "/v1/stats/projects/{pid}/insights",
             post(handlers::properties::insights),
         )
+        // Trends
+        .route(
+            "/v1/stats/projects/{pid}/trends",
+            post(handlers::trends::trends),
+        )
         // User Profiles
         .route(
             "/v1/stats/projects/{pid}/users",
@@ -110,6 +115,11 @@ pub fn create_router(state: AppState) -> Router {
         .route(
             "/v1/stats/projects/{pid}/retention",
             post(handlers::retention::retention),
+        )
+        // Pivots
+        .route(
+            "/v1/stats/projects/{pid}/pivots",
+            post(handlers::pivots::pivots),
         )
         // Flows
         .route(
@@ -144,6 +154,76 @@ pub fn create_router(state: AppState) -> Router {
         .route(
             "/v1/projects/{pid}/cohorts/{cid}/size",
             get(handlers::cohorts::cohort_size),
+        )
+        // Segments
+        .route(
+            "/v1/projects/{pid}/segments",
+            get(handlers::segments::list_segments),
+        )
+        .route(
+            "/v1/projects/{pid}/segments",
+            post(handlers::segments::create_segment),
+        )
+        .route(
+            "/v1/projects/{pid}/segments/preview",
+            post(handlers::segments::segment_preview),
+        )
+        .route(
+            "/v1/projects/{pid}/segments/{sid}",
+            get(handlers::segments::get_segment),
+        )
+        .route(
+            "/v1/projects/{pid}/segments/{sid}",
+            patch(handlers::segments::update_segment),
+        )
+        .route(
+            "/v1/projects/{pid}/segments/{sid}",
+            delete(handlers::segments::delete_segment),
+        )
+        .route(
+            "/v1/projects/{pid}/segments/{sid}/size",
+            get(handlers::segments::segment_size),
+        )
+        .route(
+            "/v1/projects/{pid}/segments/{sid}/users",
+            get(handlers::segments::segment_users),
+        )
+        // Boards
+        .route(
+            "/v1/projects/{pid}/boards",
+            get(handlers::boards::list_boards),
+        )
+        .route(
+            "/v1/projects/{pid}/boards",
+            post(handlers::boards::create_board),
+        )
+        .route(
+            "/v1/projects/{pid}/boards/{bid}",
+            get(handlers::boards::get_board),
+        )
+        .route(
+            "/v1/projects/{pid}/boards/{bid}",
+            patch(handlers::boards::update_board),
+        )
+        .route(
+            "/v1/projects/{pid}/boards/{bid}",
+            delete(handlers::boards::delete_board),
+        )
+        .route(
+            "/v1/projects/{pid}/boards/{bid}/widgets",
+            post(handlers::boards::create_widget),
+        )
+        .route(
+            "/v1/projects/{pid}/boards/{bid}/widgets/{wid}",
+            patch(handlers::boards::update_widget),
+        )
+        .route(
+            "/v1/projects/{pid}/boards/{bid}/widgets/{wid}",
+            delete(handlers::boards::delete_widget),
+        )
+        .route(
+            "/v1/projects/{pid}/boards/{bid}/layouts",
+            patch(handlers::boards::batch_update_layouts),
         )
         // Funnels
         .route(

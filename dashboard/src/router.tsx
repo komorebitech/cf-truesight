@@ -14,9 +14,14 @@ import { FunnelComparePage } from "@/pages/FunnelComparePage";
 import { UsersPage } from "@/pages/UsersPage";
 import { UserDetailPage } from "@/pages/UserDetailPage";
 import { RetentionPage } from "@/pages/RetentionPage";
-import { CohortsPage } from "@/pages/CohortsPage";
 import { CohortDetailPage } from "@/pages/CohortDetailPage";
+import { SegmentsPage } from "@/pages/SegmentsPage";
+import { SegmentDetailPage } from "@/pages/SegmentDetailPage";
 import { FlowsPage } from "@/pages/FlowsPage";
+import { PivotsPage } from "@/pages/PivotsPage";
+import { TrendsPage } from "@/pages/TrendsPage";
+import { BoardsPage } from "@/pages/BoardsPage";
+import { BoardDetailPage } from "@/pages/BoardDetailPage";
 import { TeamsListPage } from "@/pages/TeamsListPage";
 import { TeamDetailPage } from "@/pages/TeamDetailPage";
 import { AcceptInvitationPage } from "@/pages/AcceptInvitationPage";
@@ -110,6 +115,14 @@ export const router = createBrowserRouter([
         element: <InsightsPage />,
       },
       {
+        path: "projects/:id/trends",
+        element: <TrendsPage />,
+      },
+      {
+        path: "projects/:id/pivots",
+        element: <PivotsPage />,
+      },
+      {
         path: "projects/:id/users",
         element: <UsersPage />,
       },
@@ -122,12 +135,28 @@ export const router = createBrowserRouter([
         element: <RetentionPage />,
       },
       {
+        path: "projects/:id/segments",
+        element: <SegmentsPage />,
+      },
+      {
+        path: "projects/:id/segments/:segmentId",
+        element: <SegmentDetailPage />,
+      },
+      {
         path: "projects/:id/cohorts",
-        element: <CohortsPage />,
+        element: <Navigate to="../segments" replace />,
       },
       {
         path: "projects/:id/cohorts/:cohortId",
         element: <CohortDetailPage />,
+      },
+      {
+        path: "projects/:id/boards",
+        element: <BoardsPage />,
+      },
+      {
+        path: "projects/:id/boards/:boardId",
+        element: <BoardDetailPage />,
       },
       {
         path: "projects/:id/flows",
