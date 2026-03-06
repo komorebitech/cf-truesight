@@ -509,6 +509,53 @@ export function compareFunnelTimeRanges(
 }
 
 // ---------------------------------------------------------------------------
+// Live events (SSE) types
+// ---------------------------------------------------------------------------
+
+export interface LiveEvent {
+  event_id: string;
+  project_id: string;
+  event_name: string;
+  event_type: string;
+  user_id: string;
+  anonymous_id: string;
+  email: string;
+  mobile_number: string;
+  client_timestamp: string;
+  server_timestamp: string;
+  server_ts_raw: number;
+  properties: string;
+  os_name: string;
+  device_model: string;
+  sdk_version: string;
+}
+
+export interface LiveEventStreamFilters {
+  environment?: string;
+  event_type?: string;
+  event_name?: string;
+  user_id?: string;
+  email?: string;
+  mobile_number?: string;
+}
+
+export function buildLiveEventsUrl(
+  projectId: string,
+  filters: LiveEventStreamFilters,
+): string {
+  const token = localStorage.getItem("truesight_jwt") ?? configuredToken ?? "";
+  const qs = new URLSearchParams();
+  qs.set("token", token);
+  if (filters.environment) qs.set("environment", filters.environment);
+  if (filters.event_type) qs.set("event_type", filters.event_type);
+  if (filters.event_name) qs.set("event_name", filters.event_name);
+  if (filters.user_id) qs.set("user_id", filters.user_id);
+  if (filters.email) qs.set("email", filters.email);
+  if (filters.mobile_number) qs.set("mobile_number", filters.mobile_number);
+  return `${baseURL}/stats/projects/${projectId}/events/stream?${qs.toString()}`;
+}
+
+// ---------------------------------------------------------------------------
 // Event explorer endpoints
 // ---------------------------------------------------------------------------
 

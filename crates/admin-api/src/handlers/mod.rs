@@ -5,6 +5,7 @@ pub mod flows;
 pub mod funnels;
 pub mod health;
 pub mod invitations;
+pub mod live_events;
 pub mod projects;
 pub mod properties;
 pub mod query_builder;

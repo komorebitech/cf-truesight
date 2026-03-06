@@ -49,6 +49,19 @@ export function formatDuration(ms: number): string {
   return `${minutes}m ${seconds}s`;
 }
 
+export function formatRelativeShort(date: string | Date): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const diffMs = Date.now() - d.getTime();
+  const diffS = Math.floor(diffMs / 1000);
+  if (diffS < 5) return "just now";
+  if (diffS < 60) return `${diffS}s ago`;
+  const diffM = Math.floor(diffS / 60);
+  if (diffM < 60) return `${diffM}m ago`;
+  const diffH = Math.floor(diffM / 60);
+  if (diffH < 24) return `${diffH}h ago`;
+  return `${Math.floor(diffH / 24)}d ago`;
+}
+
 export function maskApiKey(key: string): string {
   if (key.length <= 8) return "****";
   return key.slice(0, 8) + "..." + key.slice(-4);

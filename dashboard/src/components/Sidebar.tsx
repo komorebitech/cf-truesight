@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   TrendingUp,
   List,
+  Radio,
   Lightbulb,
   GitBranch,
   RotateCcw,
@@ -108,6 +109,11 @@ export function Sidebar() {
           label: "Events",
           href: `/projects/${projectId}/events`,
           icon: <List className="h-4 w-4" />,
+        },
+        {
+          label: "Live",
+          href: `/projects/${projectId}/live`,
+          icon: <Radio className="h-4 w-4" />,
         },
         {
           label: "Insights",
