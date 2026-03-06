@@ -26,7 +26,7 @@ pub struct ClickHouseInserter {
 /// Flat row representation that maps [`EnrichedEvent`] fields (including a
 /// flattened [`DeviceContext`](truesight_common::event::DeviceContext)) to the
 /// ClickHouse `events` table columns.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, clickhouse::Row)]
 struct EventRow {
     event_id: Uuid,
     event_name: String,
@@ -202,10 +202,21 @@ impl ClickHouseInserter {
         &self.client
     }
 
+    /// Writes rows using the native `INSERT` API (avoids SQL string formatting
+    /// which can misinterpret `?` in data as bind parameters).
+    async fn try_insert_rows(&self, rows: &[EventRow]) -> Result<()> {
+        let mut insert = self.client.insert("events")?;
+        for row in rows {
+            insert.write(row).await?;
+        }
+        insert.end().await?;
+        Ok(())
+    }
+
     /// Inserts a batch of enriched events into the `events` table.
     ///
-    /// The method serialises each event as a JSON line and uses ClickHouse's
-    /// `INSERT ... FORMAT JSONEachRow` protocol. On failure it retries up to
+    /// The method uses the `clickhouse` crate's native row insertion API.
+    /// On failure it retries up to
     /// [`MAX_RETRIES`] times with exponential back-off (500 ms, 1 s, 2 s).
     ///
     /// Returns `Ok(())` on success, or the last encountered error after all
@@ -218,19 +229,10 @@ impl ClickHouseInserter {
 
         let rows: Vec<EventRow> = events.iter().map(EventRow::from_enriched).collect();
 
-        let json_lines: Vec<String> = rows
-            .iter()
-            .map(|r| serde_json::to_string(r).expect("EventRow serialisation must not fail"))
-            .collect();
-
-        let body = json_lines.join("\n");
-
         let mut last_err: Option<anyhow::Error> = None;
 
         for attempt in 0..MAX_RETRIES {
-            let query = format!("INSERT INTO events FORMAT JSONEachRow\n{}", body);
-
-            match self.client.query(&query).execute().await {
+            match self.try_insert_rows(&rows).await {
                 Ok(()) => {
                     tracing::debug!(count = events.len(), attempt, "batch inserted successfully");
                     return Ok(());
@@ -243,10 +245,7 @@ impl ClickHouseInserter {
                         error = %e,
                         "insert batch failed, retrying"
                     );
-                    last_err = Some(
-                        anyhow::Error::new(e)
-                            .context(format!("insert attempt {} failed", attempt + 1)),
-                    );
+                    last_err = Some(e.context(format!("insert attempt {} failed", attempt + 1)));
                     tokio::time::sleep(std::time::Duration::from_millis(delay_ms)).await;
                 }
             }
