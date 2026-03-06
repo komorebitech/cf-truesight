@@ -51,12 +51,12 @@ export function ProjectSwitcher({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between gap-2 px-3 py-2 h-auto font-normal",
+            "w-full justify-between gap-2 px-3 py-2 h-auto font-normal text-sidebar-foreground hover:bg-sidebar-active hover:text-sidebar-foreground",
             collapsed && "justify-center px-2",
           )}
         >
           <div className="flex items-center gap-2 truncate">
-            <FolderKanban className="h-4 w-4 shrink-0 text-foreground" />
+            <FolderKanban className="h-4 w-4 shrink-0 text-sidebar-foreground" />
             {!collapsed && (
               <span className="truncate text-sm font-medium">
                 {currentProject?.name ?? "Select project"}

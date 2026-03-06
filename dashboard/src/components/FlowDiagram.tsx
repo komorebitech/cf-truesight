@@ -22,13 +22,13 @@ import { Workflow } from "lucide-react";
 // ── Theme colors ─────────────────────────────────────────────────────
 
 const STEP_COLORS = [
-  { bg: "hsl(263, 70%, 50%)", bgLight: "hsl(263, 70%, 96%)", border: "hsl(263, 70%, 85%)", text: "hsl(263, 70%, 35%)" },
-  { bg: "hsl(280, 60%, 55%)", bgLight: "hsl(280, 60%, 96%)", border: "hsl(280, 60%, 85%)", text: "hsl(280, 60%, 35%)" },
-  { bg: "hsl(24, 95%, 53%)",  bgLight: "hsl(24, 95%, 96%)",  border: "hsl(24, 95%, 85%)",  text: "hsl(24, 95%, 35%)" },
-  { bg: "hsl(340, 75%, 55%)", bgLight: "hsl(340, 75%, 96%)", border: "hsl(340, 75%, 85%)", text: "hsl(340, 75%, 35%)" },
-  { bg: "hsl(210, 70%, 50%)", bgLight: "hsl(210, 70%, 96%)", border: "hsl(210, 70%, 85%)", text: "hsl(210, 70%, 35%)" },
-  { bg: "hsl(160, 60%, 42%)", bgLight: "hsl(160, 60%, 96%)", border: "hsl(160, 60%, 85%)", text: "hsl(160, 60%, 30%)" },
-  { bg: "hsl(45, 90%, 48%)",  bgLight: "hsl(45, 90%, 96%)",  border: "hsl(45, 90%, 82%)",  text: "hsl(45, 90%, 28%)" },
+  { bg: "hsl(30, 53%, 64%)",  bgLight: "hsl(43, 82%, 94%)",  border: "hsl(30, 45%, 78%)",  text: "hsl(30, 40%, 35%)" },
+  { bg: "hsl(74, 30%, 50%)",  bgLight: "hsl(74, 30%, 93%)",  border: "hsl(74, 25%, 76%)",  text: "hsl(74, 25%, 30%)" },
+  { bg: "hsl(43, 55%, 52%)",  bgLight: "hsl(52, 70%, 94%)",  border: "hsl(43, 50%, 78%)",  text: "hsl(43, 45%, 30%)" },
+  { bg: "hsl(67, 35%, 48%)",  bgLight: "hsl(67, 47%, 93%)",  border: "hsl(67, 35%, 76%)",  text: "hsl(67, 30%, 28%)" },
+  { bg: "hsl(30, 40%, 45%)",  bgLight: "hsl(30, 50%, 94%)",  border: "hsl(30, 35%, 75%)",  text: "hsl(30, 35%, 28%)" },
+  { bg: "hsl(74, 25%, 42%)",  bgLight: "hsl(74, 25%, 92%)",  border: "hsl(74, 20%, 74%)",  text: "hsl(74, 20%, 25%)" },
+  { bg: "hsl(43, 40%, 45%)",  bgLight: "hsl(43, 55%, 93%)",  border: "hsl(43, 35%, 75%)",  text: "hsl(43, 35%, 28%)" },
 ];
 
 // ── Layout constants ─────────────────────────────────────────────────
@@ -323,7 +323,7 @@ interface FlowDiagramProps {
 export function FlowDiagram({ nodes, links, isLoading }: FlowDiagramProps) {
   if (isLoading) {
     return (
-      <div className="flex h-[560px] flex-col items-center justify-center gap-4 rounded-lg bg-muted/20">
+      <div className="flex h-[calc(100vh-12rem)] min-h-[560px] flex-col items-center justify-center gap-4 rounded-lg bg-muted/20">
         <div className="flex gap-8">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="flex flex-col gap-3">
@@ -340,7 +340,7 @@ export function FlowDiagram({ nodes, links, isLoading }: FlowDiagramProps) {
 
   if (nodes.length === 0) {
     return (
-      <div className="h-[560px] rounded-lg bg-muted/20">
+      <div className="h-[calc(100vh-12rem)] min-h-[560px] rounded-lg bg-muted/20">
         <EmptyState
           variant="data"
           icon={Workflow}
@@ -352,7 +352,7 @@ export function FlowDiagram({ nodes, links, isLoading }: FlowDiagramProps) {
   }
 
   return (
-    <div className="h-[560px] w-full">
+    <div className="h-[calc(100vh-12rem)] min-h-[560px] w-full">
       <ReactFlowProvider>
         <FlowDiagramInner flowNodes={nodes} flowLinks={links} />
       </ReactFlowProvider>

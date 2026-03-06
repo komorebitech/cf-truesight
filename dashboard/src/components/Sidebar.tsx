@@ -176,8 +176,8 @@ export function Sidebar() {
         className={cn(
           "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
           active
-            ? "border-l-2 border-foreground bg-sidebar-active text-foreground"
-            : "border-l-2 border-transparent text-muted-foreground hover:bg-sidebar-active/50 hover:text-foreground",
+            ? "bg-sidebar-active text-sidebar-foreground"
+            : "text-sidebar-muted-foreground hover:bg-sidebar-active/50 hover:text-sidebar-foreground",
           collapsed && "justify-center px-2",
         )}
       >
@@ -203,11 +203,11 @@ export function Sidebar() {
   // -- Section label --
   const sectionLabel = (text: string) =>
     !collapsed ? (
-      <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted-foreground">
         {text}
       </p>
     ) : (
-      <Separator className="my-2" />
+      <Separator className="my-2 bg-sidebar-border" />
     );
 
   // -- Full sidebar content --
@@ -220,13 +220,13 @@ export function Sidebar() {
           collapsed && "justify-center px-2",
         )}
       >
-        <Eye className="h-6 w-6 text-foreground" />
+        <Eye className="h-6 w-6 text-sidebar-foreground" />
         {!collapsed && (
-          <span className="font-heading text-lg font-bold">TrueSight</span>
+          <span className="font-heading text-lg font-bold text-sidebar-foreground">TrueSight</span>
         )}
       </div>
 
-      <Separator />
+      <Separator className="bg-sidebar-border" />
 
       {/* Project Switcher + Environment */}
       <div className="px-2 py-2 space-y-1.5">
@@ -250,8 +250,8 @@ export function Sidebar() {
                   className={cn(
                     "h-7 w-full px-2 text-[11px] font-semibold uppercase",
                     environment === "live"
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-amber-600 dark:text-amber-400",
+                      ? "text-green-700 dark:text-green-400"
+                      : "text-amber-700 dark:text-amber-400",
                   )}
                   onClick={() =>
                     setEnvironment(environment === "live" ? "test" : "live")
@@ -265,15 +265,15 @@ export function Sidebar() {
               </TooltipContent>
             </Tooltip>
           ) : (
-            <div className="flex w-full rounded-md border bg-muted/50 p-0.5">
+            <div className="flex w-full rounded-md border border-sidebar-border bg-sidebar-active/50 p-0.5">
               <button
                 type="button"
                 onClick={() => setEnvironment("live")}
                 className={cn(
                   "flex-1 rounded-sm px-2 py-1 text-xs font-medium transition-colors",
                   environment === "live"
-                    ? "bg-card text-green-600 shadow-sm dark:text-green-400"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "bg-sidebar-active text-green-700 shadow-sm dark:text-green-400"
+                    : "text-sidebar-muted-foreground hover:text-sidebar-foreground",
                 )}
               >
                 Live
@@ -284,8 +284,8 @@ export function Sidebar() {
                 className={cn(
                   "flex-1 rounded-sm px-2 py-1 text-xs font-medium transition-colors",
                   environment === "test"
-                    ? "bg-card text-amber-600 shadow-sm dark:text-amber-400"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "bg-sidebar-active text-amber-700 shadow-sm dark:text-amber-400"
+                    : "text-sidebar-muted-foreground hover:text-sidebar-foreground",
                 )}
               >
                 Test
@@ -295,7 +295,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <Separator />
+      <Separator className="bg-sidebar-border" />
 
       {/* Navigation */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2 scrollbar-thin">
@@ -310,7 +310,7 @@ export function Sidebar() {
         {manageItems.map((item) => renderNavItem(item, closeMobile))}
       </nav>
 
-      <Separator />
+      <Separator className="bg-sidebar-border" />
 
       {/* Footer */}
       <div className="px-2 py-3">
@@ -332,7 +332,7 @@ export function Sidebar() {
           >
             <p
               className={cn(
-                "text-xs text-muted-foreground",
+                "text-xs text-sidebar-muted-foreground",
                 collapsed && "hidden",
               )}
             >
@@ -346,7 +346,7 @@ export function Sidebar() {
           variant="ghost"
           size="sm"
           onClick={toggleCollapsed}
-          className="mt-1 w-full justify-center text-muted-foreground hover:text-foreground lg:flex hidden"
+          className="mt-1 w-full justify-center text-sidebar-muted-foreground hover:text-sidebar-foreground lg:flex hidden"
         >
           {collapsed ? (
             <PanelLeftOpen className="h-4 w-4" />
@@ -384,7 +384,7 @@ export function Sidebar() {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden shrink-0 border-r bg-sidebar lg:flex lg:flex-col transition-all duration-200",
+          "hidden shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col transition-all duration-200",
           collapsed ? "w-16" : "w-60",
         )}
       >
