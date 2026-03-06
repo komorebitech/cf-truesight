@@ -78,7 +78,7 @@ regex = "1"
 validator = { version = "0.19", features = ["derive"] }
 
 # JWT & HTTP client
-jsonwebtoken = "9"
+jsonwebtoken = "10"
 reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 
 # Common crate
