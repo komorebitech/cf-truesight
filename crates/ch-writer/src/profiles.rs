@@ -29,11 +29,7 @@ pub async fn upsert_profiles(client: &clickhouse::Client, events: &[EnrichedEven
             .format("%Y-%m-%d %H:%M:%S%.3f")
             .to_string();
 
-        let (email, name, mobile_number, props_map) = if event.event_type == EventType::Identify {
-            extract_identify_fields(event)
-        } else {
-            (event.email.clone(), None, event.mobile_number.clone(), String::new())
-        };
+        let (email, name, mobile_number, props_map) = extract_profile_fields(event);
 
         let email_val = nullable_str(&email);
         let name_val = nullable_str(&name);
@@ -74,65 +70,82 @@ pub async fn upsert_profiles(client: &clickhouse::Client, events: &[EnrichedEven
     Ok(())
 }
 
-/// Extract identify traits: email, name, mobile_number, and remaining as Map.
-fn extract_identify_fields(
+/// Case-insensitive lookup: find the first value whose key matches any of
+/// the given candidates (compared lowercased).
+fn get_ci<'a>(
+    props: &'a serde_json::Map<String, serde_json::Value>,
+    candidates: &[&str],
+) -> Option<&'a str> {
+    for (k, v) in props {
+        let lower = k.to_lowercase();
+        if candidates.iter().any(|c| *c == lower) {
+            return v.as_str();
+        }
+    }
+    None
+}
+
+/// Returns true if `key` (lowercased) matches any candidate.
+fn is_profile_key(key: &str, candidates: &[&str]) -> bool {
+    let lower = key.to_lowercase();
+    candidates.iter().any(|c| *c == lower)
+}
+
+/// Extract profile fields (email, name, mobile_number) from any event type.
+/// For identify events, also builds a properties Map for the profile.
+fn extract_profile_fields(
     event: &EnrichedEvent,
 ) -> (Option<String>, Option<String>, Option<String>, String) {
+    let is_identify = event.event_type == EventType::Identify;
+
     let Some(serde_json::Value::Object(props)) = &event.properties else {
-        let email = event.email.clone();
-        let name = None;
-        let mobile = event.mobile_number.clone();
-        return (email, name, mobile, String::new());
+        return (event.email.clone(), None, event.mobile_number.clone(), String::new());
     };
 
-    let email = props
-        .get("email")
-        .or(props.get("$email"))
-        .and_then(|v| v.as_str())
+    let email_keys = ["email", "$email"];
+    let name_keys = ["name", "$name", "first name", "first_name", "full_name", "fullname"];
+    let mobile_keys = ["mobile_number", "$phone", "phone", "mobile", "phone_number"];
+
+    let email = get_ci(props, &email_keys)
         .map(String::from)
         .or_else(|| event.email.clone());
 
-    let name = props
-        .get("name")
-        .or(props.get("$name"))
-        .and_then(|v| v.as_str())
-        .map(String::from);
+    let name = get_ci(props, &name_keys).map(String::from);
 
-    let mobile = props
-        .get("mobile_number")
-        .or(props.get("$phone"))
-        .and_then(|v| v.as_str())
+    let mobile = get_ci(props, &mobile_keys)
         .map(String::from)
         .or_else(|| event.mobile_number.clone());
 
-    // Build remaining properties as a ClickHouse map() expression
-    let skip_keys = [
-        "email",
-        "$email",
-        "name",
-        "$name",
-        "mobile_number",
-        "$phone",
-    ];
-    let map_entries: Vec<String> = props
-        .iter()
-        .filter(|(k, _)| !skip_keys.contains(&k.as_str()))
-        .filter_map(|(k, v)| {
-            let val = match v {
-                serde_json::Value::String(s) => s.clone(),
-                serde_json::Value::Bool(b) => b.to_string(),
-                serde_json::Value::Number(n) => n.to_string(),
-                serde_json::Value::Null => return None,
-                other => serde_json::to_string(other).unwrap_or_default(),
-            };
-            Some(format!("'{}', '{}'", escape(k), escape(&val)))
-        })
+    // Only build the properties map for identify events
+    let all_skip_keys: Vec<&str> = email_keys.iter()
+        .chain(name_keys.iter())
+        .chain(mobile_keys.iter())
+        .copied()
         .collect();
 
-    let props_map = if map_entries.is_empty() {
-        String::new()
+    let props_map = if is_identify {
+        let map_entries: Vec<String> = props
+            .iter()
+            .filter(|(k, _)| !is_profile_key(k, &all_skip_keys))
+            .filter_map(|(k, v)| {
+                let val = match v {
+                    serde_json::Value::String(s) => s.clone(),
+                    serde_json::Value::Bool(b) => b.to_string(),
+                    serde_json::Value::Number(n) => n.to_string(),
+                    serde_json::Value::Null => return None,
+                    other => serde_json::to_string(other).unwrap_or_default(),
+                };
+                Some(format!("'{}', '{}'", escape(k), escape(&val)))
+            })
+            .collect();
+
+        if map_entries.is_empty() {
+            String::new()
+        } else {
+            format!("map({})", map_entries.join(", "))
+        }
     } else {
-        format!("map({})", map_entries.join(", "))
+        String::new()
     };
 
     (email, name, mobile, props_map)
