@@ -1,2 +1,2 @@
-ALTER TABLE truesight_local.events
+ALTER TABLE truesight.events
     ADD COLUMN IF NOT EXISTS session_id Nullable(String) AFTER environment;

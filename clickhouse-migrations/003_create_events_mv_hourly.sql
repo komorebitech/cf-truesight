@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS truesight_local.events_hourly
+CREATE TABLE IF NOT EXISTS truesight.events_hourly
 (
     project_id UUID,
     event_name LowCardinality(String),
@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS truesight_local.events_hourly
 ENGINE = SummingMergeTree()
 ORDER BY (project_id, event_name, event_type, hour);
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS truesight_local.events_hourly_mv
-TO truesight_local.events_hourly
+CREATE MATERIALIZED VIEW IF NOT EXISTS truesight.events_hourly_mv
+TO truesight.events_hourly
 AS
 SELECT
     project_id,
@@ -18,5 +18,5 @@ SELECT
     event_type,
     toStartOfHour(server_timestamp) AS hour,
     count() AS count
-FROM truesight_local.events
+FROM truesight.events
 GROUP BY ALL;

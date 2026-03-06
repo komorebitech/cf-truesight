@@ -1,6 +1,6 @@
-CREATE DATABASE IF NOT EXISTS truesight_local;
+CREATE DATABASE IF NOT EXISTS truesight;
 
-CREATE TABLE IF NOT EXISTS truesight_local.events
+CREATE TABLE IF NOT EXISTS truesight.events
 (
     event_id UUID,
     project_id UUID,

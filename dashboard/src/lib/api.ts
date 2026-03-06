@@ -1039,6 +1039,63 @@ export function getCohortSize(projectId: string, cohortId: string, environment?:
 }
 
 // ---------------------------------------------------------------------------
+// Event Catalog endpoints
+// ---------------------------------------------------------------------------
+
+export interface CatalogEvent {
+  event_name: string;
+  event_type: string;
+  event_count: number;
+  first_seen: string;
+  last_seen: string;
+}
+
+export interface EventCatalogResponse {
+  events: CatalogEvent[];
+}
+
+export interface EventProperty {
+  property_key: string;
+  first_seen: string;
+}
+
+export interface EventPropertiesResponse {
+  event_name: string;
+  properties: EventProperty[];
+}
+
+export function getEventCatalog(
+  projectId: string,
+  q?: string,
+  limit?: number,
+  environment?: string,
+) {
+  const qs = new URLSearchParams();
+  if (q) qs.set("q", q);
+  if (limit) qs.set("limit", String(limit));
+  if (environment) qs.set("environment", environment);
+  const query = qs.toString();
+  return request<EventCatalogResponse>(
+    "GET",
+    `/stats/projects/${projectId}/event-catalog${query ? `?${query}` : ""}`,
+  );
+}
+
+export function getEventProperties(
+  projectId: string,
+  eventName: string,
+  environment?: string,
+) {
+  const qs = new URLSearchParams();
+  if (environment) qs.set("environment", environment);
+  const query = qs.toString();
+  return request<EventPropertiesResponse>(
+    "GET",
+    `/stats/projects/${projectId}/event-catalog/${encodeURIComponent(eventName)}/properties${query ? `?${query}` : ""}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Flows endpoints
 // ---------------------------------------------------------------------------
 
