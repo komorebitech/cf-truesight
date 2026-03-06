@@ -52,6 +52,7 @@ struct EventRow {
     locale: String,
     timezone: String,
     sdk_version: String,
+    platform: String,
 }
 
 impl EventRow {
@@ -94,6 +95,7 @@ impl EventRow {
             locale: event.context.locale.clone(),
             timezone: event.context.timezone.clone(),
             sdk_version: event.context.sdk_version.clone(),
+            platform: event.context.platform.clone().unwrap_or_default(),
         }
     }
 }

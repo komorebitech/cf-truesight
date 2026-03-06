@@ -120,6 +120,7 @@ interface CachedDeviceFields {
   locale: string;
   timezone: string;
   sdk_version: string;
+  platform: string;
   screen_width: number;
   screen_height: number;
 }
@@ -158,6 +159,7 @@ async function getCachedDeviceFields(): Promise<CachedDeviceFields> {
       }
     })(),
     sdk_version: SDK_VERSION,
+    platform: 'web',
     screen_width: typeof screen !== 'undefined' ? screen.width : 0,
     screen_height: typeof screen !== 'undefined' ? screen.height : 0,
   };

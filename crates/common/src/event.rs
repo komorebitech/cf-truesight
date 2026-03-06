@@ -21,6 +21,8 @@ pub struct DeviceContext {
     pub locale: String,
     pub timezone: String,
     pub sdk_version: String,
+    #[serde(default)]
+    pub platform: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

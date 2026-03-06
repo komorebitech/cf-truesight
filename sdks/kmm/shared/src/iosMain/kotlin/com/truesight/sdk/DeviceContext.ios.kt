@@ -34,7 +34,8 @@ actual class DeviceContextCollector {
             networkType = null, // Network type requires Reachability - omit on iOS for simplicity
             locale = locale,
             timezone = timezone,
-            sdkVersion = TrueSight.SDK_VERSION
+            sdkVersion = TrueSight.SDK_VERSION,
+            platform = "ios"
         )
     }
 }

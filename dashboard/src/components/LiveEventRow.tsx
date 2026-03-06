@@ -102,6 +102,11 @@ export function LiveEventRow({ event, isLast, onSelect }: LiveEventRowProps) {
               {event.event_type}
             </Badge>
             <span className="truncate font-medium">{event.event_name}</span>
+            {event.platform && (
+              <Badge variant="outline" className="shrink-0 text-xs">
+                {event.platform}
+              </Badge>
+            )}
             <span className="ml-auto shrink-0 truncate text-xs text-muted-foreground max-w-[180px]">
               {userIdentifier(event)}
             </span>

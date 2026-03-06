@@ -27,6 +27,7 @@ export function LiveEventsContent() {
 
   // Filter state
   const [eventType, setEventType] = useState("");
+  const [platform, setPlatform] = useState("");
   const [eventName, setEventName] = useState("");
   const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
@@ -41,6 +42,7 @@ export function LiveEventsContent() {
   const filters: LiveEventStreamFilters = {
     environment,
     event_type: eventType || undefined,
+    platform: platform || undefined,
     event_name: debouncedEventName || undefined,
     user_id: debouncedUserId || undefined,
     email: debouncedEmail || undefined,
@@ -67,6 +69,7 @@ export function LiveEventsContent() {
 
   const handleReset = () => {
     setEventType("");
+    setPlatform("");
     setEventName("");
     setUserId("");
     setEmail("");
@@ -170,6 +173,18 @@ export function LiveEventsContent() {
           <option value="track">track</option>
           <option value="identify">identify</option>
           <option value="screen">screen</option>
+        </Select>
+
+        <Select
+          value={platform}
+          onChange={(e) => setPlatform(e.target.value)}
+          className="w-32"
+        >
+          <option value="">All platforms</option>
+          <option value="web">Web</option>
+          <option value="android">Android</option>
+          <option value="ios">iOS</option>
+          <option value="server">Server</option>
         </Select>
 
         <Input

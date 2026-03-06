@@ -13,7 +13,8 @@ data class DeviceContextModel(
     @SerialName("network_type") val networkType: String? = null,
     val locale: String,
     val timezone: String,
-    @SerialName("sdk_version") val sdkVersion: String
+    @SerialName("sdk_version") val sdkVersion: String,
+    @SerialName("platform") val platform: String
 )
 
 expect class DeviceContextCollector {

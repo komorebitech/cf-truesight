@@ -31,6 +31,7 @@ export function EventExplorerPage() {
 
   const [timeRange, setTimeRange] = useState<TimeRange>(() => getPresetRange("7d"));
   const [eventType, setEventType] = useState("");
+  const [platform, setPlatform] = useState("");
   const [eventName, setEventName] = useState("");
   const [userId, setUserId] = useState("");
   const [page, setPage] = useState(1);
@@ -42,6 +43,7 @@ export function EventExplorerPage() {
     from: timeRange.from,
     to: timeRange.to,
     event_type: eventType || undefined,
+    platform: platform || undefined,
     event_name: debouncedEventName || undefined,
     user_id: debouncedUserId || undefined,
     environment,
@@ -59,6 +61,7 @@ export function EventExplorerPage() {
   const handleReset = () => {
     setTimeRange(getPresetRange("7d"));
     setEventType("");
+    setPlatform("");
     setEventName("");
     setUserId("");
     setPage(1);
@@ -95,6 +98,21 @@ export function EventExplorerPage() {
                 {t}
               </option>
             ))}
+          </Select>
+
+          <Select
+            value={platform}
+            onChange={(e) => {
+              setPlatform(e.target.value);
+              setPage(1);
+            }}
+            className="w-36"
+          >
+            <option value="">All platforms</option>
+            <option value="web">Web</option>
+            <option value="android">Android</option>
+            <option value="ios">iOS</option>
+            <option value="server">Server</option>
           </Select>
 
           <div className="relative">

@@ -95,6 +95,7 @@ export interface TrackedEvent {
   os_name: string;
   device_model: string;
   sdk_version: string;
+  platform: string;
 }
 
 export interface EventsListResponse {
@@ -110,6 +111,7 @@ export interface EventFilters {
   user_id?: string;
   anonymous_id?: string;
   environment?: "live" | "test";
+  platform?: string;
   page?: number;
   per_page?: number;
 }
@@ -528,6 +530,7 @@ export interface LiveEvent {
   os_name: string;
   device_model: string;
   sdk_version: string;
+  platform: string;
 }
 
 export interface LiveEventStreamFilters {
@@ -537,6 +540,7 @@ export interface LiveEventStreamFilters {
   user_id?: string;
   email?: string;
   mobile_number?: string;
+  platform?: string;
 }
 
 export function buildLiveEventsUrl(
@@ -552,6 +556,7 @@ export function buildLiveEventsUrl(
   if (filters.user_id) qs.set("user_id", filters.user_id);
   if (filters.email) qs.set("email", filters.email);
   if (filters.mobile_number) qs.set("mobile_number", filters.mobile_number);
+  if (filters.platform) qs.set("platform", filters.platform);
   return `${baseURL}/stats/projects/${projectId}/events/stream?${qs.toString()}`;
 }
 
@@ -568,6 +573,7 @@ export function getEvents(projectId: string, filters?: EventFilters) {
   if (filters?.user_id) qs.set("user_id", filters.user_id);
   if (filters?.anonymous_id) qs.set("anonymous_id", filters.anonymous_id);
   if (filters?.environment) qs.set("environment", filters.environment);
+  if (filters?.platform) qs.set("platform", filters.platform);
   if (filters?.page) qs.set("page", String(filters.page));
   if (filters?.per_page) qs.set("per_page", String(filters.per_page));
   const query = qs.toString();

@@ -10,6 +10,7 @@ export interface DeviceContext {
   locale: string;
   timezone: string;
   sdk_version: string;
+  platform: string;
   screen_width: number;
   screen_height: number;
   page_url: string;

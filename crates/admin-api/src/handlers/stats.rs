@@ -331,6 +331,7 @@ pub struct ListEventsQuery {
     pub user_id: Option<String>,
     pub anonymous_id: Option<String>,
     pub environment: Option<String>,
+    pub platform: Option<String>,
     #[serde(default = "default_events_page")]
     pub page: u64,
     #[serde(default = "default_events_per_page")]
@@ -358,6 +359,7 @@ pub struct EventRow {
     #[serde(rename = "server_timestamp")]
     pub server_ts: String,
     pub properties: String,
+    pub platform: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -408,6 +410,9 @@ pub async fn list_events(
     if params.environment.is_some() {
         conditions.push("environment = ?".to_string());
     }
+    if params.platform.is_some() {
+        conditions.push("platform = ?".to_string());
+    }
 
     let where_clause = conditions.join(" AND ");
 
@@ -417,7 +422,7 @@ pub async fn list_events(
          COALESCE(user_id, '') AS user_id, anonymous_id, \
          formatDateTime(client_timestamp, '%Y-%m-%d %H:%i:%S', 'UTC') AS client_ts, \
          formatDateTime(server_timestamp, '%Y-%m-%d %H:%i:%S', 'UTC') AS server_ts, \
-         properties \
+         properties, platform \
          FROM {}.events WHERE {} \
          ORDER BY client_timestamp DESC \
          LIMIT ? OFFSET ?",
@@ -448,6 +453,9 @@ pub async fn list_events(
     }
     if let Some(ref env) = params.environment {
         q = q.bind(env.as_str());
+    }
+    if let Some(ref plat) = params.platform {
+        q = q.bind(plat.as_str());
     }
 
     let mut rows = q

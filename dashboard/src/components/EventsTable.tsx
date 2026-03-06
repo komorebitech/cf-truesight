@@ -81,6 +81,7 @@ export function EventsTable({
             <TableHead className="w-8" />
             <TableHead>Event Name</TableHead>
             <TableHead>Type</TableHead>
+            <TableHead>Platform</TableHead>
             <TableHead>Anonymous ID</TableHead>
             <TableHead>User ID</TableHead>
             <TableHead>Timestamp</TableHead>
@@ -117,6 +118,13 @@ export function EventsTable({
                     {event.event_type}
                   </Badge>
                 </TableCell>
+                <TableCell>
+                  {event.platform ? (
+                    <Badge variant="outline" className="text-xs">
+                      {event.platform}
+                    </Badge>
+                  ) : null}
+                </TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">
                   {event.anonymous_id.slice(0, 12)}...
                 </TableCell>
@@ -129,7 +137,7 @@ export function EventsTable({
               </motion.tr>
               {expandedId === event.event_id && (
                 <TableRow key={`${event.event_id}-expanded`}>
-                  <TableCell colSpan={6} className="bg-muted p-0">
+                  <TableCell colSpan={7} className="bg-muted p-0">
                     <pre className="max-h-64 overflow-auto p-4 text-xs">
                       {JSON.stringify(cleanProperties(JSON.parse(event.properties || "{}")), null, 2)}
                     </pre>

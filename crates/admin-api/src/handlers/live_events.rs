@@ -27,6 +27,7 @@ pub struct LiveEventsQuery {
     pub user_id: Option<String>,
     pub email: Option<String>,
     pub mobile_number: Option<String>,
+    pub platform: Option<String>,
 }
 
 // ── ClickHouse row ──────────────────────────────────────────────────
@@ -50,6 +51,7 @@ pub struct LiveEventRow {
     pub os_name: String,
     pub device_model: String,
     pub sdk_version: String,
+    pub platform: String,
 }
 
 // ── Token validation (EventSource can't set headers) ────────────────
@@ -133,6 +135,9 @@ pub async fn live_events_stream(
                     "positionCaseInsensitive(COALESCE(mobile_number, ''), ?) > 0".to_string(),
                 );
             }
+            if params.platform.is_some() {
+                conditions.push("platform = ?".to_string());
+            }
 
             let where_clause = conditions.join(" AND ");
 
@@ -144,7 +149,7 @@ pub async fn live_events_stream(
                  formatDateTime(client_timestamp, '%Y-%m-%dT%H:%i:%S', 'UTC') AS client_ts, \
                  formatDateTime(server_timestamp, '%Y-%m-%dT%H:%i:%S', 'UTC') AS server_ts, \
                  toFloat64(toUnixTimestamp64Milli(server_timestamp)) / 1000.0 AS server_ts_raw, \
-                 properties, os_name, device_model, sdk_version \
+                 properties, os_name, device_model, sdk_version, platform \
                  FROM {db}.events WHERE {where_clause} \
                  ORDER BY server_timestamp ASC \
                  LIMIT 100"
@@ -173,6 +178,9 @@ pub async fn live_events_stream(
             }
             if let Some(ref mn) = params.mobile_number {
                 q = q.bind(mn.as_str());
+            }
+            if let Some(ref plat) = params.platform {
+                q = q.bind(plat.as_str());
             }
 
             match q.fetch_all::<LiveEventRow>().await {
