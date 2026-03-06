@@ -7,6 +7,20 @@ pub mod sql_types {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::TeamRole;
+
+    allowed_domains (id) {
+        id -> Uuid,
+        team_id -> Uuid,
+        #[max_length = 255]
+        domain -> Varchar,
+        default_role -> TeamRole,
+        created_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     api_keys (id) {
         id -> Uuid,
         project_id -> Uuid,
@@ -24,21 +38,36 @@ diesel::table! {
 }
 
 diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::TeamRole;
-
-    allowed_domains (id) {
+    board_widgets (id) {
         id -> Uuid,
-        team_id -> Uuid,
+        board_id -> Uuid,
+        #[max_length = 50]
+        widget_type -> Varchar,
         #[max_length = 255]
-        domain -> Varchar,
-        default_role -> TeamRole,
+        title -> Varchar,
+        config -> Jsonb,
+        layout -> Jsonb,
+        position -> Int4,
         created_at -> Timestamptz,
+        updated_at -> Timestamptz,
     }
 }
 
 diesel::table! {
-    cohorts (id) {
+    boards (id) {
+        id -> Uuid,
+        project_id -> Uuid,
+        #[max_length = 255]
+        name -> Varchar,
+        description -> Nullable<Text>,
+        is_default -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    segments (id) {
         id -> Uuid,
         project_id -> Uuid,
         #[max_length = 255]
@@ -47,6 +76,8 @@ diesel::table! {
         definition -> Jsonb,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        #[max_length = 50]
+        segment_type -> Varchar,
     }
 }
 
@@ -143,21 +174,25 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(api_keys -> projects (project_id));
 diesel::joinable!(allowed_domains -> teams (team_id));
-diesel::joinable!(cohorts -> projects (project_id));
+diesel::joinable!(api_keys -> projects (project_id));
+diesel::joinable!(board_widgets -> boards (board_id));
+diesel::joinable!(boards -> projects (project_id));
+diesel::joinable!(segments -> projects (project_id));
 diesel::joinable!(funnels -> projects (project_id));
 diesel::joinable!(invitations -> teams (team_id));
 diesel::joinable!(invitations -> users (invited_by));
 diesel::joinable!(team_members -> teams (team_id));
 diesel::joinable!(team_members -> users (user_id));
-diesel::joinable!(team_projects -> teams (team_id));
 diesel::joinable!(team_projects -> projects (project_id));
+diesel::joinable!(team_projects -> teams (team_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    api_keys,
     allowed_domains,
-    cohorts,
+    api_keys,
+    board_widgets,
+    boards,
+    segments,
     funnels,
     invitations,
     projects,

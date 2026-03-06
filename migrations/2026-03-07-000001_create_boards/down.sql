@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS board_widgets;
+DROP TABLE IF EXISTS boards;
