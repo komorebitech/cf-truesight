@@ -203,24 +203,24 @@ pub struct InsightsTotal {
 #[derive(Debug, clickhouse::Row, Deserialize)]
 struct InsightsRawRow {
     period: String,
-    value: f64,
     #[serde(default)]
     g0: String,
     #[serde(default)]
     g1: String,
     #[serde(default)]
     g2: String,
+    value: f64,
 }
 
 #[derive(Debug, clickhouse::Row, Deserialize)]
 struct TotalsRawRow {
-    value: f64,
     #[serde(default)]
     g0: String,
     #[serde(default)]
     g1: String,
     #[serde(default)]
     g2: String,
+    value: f64,
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
