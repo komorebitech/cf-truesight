@@ -12,6 +12,12 @@ export interface DeviceContext {
   sdk_version: string;
   screen_width: number;
   screen_height: number;
+  page_url: string;
+  page_path: string;
+  referrer: string;
+  user_agent: string;
+  viewport_width: number;
+  viewport_height: number;
 }
 
 export interface TrueSightEvent {
@@ -22,6 +28,7 @@ export interface TrueSightEvent {
   anonymous_id: string;
   mobile_number: string | null;
   email: string | null;
+  session_id: string | null;
   client_timestamp: string;
   properties: Record<string, unknown>;
   context: DeviceContext;

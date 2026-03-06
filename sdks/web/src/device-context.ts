@@ -79,21 +79,56 @@ async function generateDeviceId(): Promise<string> {
     components.push('no-canvas');
   }
 
-  // Hash everything with SHA-256
-  const encoder = new TextEncoder();
-  const data = encoder.encode(components.join('|'));
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = new Uint8Array(hashBuffer);
-  return Array.from(hashArray)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  // Hash everything with SHA-256 (with fallback for non-browser environments)
+  if (typeof globalThis.crypto === 'undefined' || !globalThis.crypto.subtle) {
+    let h = 0;
+    const raw = components.join('|');
+    for (let i = 0; i < raw.length; i++) {
+      h = ((h << 5) - h + raw.charCodeAt(i)) | 0;
+    }
+    return `fallback-${Math.abs(h)}`;
+  }
+
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(components.join('|'));
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = new Uint8Array(hashBuffer);
+    return Array.from(hashArray)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  } catch {
+    let h = 0;
+    const raw = components.join('|');
+    for (let i = 0; i < raw.length; i++) {
+      h = ((h << 5) - h + raw.charCodeAt(i)) | 0;
+    }
+    return `fallback-${Math.abs(h)}`;
+  }
 }
 
-let cachedContext: DeviceContext | null = null;
+// Device-level fields are cached (they don't change during a session).
+// Page-level fields (URL, path, referrer, viewport) are collected fresh
+// every call since they change during SPA navigation.
+interface CachedDeviceFields {
+  app_version: string;
+  os_name: string;
+  os_version: string;
+  device_model: string;
+  device_id: string;
+  network_type: string;
+  locale: string;
+  timezone: string;
+  sdk_version: string;
+  screen_width: number;
+  screen_height: number;
+}
 
-export async function getDeviceContext(): Promise<DeviceContext> {
-  if (cachedContext) {
-    return cachedContext;
+let cachedDeviceFields: CachedDeviceFields | null = null;
+
+async function getCachedDeviceFields(): Promise<CachedDeviceFields> {
+  if (cachedDeviceFields) {
+    return cachedDeviceFields;
   }
 
   const ua =
@@ -104,7 +139,7 @@ export async function getDeviceContext(): Promise<DeviceContext> {
 
   const deviceId = await generateDeviceId();
 
-  cachedContext = {
+  cachedDeviceFields = {
     app_version:
       typeof document !== 'undefined'
         ? document.querySelector('meta[name=version]')?.getAttribute('content') || 'unknown'
@@ -127,10 +162,27 @@ export async function getDeviceContext(): Promise<DeviceContext> {
     screen_height: typeof screen !== 'undefined' ? screen.height : 0,
   };
 
-  return cachedContext;
+  return cachedDeviceFields;
+}
+
+export async function getDeviceContext(): Promise<DeviceContext> {
+  const cached = await getCachedDeviceFields();
+
+  // Fresh per-call: these change during SPA navigation
+  return {
+    ...cached,
+    page_url: typeof window !== 'undefined' ? window.location.href : '',
+    page_path: typeof window !== 'undefined'
+      ? window.location.pathname + window.location.search
+      : '',
+    referrer: typeof document !== 'undefined' ? document.referrer : '',
+    user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+    viewport_width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    viewport_height: typeof window !== 'undefined' ? window.innerHeight : 0,
+  };
 }
 
 /** Clear cached context (used in testing). */
 export function clearDeviceContextCache(): void {
-  cachedContext = null;
+  cachedDeviceFields = null;
 }

@@ -26,6 +26,7 @@ object TrueSight {
     private lateinit var anonymousIdManager: AnonymousIdManager
     private lateinit var deviceContextCollector: DeviceContextCollector
     private lateinit var logger: Logger
+    private var sessionManager: SessionManager? = null
 
     private var userId: String? = null
     private var anonymousId: String = ""
@@ -75,6 +76,12 @@ object TrueSight {
 
         flushScheduler.start(config.flushInterval) {
             performFlush()
+        }
+
+        // Initialize session manager
+        if (config.sessionTrackingEnabled) {
+            sessionManager = SessionManager()
+            sessionManager?.getOrStartSession()
         }
 
         initialized = true
@@ -140,6 +147,25 @@ object TrueSight {
         enqueueEvent(event)
     }
 
+    fun trackExperiment(flagName: String, variant: String, properties: Map<String, Any?> = emptyMap()) {
+        track("\$experiment_exposure", properties + mapOf("flag_name" to flagName, "variant" to variant))
+    }
+
+    fun onAppBackground() {
+        sessionManager?.onBackground()
+    }
+
+    fun onAppForeground() {
+        val oldSessionId = sessionManager?.currentSessionId()
+        val result = sessionManager?.onForeground() ?: return
+        if (result.second) {
+            if (oldSessionId != null) {
+                track("\$session_end", mapOf("session_id" to oldSessionId))
+            }
+            track("\$session_start", mapOf("session_id" to result.first))
+        }
+    }
+
     fun flush() {
         ensureInitialized()
         scope.launch {
@@ -149,6 +175,7 @@ object TrueSight {
 
     fun reset() {
         ensureInitialized()
+        sessionManager?.reset()
         userId = null
         mobileNumber = null
         email = null
@@ -217,6 +244,7 @@ object TrueSight {
             eventType = eventType,
             userId = userId,
             anonymousId = anonymousId,
+            sessionId = sessionManager?.getOrStartSession(),
             mobileNumber = mobileNumber,
             email = email,
             clientTimestamp = timestamp,

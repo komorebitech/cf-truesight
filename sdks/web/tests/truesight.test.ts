@@ -65,9 +65,47 @@ vi.stubGlobal('document', {
   querySelector: vi.fn().mockReturnValue(null),
 });
 
+// Mock sessionStorage
+const sessionStorageStore: Record<string, string> = {};
+const sessionStorageMock = {
+  getItem: vi.fn((key: string) => sessionStorageStore[key] ?? null),
+  setItem: vi.fn((key: string, value: string) => {
+    sessionStorageStore[key] = value;
+  }),
+  removeItem: vi.fn((key: string) => {
+    delete sessionStorageStore[key];
+  }),
+  clear: vi.fn(() => {
+    for (const key of Object.keys(sessionStorageStore)) {
+      delete sessionStorageStore[key];
+    }
+  }),
+  get length() {
+    return Object.keys(sessionStorageStore).length;
+  },
+  key: vi.fn((index: number) => Object.keys(sessionStorageStore)[index] ?? null),
+};
+vi.stubGlobal('sessionStorage', sessionStorageMock);
+
+// Mock history
+vi.stubGlobal('history', {
+  pushState: vi.fn(),
+  replaceState: vi.fn(),
+});
+
+// Mock location
+vi.stubGlobal('location', {
+  href: 'https://test.example.com/page',
+  pathname: '/page',
+  search: '',
+  origin: 'https://test.example.com',
+});
+
 // Mock window (for event listeners in flush-scheduler)
 vi.stubGlobal('window', {
-  location: { origin: 'https://test.example.com' },
+  location: { origin: 'https://test.example.com', href: 'https://test.example.com/page', pathname: '/page', search: '' },
+  innerWidth: 1920,
+  innerHeight: 1080,
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
 });
@@ -79,6 +117,7 @@ describe('TrueSightSDK', () => {
     sdk = new TrueSightSDK();
     fetchMock.mockClear();
     localStorageMock.clear();
+    sessionStorageMock.clear();
 
     // Delete the database before each test
     await new Promise<void>((resolve, reject) => {
@@ -97,7 +136,7 @@ describe('TrueSightSDK', () => {
     it('should initialize with valid config', async () => {
       await sdk.init({
         apiKey: 'test-api-key-123',
-        endpoint: 'https://api.truesight.dev/v1/events',
+        endpoint: 'https://api.truesight.dev',
       });
 
       expect(sdk.isInitialized()).toBe(true);
@@ -107,7 +146,7 @@ describe('TrueSightSDK', () => {
       await expect(
         sdk.init({
           apiKey: '',
-          endpoint: 'https://api.truesight.dev/v1/events',
+          endpoint: 'https://api.truesight.dev',
         })
       ).rejects.toThrow('apiKey is required');
     });
@@ -124,13 +163,13 @@ describe('TrueSightSDK', () => {
     it('should not reinitialize if already initialized', async () => {
       await sdk.init({
         apiKey: 'test-api-key-123',
-        endpoint: 'https://api.truesight.dev/v1/events',
+        endpoint: 'https://api.truesight.dev',
       });
 
       // Should not throw, just warn
       await sdk.init({
         apiKey: 'different-key',
-        endpoint: 'https://api.truesight.dev/v1/events',
+        endpoint: 'https://api.truesight.dev',
       });
 
       expect(sdk.isInitialized()).toBe(true);
@@ -139,7 +178,7 @@ describe('TrueSightSDK', () => {
     it('should generate anonymous ID on init', async () => {
       await sdk.init({
         apiKey: 'test-api-key-123',
-        endpoint: 'https://api.truesight.dev/v1/events',
+        endpoint: 'https://api.truesight.dev',
       });
 
       expect(sdk.getAnonymousId()).toBeTruthy();
@@ -151,7 +190,7 @@ describe('TrueSightSDK', () => {
     beforeEach(async () => {
       await sdk.init({
         apiKey: 'test-api-key-123',
-        endpoint: 'https://api.truesight.dev/v1/events',
+        endpoint: 'https://api.truesight.dev',
       });
     });
 
@@ -162,7 +201,7 @@ describe('TrueSightSDK', () => {
 
       expect(fetchMock).toHaveBeenCalled();
       const callArgs = fetchMock.mock.calls[0];
-      expect(callArgs[0]).toBe('https://api.truesight.dev/v1/events');
+      expect(callArgs[0]).toBe('https://api.truesight.dev/v1/events/batch');
     });
 
     it('should not track empty event names', async () => {
@@ -186,7 +225,7 @@ describe('TrueSightSDK', () => {
     beforeEach(async () => {
       await sdk.init({
         apiKey: 'test-api-key-123',
-        endpoint: 'https://api.truesight.dev/v1/events',
+        endpoint: 'https://api.truesight.dev',
       });
     });
 
@@ -222,7 +261,7 @@ describe('TrueSightSDK', () => {
     beforeEach(async () => {
       await sdk.init({
         apiKey: 'test-api-key-123',
-        endpoint: 'https://api.truesight.dev/v1/events',
+        endpoint: 'https://api.truesight.dev',
       });
     });
 
@@ -247,7 +286,7 @@ describe('TrueSightSDK', () => {
     beforeEach(async () => {
       await sdk.init({
         apiKey: 'test-api-key-123',
-        endpoint: 'https://api.truesight.dev/v1/events',
+        endpoint: 'https://api.truesight.dev',
       });
     });
 
@@ -276,7 +315,7 @@ describe('TrueSightSDK', () => {
     beforeEach(async () => {
       await sdk.init({
         apiKey: 'test-api-key-123',
-        endpoint: 'https://api.truesight.dev/v1/events',
+        endpoint: 'https://api.truesight.dev',
       });
     });
 
@@ -290,7 +329,7 @@ describe('TrueSightSDK', () => {
     beforeEach(async () => {
       await sdk.init({
         apiKey: 'test-api-key-123',
-        endpoint: 'https://api.truesight.dev/v1/events',
+        endpoint: 'https://api.truesight.dev',
       });
     });
 

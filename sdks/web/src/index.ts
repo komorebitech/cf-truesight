@@ -1,7 +1,7 @@
 import { TrueSightSDK } from './truesight.js';
 
 // Export types
-export type { Config } from './config.js';
+export type { Config, AutoTrackConfig } from './config.js';
 export type {
   EventType,
   DeviceContext,
@@ -54,6 +54,11 @@ export const setMobileNumber = instance.setMobileNumber.bind(instance);
  * Set email for all future events.
  */
 export const setEmail = instance.setEmail.bind(instance);
+
+/**
+ * Track an A/B test experiment exposure.
+ */
+export const trackExperiment = instance.trackExperiment.bind(instance);
 
 // Default export is the singleton
 export default instance;

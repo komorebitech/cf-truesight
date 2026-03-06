@@ -11,6 +11,7 @@ data class EventModel(
     @SerialName("event_type") val eventType: EventType,
     @SerialName("user_id") val userId: String? = null,
     @SerialName("anonymous_id") val anonymousId: String,
+    @SerialName("session_id") val sessionId: String? = null,
     @SerialName("mobile_number") val mobileNumber: String? = null,
     @SerialName("email") val email: String? = null,
     @SerialName("client_timestamp") val clientTimestamp: String,

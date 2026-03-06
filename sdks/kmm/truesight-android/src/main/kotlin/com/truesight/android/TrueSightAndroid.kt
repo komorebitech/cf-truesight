@@ -2,10 +2,14 @@ package com.truesight.android
 
 import android.app.Application
 import android.content.Context
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import com.truesight.sdk.AnonymousIdManager
 import com.truesight.sdk.Config
 import com.truesight.sdk.DeviceContextCollector
 import com.truesight.sdk.EventQueue
+import com.truesight.sdk.SessionManager
 import com.truesight.sdk.TrueSight
 
 /**
@@ -52,6 +56,21 @@ object TrueSightAndroid {
         EventQueue.initialize(appContext)
         AnonymousIdManager.initialize(appContext)
         DeviceContextCollector.initialize(appContext)
+        SessionManager.initialize(appContext, config.sessionTimeoutMs)
+
+        // Register ProcessLifecycleOwner observer for auto session management
+        try {
+            ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+                override fun onStart(owner: LifecycleOwner) {
+                    TrueSight.onAppForeground()
+                }
+                override fun onStop(owner: LifecycleOwner) {
+                    TrueSight.onAppBackground()
+                }
+            })
+        } catch (_: Exception) {
+            // lifecycle-process not available; caller must invoke onAppForeground/Background manually
+        }
 
         // Initialize the shared SDK
         TrueSight.init(config)

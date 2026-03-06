@@ -10,12 +10,16 @@ import {
 } from './anonymous-id.js';
 import { clearKeyCache } from './encryption.js';
 import { logger } from './logger.js';
+import { SessionManager } from './session-manager.js';
+import { AutoTrackManager } from './auto/auto-track-manager.js';
 
 export class TrueSightSDK {
   private initialized = false;
   private config!: Config;
   private queue!: EventQueue;
   private scheduler!: FlushScheduler;
+  private sessionManager!: SessionManager;
+  private autoTrackManager: AutoTrackManager | null = null;
 
   private userId: string | null = null;
   private anonymousId: string = '';
@@ -54,8 +58,29 @@ export class TrueSightSDK {
     this.scheduler = new FlushScheduler(this.config, this.queue);
     this.scheduler.start();
 
+    // Initialize session manager
+    this.sessionManager = new SessionManager(
+      this.config.sessionTimeout,
+      (eventName, properties) => {
+        void this.enqueueEvent('track', eventName, properties).catch((error) => {
+          logger.warn(`Failed to enqueue session event "${eventName}": ${String(error)}`);
+        });
+      }
+    );
+
     this.initialized = true;
     logger.info('TrueSight SDK initialized');
+
+    // Initialize auto-tracking (must be after initialized=true since trackers call track())
+    this.autoTrackManager = new AutoTrackManager(
+      this.config.autoTrack,
+      (eventName, properties) => {
+        void this.track(eventName, properties).catch((error) => {
+          logger.warn(`Failed to auto-track event "${eventName}": ${String(error)}`);
+        });
+      }
+    );
+    this.autoTrackManager.start();
   }
 
   async track(
@@ -122,6 +147,18 @@ export class TrueSightSDK {
     await this.scheduler.flush();
   }
 
+  async trackExperiment(
+    flagName: string,
+    variant: string,
+    properties: Record<string, unknown> = {}
+  ): Promise<void> {
+    await this.track('$experiment_exposure', {
+      flag_name: flagName,
+      variant,
+      ...properties,
+    });
+  }
+
   async reset(): Promise<void> {
     this.ensureInitialized();
 
@@ -129,6 +166,11 @@ export class TrueSightSDK {
     this.mobileNumber = null;
     this.email = null;
     this.traits = {};
+
+    // Reset session
+    if (this.sessionManager) {
+      this.sessionManager.reset();
+    }
 
     // Generate new anonymous ID
     this.anonymousId = await resetAnonymousId(this.config.apiKey);
@@ -185,6 +227,13 @@ export class TrueSightSDK {
 
   /** Destroy SDK instance (stop scheduler, close DB). */
   destroy(): void {
+    if (this.autoTrackManager) {
+      this.autoTrackManager.stop();
+      this.autoTrackManager = null;
+    }
+    if (this.sessionManager) {
+      this.sessionManager.destroy();
+    }
     if (this.scheduler) {
       this.scheduler.stop();
     }
@@ -217,6 +266,11 @@ export class TrueSightSDK {
   ): Promise<void> {
     const context = await getDeviceContext();
 
+    // Touch session activity + get session ID
+    const sessionId = this.sessionManager
+      ? (this.sessionManager.touchActivity(), this.sessionManager.getSessionId())
+      : null;
+
     const event: TrueSightEvent = {
       event_id: crypto.randomUUID(),
       event_name: eventName,
@@ -225,6 +279,7 @@ export class TrueSightSDK {
       anonymous_id: this.anonymousId,
       mobile_number: this.mobileNumber,
       email: this.email,
+      session_id: sessionId,
       client_timestamp: new Date().toISOString(),
       properties,
       context,
