@@ -13,9 +13,6 @@ export function isAnonymousElement(el: Element): boolean {
   const id = (el as HTMLElement).id;
   if (id) return false;
 
-  const className = (el as HTMLElement).className;
-  if (typeof className === 'string' && className.trim()) return false;
-
   const text = el.textContent?.trim();
   if (text) return false;
 
