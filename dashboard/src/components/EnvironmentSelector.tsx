@@ -7,7 +7,7 @@ interface EnvironmentSelectorProps {
 
 export function EnvironmentSelector({ value, onChange }: EnvironmentSelectorProps) {
   return (
-    <div className="inline-flex h-9 items-center gap-0.5 rounded-lg bg-muted p-1">
+    <div className="inline-flex h-9 items-center gap-0.5 rounded-lg border bg-background p-1">
       <button
         type="button"
         onClick={() => onChange("live")}
