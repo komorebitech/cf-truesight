@@ -96,7 +96,7 @@ pub async fn list_users(
          formatDateTime(max(s.last_seen), '%Y-%m-%d %H:%i:%S', 'UTC') AS last_seen, \
          sum(s.event_count) AS event_count \
          FROM {db}.user_stats AS s \
-         LEFT JOIN {db}.user_profiles FINAL AS p \
+         LEFT JOIN (SELECT * FROM {db}.user_profiles FINAL) AS p \
            ON s.project_id = p.project_id AND s.user_uid = p.user_uid AND s.environment = p.environment \
          WHERE s.project_id = ?{env_filter} \
          GROUP BY s.user_uid{search_filter} \
