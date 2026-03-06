@@ -1,4 +1,6 @@
-use serde::Deserialize;
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 use truesight_common::error::AppError;
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -27,7 +29,7 @@ pub const TOP_LEVEL_COLUMNS: &[&str] = &[
 
 // ── Shared types ─────────────────────────────────────────────────────
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct PropertyFilter {
     pub property: String,
     pub operator: String,
@@ -93,13 +95,112 @@ pub fn extract_string_array(value: &Option<serde_json::Value>) -> Result<Vec<Str
     }
 }
 
-/// Translate an array of [`PropertyFilter`]s into SQL `WHERE` fragments and
-/// their associated bind values.
-///
-/// Returns `(sql_conditions, bind_values)`.  Conditions that use bind
-/// parameters (`eq`, `neq`, `contains`) append their value to
-/// `bind_values`; conditions that inline literals (`in`, `not_in`,
-/// `exists`, `not_exists`) do not.
+// ── Metric & Period helpers ──────────────────────────────────────────
+
+/// SQL expression for the selected aggregation metric.
+pub fn metric_expr(metric: &str) -> Result<&'static str, AppError> {
+    match metric {
+        "total" => Ok("toFloat64(count())"),
+        "unique_users" => Ok("toFloat64(uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))"),
+        "avg_per_user" => Ok(
+            "toFloat64(count()) / max(1, uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))",
+        ),
+        other => Err(AppError::Validation(format!("Unknown metric: {}", other))),
+    }
+}
+
+/// SQL expression that truncates `server_timestamp` to the requested granularity.
+pub fn period_expr(granularity: &str) -> Result<&'static str, AppError> {
+    match granularity {
+        "hour" => Ok("formatDateTime(toStartOfHour(server_timestamp), '%Y-%m-%d %H:00')"),
+        "day" => Ok("formatDateTime(toDate(server_timestamp), '%Y-%m-%d')"),
+        "week" => Ok("formatDateTime(toMonday(server_timestamp), '%Y-%m-%d')"),
+        "month" => Ok("formatDateTime(toStartOfMonth(server_timestamp), '%Y-%m-%d')"),
+        other => Err(AppError::Validation(format!(
+            "Unknown granularity: {}",
+            other
+        ))),
+    }
+}
+
+/// Build a group key JSON value from up to 3 group-by fields.
+pub fn build_group_key(group_by: &[String], g0: &str, g1: &str, g2: &str) -> serde_json::Value {
+    let mut map = serde_json::Map::new();
+    for (i, key) in group_by.iter().enumerate() {
+        let val = match i {
+            0 => g0,
+            1 => g1,
+            2 => g2,
+            _ => "",
+        };
+        map.insert(key.clone(), serde_json::Value::String(val.to_string()));
+    }
+    serde_json::Value::Object(map)
+}
+
+/// Shared row types for ClickHouse results with group-by columns.
+#[derive(Debug, clickhouse::Row, Deserialize)]
+pub struct GroupedSeriesRow {
+    pub period: String,
+    #[serde(default)]
+    pub g0: String,
+    #[serde(default)]
+    pub g1: String,
+    #[serde(default)]
+    pub g2: String,
+    pub value: f64,
+}
+
+#[derive(Debug, clickhouse::Row, Deserialize)]
+pub struct GroupedTotalsRow {
+    #[serde(default)]
+    pub g0: String,
+    #[serde(default)]
+    pub g1: String,
+    #[serde(default)]
+    pub g2: String,
+    pub value: f64,
+}
+
+/// Data point in a time series.
+#[derive(Debug, Serialize, Clone)]
+pub struct DataPoint {
+    pub period: String,
+    pub value: f64,
+}
+
+/// Post-process series rows into grouped series using insertion-order.
+pub fn group_series_rows(
+    rows: &[GroupedSeriesRow],
+    group_by: &[String],
+) -> Vec<(serde_json::Value, Vec<DataPoint>)> {
+    let mut map: HashMap<String, Vec<DataPoint>> = HashMap::new();
+    let mut order: Vec<String> = Vec::new();
+
+    for row in rows {
+        let group_key = build_group_key(group_by, &row.g0, &row.g1, &row.g2).to_string();
+        if !map.contains_key(&group_key) {
+            order.push(group_key.clone());
+        }
+        map.entry(group_key).or_default().push(DataPoint {
+            period: row.period.clone(),
+            value: row.value,
+        });
+    }
+
+    order
+        .into_iter()
+        .map(|key| {
+            let data = map.remove(&key).unwrap_or_default();
+            let group: serde_json::Value =
+                serde_json::from_str(&key).unwrap_or(serde_json::Value::Object(Default::default()));
+            (group, data)
+        })
+        .collect()
+}
+
+// ── Filter helpers ──────────────────────────────────────────────────
+
 pub fn build_property_filter_clauses(
     filters: &[PropertyFilter],
 ) -> Result<(Vec<String>, Vec<String>), AppError> {

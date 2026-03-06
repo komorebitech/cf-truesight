@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use axum::{
     Json,
     extract::{Path, Query, State},
@@ -17,7 +15,9 @@ use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
 use super::query_builder::{
-    PropertyFilter, build_property_filter_clauses, column_expr, validate_identifier,
+    GroupedSeriesRow, GroupedTotalsRow, PropertyFilter, build_group_key,
+    build_property_filter_clauses, column_expr, group_series_rows, metric_expr, period_expr,
+    validate_identifier,
 };
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -174,6 +174,8 @@ pub struct InsightsRequest {
     #[serde(default = "default_insights_granularity")]
     pub granularity: String,
     pub environment: Option<String>,
+    #[allow(dead_code)]
+    pub segment_id: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize)]
@@ -200,67 +202,7 @@ pub struct InsightsTotal {
     pub value: f64,
 }
 
-#[derive(Debug, clickhouse::Row, Deserialize)]
-struct InsightsRawRow {
-    period: String,
-    #[serde(default)]
-    g0: String,
-    #[serde(default)]
-    g1: String,
-    #[serde(default)]
-    g2: String,
-    value: f64,
-}
-
-#[derive(Debug, clickhouse::Row, Deserialize)]
-struct TotalsRawRow {
-    #[serde(default)]
-    g0: String,
-    #[serde(default)]
-    g1: String,
-    #[serde(default)]
-    g2: String,
-    value: f64,
-}
-
 // ── Helpers ──────────────────────────────────────────────────────────
-
-fn metric_expr(metric: &str) -> Result<&'static str, AppError> {
-    match metric {
-        "total" => Ok("toFloat64(count())"),
-        "unique_users" => Ok("toFloat64(uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))"),
-        "avg_per_user" => Ok(
-            "toFloat64(count()) / max(1, uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))",
-        ),
-        other => Err(AppError::Validation(format!("Unknown metric: {}", other))),
-    }
-}
-
-fn period_expr(granularity: &str) -> Result<&'static str, AppError> {
-    match granularity {
-        "day" => Ok("formatDateTime(toDate(server_timestamp), '%Y-%m-%d')"),
-        "week" => Ok("formatDateTime(toMonday(server_timestamp), '%Y-%m-%d')"),
-        "month" => Ok("formatDateTime(toStartOfMonth(server_timestamp), '%Y-%m-%d')"),
-        other => Err(AppError::Validation(format!(
-            "Unknown granularity: {}",
-            other
-        ))),
-    }
-}
-
-fn build_group_key(group_by: &[String], g0: &str, g1: &str, g2: &str) -> serde_json::Value {
-    let mut map = serde_json::Map::new();
-    for (i, key) in group_by.iter().enumerate() {
-        let val = match i {
-            0 => g0,
-            1 => g1,
-            2 => g2,
-            _ => "",
-        };
-        map.insert(key.clone(), serde_json::Value::String(val.to_string()));
-    }
-    serde_json::Value::Object(map)
-}
 
 pub async fn insights(
     State(state): State<AppState>,
@@ -357,7 +299,7 @@ pub async fn insights(
         q = q.bind(val.as_str());
     }
     let series_rows = q
-        .fetch_all::<InsightsRawRow>()
+        .fetch_all::<GroupedSeriesRow>()
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
 
@@ -394,37 +336,24 @@ pub async fn insights(
         q = q.bind(val.as_str());
     }
     let totals_rows = q
-        .fetch_all::<TotalsRawRow>()
+        .fetch_all::<GroupedTotalsRow>()
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
 
     // ── Post-processing ──────────────────────────────────────────────
 
-    // Group series rows by their group key
-    let mut series_map: HashMap<String, Vec<InsightsDataPoint>> = HashMap::new();
-    let mut series_order: Vec<String> = Vec::new();
-
-    for row in &series_rows {
-        let group_key = build_group_key(&req.group_by, &row.g0, &row.g1, &row.g2).to_string();
-        if !series_map.contains_key(&group_key) {
-            series_order.push(group_key.clone());
-        }
-        series_map
-            .entry(group_key)
-            .or_default()
-            .push(InsightsDataPoint {
-                period: row.period.clone(),
-                value: row.value,
-            });
-    }
-
-    let series: Vec<InsightsSeries> = series_order
+    let grouped = group_series_rows(&series_rows, &req.group_by);
+    let series: Vec<InsightsSeries> = grouped
         .into_iter()
-        .map(|key| {
-            let data = series_map.remove(&key).unwrap_or_default();
-            let group: serde_json::Value =
-                serde_json::from_str(&key).unwrap_or(serde_json::Value::Object(Default::default()));
-            InsightsSeries { group, data }
+        .map(|(group, data)| InsightsSeries {
+            group,
+            data: data
+                .into_iter()
+                .map(|dp| InsightsDataPoint {
+                    period: dp.period,
+                    value: dp.value,
+                })
+                .collect(),
         })
         .collect();
 
