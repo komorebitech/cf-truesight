@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { TrackedEvent } from "@/lib/api";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cleanProperties } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -131,7 +131,7 @@ export function EventsTable({
                 <TableRow key={`${event.event_id}-expanded`}>
                   <TableCell colSpan={6} className="bg-muted p-0">
                     <pre className="max-h-64 overflow-auto p-4 text-xs">
-                      {JSON.stringify(JSON.parse(event.properties || "{}"), null, 2)}
+                      {JSON.stringify(cleanProperties(JSON.parse(event.properties || "{}")), null, 2)}
                     </pre>
                   </TableCell>
                 </TableRow>
@@ -247,7 +247,7 @@ export function EventsTable({
                   </dt>
                   <dd>
                     <pre className="rounded-md bg-muted p-4 text-xs overflow-auto">
-                      {JSON.stringify(JSON.parse(drawerEvent.properties || "{}"), null, 2)}
+                      {JSON.stringify(cleanProperties(JSON.parse(drawerEvent.properties || "{}")), null, 2)}
                     </pre>
                   </dd>
                 </div>

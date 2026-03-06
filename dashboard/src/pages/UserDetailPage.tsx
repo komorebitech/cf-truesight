@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router";
 import { useUser, useUserEvents } from "@/hooks/use-users-ch";
 import { Header } from "@/components/Header";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
+import { cleanProperties } from "@/lib/utils";
 import {
   TimeRangeSelector,
   type TimeRange,
@@ -74,7 +75,7 @@ export function UserDetailPage() {
     try {
       const parsed = JSON.parse(user.properties);
       if (typeof parsed === "object" && parsed !== null && Object.keys(parsed).length > 0) {
-        return parsed as Record<string, unknown>;
+        return cleanProperties(parsed as Record<string, unknown>);
       }
       return null;
     } catch {
@@ -329,7 +330,7 @@ export function UserDetailPage() {
                         </TableCell>
                         <TableCell className="max-w-xs truncate font-mono text-xs text-muted-foreground">
                           {event.properties && event.properties !== "{}"
-                            ? event.properties
+                            ? JSON.stringify(cleanProperties(JSON.parse(event.properties)))
                             : "-"}
                         </TableCell>
                       </motion.tr>

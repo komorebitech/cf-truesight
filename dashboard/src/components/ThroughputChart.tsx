@@ -32,7 +32,7 @@ export function ThroughputChart({ data, isLoading }: ThroughputChartProps) {
 
   const chartData = data.map((point) => ({
     ...point,
-    time: format(new Date(point.timestamp), "HH:mm"),
+    time: format(new Date(Number(point.timestamp) * 1000), "HH:mm"),
   }));
 
   return (
@@ -52,6 +52,7 @@ export function ThroughputChart({ data, isLoading }: ThroughputChartProps) {
             tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
             tickLine={false}
             axisLine={false}
+            interval="equidistantPreserveStart"
           />
           <YAxis
             tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}

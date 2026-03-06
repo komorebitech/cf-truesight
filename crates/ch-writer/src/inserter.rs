@@ -8,9 +8,15 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use regex::Regex;
 use serde::Serialize;
+use std::sync::LazyLock;
 use truesight_common::event::EnrichedEvent;
 use uuid::Uuid;
+
+/// Regex to strip Swift `AnyDecodable("...")` wrappers from KMM SDK property values.
+static ANY_DECODABLE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"^AnyDecodable\("(.*)"\)$"#).unwrap());
 
 /// Wraps a [`clickhouse::Client`] and provides batch-insert functionality.
 pub struct ClickHouseInserter {
@@ -55,13 +61,14 @@ impl EventRow {
             .trim_matches('"')
             .to_string();
 
-        let properties_json = event
-            .properties
+        let sanitized_props = sanitize_properties(&event.properties);
+
+        let properties_json = sanitized_props
             .as_ref()
             .map(|v| serde_json::to_string(v).unwrap_or_default())
             .unwrap_or_default();
 
-        let properties_map = flatten_properties(&event.properties);
+        let properties_map = flatten_properties(&sanitized_props);
 
         Self {
             event_id: event.event_id,
@@ -88,6 +95,37 @@ impl EventRow {
             timezone: event.context.timezone.clone(),
             sdk_version: event.context.sdk_version.clone(),
         }
+    }
+}
+
+/// Strip `AnyDecodable("...")` wrappers from property values.
+///
+/// The KMM/Swift SDK sometimes serialises values wrapped in `AnyDecodable(...)`.
+/// This function recursively walks the JSON and unwraps them to clean strings.
+fn sanitize_properties(props: &Option<serde_json::Value>) -> Option<serde_json::Value> {
+    props.as_ref().map(sanitize_value)
+}
+
+fn sanitize_value(value: &serde_json::Value) -> serde_json::Value {
+    match value {
+        serde_json::Value::String(s) => {
+            if let Some(caps) = ANY_DECODABLE_RE.captures(s) {
+                serde_json::Value::String(caps[1].to_string())
+            } else {
+                value.clone()
+            }
+        }
+        serde_json::Value::Object(map) => {
+            let cleaned: serde_json::Map<String, serde_json::Value> = map
+                .iter()
+                .map(|(k, v)| (k.clone(), sanitize_value(v)))
+                .collect();
+            serde_json::Value::Object(cleaned)
+        }
+        serde_json::Value::Array(arr) => {
+            serde_json::Value::Array(arr.iter().map(sanitize_value).collect())
+        }
+        other => other.clone(),
     }
 }
 

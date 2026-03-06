@@ -73,45 +73,46 @@ pub async fn list_users(
     let offset = (page - 1) * per_page;
     let fetch_limit = per_page + 1;
 
-    let mut conditions = vec!["project_id = ?".to_string()];
+    let env_filter = if params.environment.is_some() {
+        " AND s.environment = ?"
+    } else {
+        ""
+    };
 
-    if params.search.is_some() {
-        conditions.push(
-            "(positionCaseInsensitive(user_uid, ?) > 0 \
-             OR positionCaseInsensitive(email, ?) > 0 \
-             OR positionCaseInsensitive(name, ?) > 0)"
-                .to_string(),
-        );
-    }
-    if params.environment.is_some() {
-        conditions.push("environment = ?".to_string());
-    }
-
-    let where_clause = conditions.join(" AND ");
+    let search_filter = if params.search.is_some() {
+        " HAVING positionCaseInsensitive(user_uid, ?) > 0 \
+         OR positionCaseInsensitive(any(p.email), ?) > 0 \
+         OR positionCaseInsensitive(any(p.name), ?) > 0"
+    } else {
+        ""
+    };
 
     let query_str = format!(
-        "SELECT user_uid, \
-         COALESCE(email, '') AS email, \
-         COALESCE(name, '') AS name, \
-         COALESCE(mobile_number, '') AS mobile_number, \
-         formatDateTime(first_seen, '%Y-%m-%d %H:%M:%S', 'UTC') AS first_seen, \
-         formatDateTime(last_seen, '%Y-%m-%d %H:%M:%S', 'UTC') AS last_seen, \
-         event_count \
-         FROM {db}.user_profiles FINAL \
-         WHERE {where_clause} \
+        "SELECT s.user_uid AS user_uid, \
+         COALESCE(any(p.email), '') AS email, \
+         COALESCE(any(p.name), '') AS name, \
+         COALESCE(any(p.mobile_number), '') AS mobile_number, \
+         formatDateTime(min(s.first_seen), '%Y-%m-%d %H:%i:%S', 'UTC') AS first_seen, \
+         formatDateTime(max(s.last_seen), '%Y-%m-%d %H:%i:%S', 'UTC') AS last_seen, \
+         sum(s.event_count) AS event_count \
+         FROM {db}.user_stats AS s \
+         LEFT JOIN {db}.user_profiles FINAL AS p \
+           ON s.project_id = p.project_id AND s.user_uid = p.user_uid AND s.environment = p.environment \
+         WHERE s.project_id = ?{env_filter} \
+         GROUP BY s.user_uid{search_filter} \
          ORDER BY last_seen DESC \
          LIMIT ? OFFSET ?"
     );
 
     let mut q = state.clickhouse_client.query(&query_str).bind(project_id);
 
+    if let Some(ref env) = params.environment {
+        q = q.bind(env.as_str());
+    }
     if let Some(ref search) = params.search {
         q = q.bind(search.as_str());
         q = q.bind(search.as_str());
         q = q.bind(search.as_str());
-    }
-    if let Some(ref env) = params.environment {
-        q = q.bind(env.as_str());
     }
 
     let mut rows = q
@@ -170,37 +171,109 @@ pub async fn get_user(
         ""
     };
 
-    let query_str = format!(
+    let stats_env_filter = if params.environment.is_some() {
+        " AND environment = ?"
+    } else {
+        ""
+    };
+
+    // Get profile data from user_profiles
+    let profile_query = format!(
         "SELECT user_uid, \
          COALESCE(email, '') AS email, \
          COALESCE(name, '') AS name, \
          COALESCE(mobile_number, '') AS mobile_number, \
-         toString(properties) AS properties, \
-         formatDateTime(first_seen, '%Y-%m-%d %H:%M:%S', 'UTC') AS first_seen, \
-         formatDateTime(last_seen, '%Y-%m-%d %H:%M:%S', 'UTC') AS last_seen, \
-         event_count \
+         toString(properties) AS properties \
          FROM {db}.user_profiles FINAL \
          WHERE project_id = ? AND user_uid = ?{env_filter} \
          LIMIT 1"
     );
 
-    let mut q = state
+    let mut pq = state
         .clickhouse_client
-        .query(&query_str)
+        .query(&profile_query)
         .bind(project_id)
         .bind(user_uid.as_str());
     if let Some(ref env) = params.environment {
-        q = q.bind(env.as_str());
+        pq = pq.bind(env.as_str());
     }
 
-    let row = q
-        .fetch_optional::<UserDetailRow>()
+    #[derive(clickhouse::Row, Deserialize)]
+    struct ProfileOnly {
+        user_uid: String,
+        email: String,
+        name: String,
+        mobile_number: String,
+        properties: String,
+    }
+
+    let profile = pq
+        .fetch_optional::<ProfileOnly>()
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
 
-    match row {
-        Some(user) => Ok(Json(user)),
-        None => Err(AppError::NotFound(format!("User '{}' not found", user_uid))),
+    // Get accurate stats from user_stats
+    let stats_query = format!(
+        "SELECT sum(event_count) AS event_count, \
+         formatDateTime(min(first_seen), '%Y-%m-%d %H:%i:%S', 'UTC') AS first_seen, \
+         formatDateTime(max(last_seen), '%Y-%m-%d %H:%i:%S', 'UTC') AS last_seen \
+         FROM {db}.user_stats \
+         WHERE project_id = ? AND user_uid = ?{stats_env_filter}"
+    );
+
+    #[derive(clickhouse::Row, Deserialize)]
+    struct StatsOnly {
+        event_count: u64,
+        first_seen: String,
+        last_seen: String,
+    }
+
+    let mut sq = state
+        .clickhouse_client
+        .query(&stats_query)
+        .bind(project_id)
+        .bind(user_uid.as_str());
+    if let Some(ref env) = params.environment {
+        sq = sq.bind(env.as_str());
+    }
+
+    let stats = sq
+        .fetch_optional::<StatsOnly>()
+        .await
+        .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
+
+    match (profile, stats) {
+        (Some(p), Some(s)) => Ok(Json(UserDetailRow {
+            user_uid: p.user_uid,
+            email: p.email,
+            name: p.name,
+            mobile_number: p.mobile_number,
+            properties: p.properties,
+            first_seen: s.first_seen,
+            last_seen: s.last_seen,
+            event_count: s.event_count,
+        })),
+        (Some(p), None) => Ok(Json(UserDetailRow {
+            user_uid: p.user_uid,
+            email: p.email,
+            name: p.name,
+            mobile_number: p.mobile_number,
+            properties: p.properties,
+            first_seen: String::new(),
+            last_seen: String::new(),
+            event_count: 0,
+        })),
+        (None, Some(s)) => Ok(Json(UserDetailRow {
+            user_uid: user_uid.clone(),
+            email: String::new(),
+            name: String::new(),
+            mobile_number: String::new(),
+            properties: String::new(),
+            first_seen: s.first_seen,
+            last_seen: s.last_seen,
+            event_count: s.event_count,
+        })),
+        (None, None) => Err(AppError::NotFound(format!("User '{}' not found", user_uid))),
     }
 }
 
@@ -279,8 +352,8 @@ pub async fn user_events(
         "SELECT toString(event_id) AS event_id, toString(project_id) AS project_id, \
          event_name, event_type, \
          COALESCE(user_id, '') AS user_id, anonymous_id, \
-         formatDateTime(client_timestamp, '%Y-%m-%d %H:%M:%S', 'UTC') AS client_ts, \
-         formatDateTime(server_timestamp, '%Y-%m-%d %H:%M:%S', 'UTC') AS server_ts, \
+         formatDateTime(client_timestamp, '%Y-%m-%d %H:%i:%S', 'UTC') AS client_ts, \
+         formatDateTime(server_timestamp, '%Y-%m-%d %H:%i:%S', 'UTC') AS server_ts, \
          properties \
          FROM {db}.events \
          WHERE {where_clause} \

@@ -62,6 +62,30 @@ export function formatRelativeShort(date: string | Date): string {
   return `${Math.floor(diffH / 24)}d ago`;
 }
 
+const ANY_DECODABLE_RE = /^AnyDecodable\("(.*)"\)$/;
+
+/**
+ * Strip `AnyDecodable("...")` wrappers from property values.
+ * Handles the KMM/Swift SDK serialisation artefact.
+ */
+export function cleanPropertyValue(value: string): string {
+  const match = ANY_DECODABLE_RE.exec(value);
+  return match?.[1] ?? value;
+}
+
+/**
+ * Clean all values in a parsed properties object.
+ */
+export function cleanProperties(
+  obj: Record<string, unknown>,
+): Record<string, unknown> {
+  const cleaned: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(obj)) {
+    cleaned[key] = typeof val === "string" ? cleanPropertyValue(val) : val;
+  }
+  return cleaned;
+}
+
 export function maskApiKey(key: string): string {
   if (key.length <= 8) return "****";
   return key.slice(0, 8) + "..." + key.slice(-4);

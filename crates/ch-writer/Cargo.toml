@@ -23,6 +23,7 @@ tracing-subscriber = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
 anyhow = { workspace = true }
+regex = { workspace = true }
 axum = { workspace = true }
 dotenvy = { workspace = true }
 envy = { workspace = true }

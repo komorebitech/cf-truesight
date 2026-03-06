@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, Link, useNavigate } from "react-router";
 import { useUsers } from "@/hooks/use-users-ch";
 import { Header } from "@/components/Header";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
@@ -32,6 +32,7 @@ const PAGE_SIZE = 25;
 
 export function UsersPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const { environment } = useEnvironment();
 
@@ -113,6 +114,7 @@ export function UsersPage() {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.2, delay: i * 0.02 }}
                     className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/50"
+                    onClick={() => navigate(`/projects/${id}/users/${encodeURIComponent(user.user_uid)}`)}
                   >
                     <TableCell>
                       <Link
