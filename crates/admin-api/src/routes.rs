@@ -230,11 +230,22 @@ pub fn create_router(state: AppState) -> Router {
         .route_layer(middleware::from_fn_with_state(state.clone(), admin_auth))
         .with_state(state.clone());
 
+    // SSE routes (auth via query param, outside middleware)
+    let sse_routes = Router::new()
+        .route(
+            "/v1/stats/projects/{pid}/events/stream",
+            get(handlers::live_events::live_events_stream),
+        )
+        .with_state(state.clone());
+
     // Public routes (no auth required)
     let public_routes = Router::new()
         .route("/health", get(handlers::health::health))
         .route("/v1/auth/google", post(handlers::auth::google_login))
         .with_state(state);
 
-    Router::new().merge(api_routes).merge(public_routes)
+    Router::new()
+        .merge(api_routes)
+        .merge(sse_routes)
+        .merge(public_routes)
 }
