@@ -129,9 +129,9 @@ export function EventCatalogPage() {
                 <TableHead className="w-8" />
                 <TableHead>Event Name</TableHead>
                 <TableHead className="w-28">Type</TableHead>
-                <TableHead className="w-28 text-right">Count</TableHead>
-                <TableHead className="w-44">First Seen</TableHead>
-                <TableHead className="w-44">Last Seen</TableHead>
+                <TableHead className="w-28 pr-4 text-right">Count</TableHead>
+                <TableHead className="w-48">First Seen</TableHead>
+                <TableHead className="w-48">Last Seen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -180,13 +180,13 @@ export function EventCatalogPage() {
                                 {ev.event_type}
                               </Badge>
                             </div>
-                            <div className="w-28 text-right tabular-nums text-sm">
+                            <div className="w-28 pr-4 text-right tabular-nums text-sm">
                               {formatCount(ev.event_count)}
                             </div>
-                            <div className="w-44 text-sm text-muted-foreground">
+                            <div className="w-48 text-sm text-muted-foreground">
                               {formatDate(ev.first_seen)}
                             </div>
-                            <div className="w-44 text-sm text-muted-foreground">
+                            <div className="w-48 text-sm text-muted-foreground">
                               {formatDate(ev.last_seen)}
                             </div>
                           </div>
