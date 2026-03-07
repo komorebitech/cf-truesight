@@ -38,10 +38,12 @@ TrueSight is a self-hosted analytics event routing system. It ingests events fro
 
 ### Dashboard
 - Path alias: `@/` = `src/`
-- shadcn/ui components in `src/components/ui/`
+- shadcn/ui components in `src/components/ui/` — use Radix-based Select (not native `<select>`)
 - Hooks in `src/hooks/` wrap TanStack Query
 - API client in `src/lib/api.ts` — reads `VITE_ADMIN_TOKEN` from env, proxied via Vite in dev
 - Dashboard reads `.env` from parent directory (`envDir: ..` in vite.config.ts)
+- All times displayed in 12-hour AM/PM format (`hh:mm a` via date-fns). Use `formatDate()` from `lib/utils.ts`.
+- Chart color palette: `#2d6a4f`, `#9e2a2b`, `#d62828`, `#386641`, `#ffb700`, `#1565c0` — defined in `lib/charts.ts` and CSS vars `--chart-1` through `--chart-6`
 
 ### Web SDK
 - Published as `@cityflo/truesight-web-sdk` on npm (public)

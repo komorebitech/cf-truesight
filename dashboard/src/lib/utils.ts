@@ -18,7 +18,7 @@ export function formatDate(date: string | number | Date): string {
   } else {
     d = new Date(date);
   }
-  return format(d, "MMM d, yyyy HH:mm");
+  return format(d, "MMM d, yyyy hh:mm a");
 }
 
 export function formatDateShort(date: string | Date): string {

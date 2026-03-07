@@ -547,7 +547,7 @@ export function ProjectDetailPage() {
                       />
                       <Tooltip
                         contentStyle={tooltipStyle}
-                        labelFormatter={(v: number) => format(new Date(v), "MMM d, HH:mm")}
+                        labelFormatter={(v: number) => format(new Date(v), "MMM d, hh:mm a")}
                         formatter={(value: number) => [value.toLocaleString(), "Events"]}
                       />
                     </AreaChart>

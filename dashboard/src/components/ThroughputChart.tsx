@@ -34,7 +34,7 @@ export function ThroughputChart({ data, isLoading }: ThroughputChartProps) {
 
   const chartData = data.map((point) => ({
     ...point,
-    time: format(new Date(Number(point.timestamp) * 1000), "HH:mm"),
+    time: format(new Date(Number(point.timestamp) * 1000), "hh:mm a"),
   }));
 
   return (
