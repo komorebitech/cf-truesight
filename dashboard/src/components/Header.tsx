@@ -69,17 +69,17 @@ function useBreadcrumbs(): Crumb[] {
 }
 
 const sectionColors: Record<string, string> = {
-  analytics: "bg-[#D4A373]",
-  events: "bg-[#CCD5AE]",
-  catalog: "bg-[#CCD5AE]",
-  live: "bg-[#D4A373]",
-  insights: "bg-[#FAEDCD]",
-  funnels: "bg-[#D4A373]/80",
-  retention: "bg-[#CCD5AE]/80",
-  cohorts: "bg-[#D4A373]/60",
-  flows: "bg-[#E9EDC9]",
-  users: "bg-[#CCD5AE]/60",
-  settings: "bg-[#FAEDCD]/80",
+  analytics: "bg-[#FEC89A]",
+  events: "bg-[#FEC5BB]",
+  catalog: "bg-[#D8E2DC]",
+  live: "bg-[#FFD7BA]",
+  insights: "bg-[#FAE1DD]",
+  funnels: "bg-[#FCD5CE]",
+  retention: "bg-[#D8E2DC]",
+  cohorts: "bg-[#ECE4DB]",
+  flows: "bg-[#FFE5D9]",
+  users: "bg-[#D8E2DC]/80",
+  settings: "bg-[#E8E8E4]",
 };
 
 export function Header({ title }: { title?: string }) {

@@ -1,4 +1,4 @@
-import { LogOut, User } from "lucide-react";
+import { LogOut, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
@@ -9,9 +9,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTheme } from "@/components/ThemeToggle";
 
 export function UserMenu() {
   const { user, logout } = useAuth();
+  const { theme, toggle: toggleTheme } = useTheme();
 
   if (!user) return null;
 
@@ -24,22 +26,25 @@ export function UserMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-sidebar-active transition-colors outline-none text-sidebar-foreground">
-        <Avatar className="h-7 w-7">
+      <DropdownMenuTrigger className="flex items-center justify-center rounded-full outline-none ring-2 ring-transparent hover:ring-sidebar-border transition-all">
+        <Avatar className="h-8 w-8">
           <AvatarImage src={user.picture_url} alt={user.name} />
-          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+          <AvatarFallback className="text-[11px]">{initials}</AvatarFallback>
         </Avatar>
-        <div className="flex-1 text-left truncate">
-          <p className="truncate font-medium leading-tight">{user.name}</p>
-          <p className="truncate text-xs text-sidebar-muted-foreground">{user.email}</p>
-        </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+      <DropdownMenuContent side="right" align="end" className="w-48">
+        <DropdownMenuLabel className="font-normal">
+          <p className="text-sm font-medium">{user.name}</p>
+          <p className="text-xs text-muted-foreground">{user.email}</p>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
-          <User className="mr-2 h-4 w-4" />
-          Profile
+        <DropdownMenuItem onClick={toggleTheme}>
+          {theme === "dark" ? (
+            <Sun className="mr-2 h-4 w-4" />
+          ) : (
+            <Moon className="mr-2 h-4 w-4" />
+          )}
+          {theme === "dark" ? "Light mode" : "Dark mode"}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logout}>

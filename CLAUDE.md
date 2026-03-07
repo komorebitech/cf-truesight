@@ -78,3 +78,10 @@ Key env vars (see `.env.example` for full list):
 - Dashboard Vite proxy rewrites `/api` → `http://localhost:8081` (admin API).
 - API key prefix is displayed as-is (not masked) in the dashboard.
 - Backend `list_api_keys` returns a plain `Vec<ApiKeyResponse>`, not `{ data: [...] }`.
+
+
+## Debugging and Maintenance
+
+- Use aws cli with profile cf and region ap-south-1 to access aws resources
+- ECS stores logs in Cloudwatch logs
+- All credentials are stored in secrets manager (clickhouse, postgresql, etc.)
