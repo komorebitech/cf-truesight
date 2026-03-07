@@ -24,29 +24,36 @@ pub struct ClickHouseInserter {
 /// Flat row representation that maps [`EnrichedEvent`] fields (including a
 /// flattened [`DeviceContext`](truesight_common::event::DeviceContext)) to the
 /// ClickHouse `events` table columns.
+///
+/// Types must match the ClickHouse schema exactly for RowBinary serialization:
+/// - `Nullable(T)` → `Option<T>`
+/// - `DateTime64(3)` → `DateTime<Utc>` with `serde(with = ...millis)`
+/// - `LowCardinality(String)` → `String` (transparent)
 #[derive(Debug, Serialize, clickhouse::Row)]
 struct EventRow {
     event_id: Uuid,
     event_name: String,
     event_type: String,
-    user_id: String,
+    user_id: Option<String>,
     anonymous_id: String,
-    mobile_number: String,
-    email: String,
-    client_timestamp: String,
-    server_timestamp: String,
+    mobile_number: Option<String>,
+    email: Option<String>,
+    #[serde(with = "clickhouse::serde::chrono::datetime64::millis")]
+    client_timestamp: DateTime<Utc>,
+    #[serde(with = "clickhouse::serde::chrono::datetime64::millis")]
+    server_timestamp: DateTime<Utc>,
     properties: String,
     properties_map: Vec<(String, String)>,
     project_id: Uuid,
     environment: String,
     session_id: Option<String>,
     // Flattened DeviceContext fields
-    app_version: String,
+    app_version: Option<String>,
     os_name: String,
     os_version: String,
     device_model: String,
     device_id: String,
-    network_type: String,
+    network_type: Option<String>,
     locale: String,
     timezone: String,
     sdk_version: String,
@@ -73,23 +80,23 @@ impl EventRow {
             event_id: event.event_id,
             event_name: event.event_name.clone(),
             event_type: event_type_str,
-            user_id: event.user_id.clone().unwrap_or_default(),
+            user_id: event.user_id.clone().filter(|s| !s.is_empty()),
             anonymous_id: event.anonymous_id.clone(),
-            mobile_number: event.mobile_number.clone().unwrap_or_default(),
-            email: event.email.clone().unwrap_or_default(),
-            client_timestamp: format_datetime(&event.client_timestamp),
-            server_timestamp: format_datetime(&event.server_timestamp),
+            mobile_number: event.mobile_number.clone().filter(|s| !s.is_empty()),
+            email: event.email.clone().filter(|s| !s.is_empty()),
+            client_timestamp: event.client_timestamp,
+            server_timestamp: event.server_timestamp,
             properties: properties_json,
             properties_map,
             project_id: event.project_id,
             environment: event.environment.clone(),
             session_id: event.session_id.clone(),
-            app_version: event.context.app_version.clone().unwrap_or_default(),
+            app_version: event.context.app_version.clone(),
             os_name: event.context.os_name.clone(),
             os_version: event.context.os_version.clone(),
             device_model: event.context.device_model.clone(),
             device_id: event.context.device_id.clone(),
-            network_type: event.context.network_type.clone().unwrap_or_default(),
+            network_type: event.context.network_type.clone(),
             locale: event.context.locale.clone(),
             timezone: event.context.timezone.clone(),
             sdk_version: event.context.sdk_version.clone(),
@@ -168,10 +175,6 @@ fn flatten_properties(props: &Option<serde_json::Value>) -> Vec<(String, String)
         out.push((k.clone(), s));
     }
     out
-}
-
-fn format_datetime(dt: &DateTime<Utc>) -> String {
-    dt.format("%Y-%m-%d %H:%M:%S%.3f").to_string()
 }
 
 /// Maximum number of retry attempts for a failed insert.
