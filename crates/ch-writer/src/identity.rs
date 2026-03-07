@@ -1,7 +1,7 @@
 //! Identity resolution: upserting anonymous-to-known user mappings.
 //!
 //! When an `Identify` event arrives the writer records (or updates) the mapping
-//! between `anonymous_id` and `user_id` in the ClickHouse `user_identity_map`
+//! between `anonymous_id` and `user_id` in the ClickHouse `identity_map`
 //! table. This allows downstream queries to stitch sessions across identified
 //! and anonymous activity.
 
@@ -9,12 +9,12 @@ use anyhow::{Context, Result};
 use truesight_common::event::{EnrichedEvent, EventType};
 
 /// If the given event is an `Identify` event with a `user_id`, upsert a row
-/// into the `user_identity_map` table.
+/// into the `identity_map` table.
 ///
 /// The table is expected to exist with the following schema (or compatible):
 ///
 /// ```sql
-/// CREATE TABLE IF NOT EXISTS user_identity_map (
+/// CREATE TABLE IF NOT EXISTS identity_map (
 ///     project_id   UUID,
 ///     anonymous_id String,
 ///     user_id      String,
@@ -48,7 +48,7 @@ pub async fn process_identify_event(
         .to_string();
 
     let query = format!(
-        "INSERT INTO user_identity_map (project_id, anonymous_id, user_id, first_seen, last_seen) VALUES ('{}', '{}', '{}', '{}', '{}')",
+        "INSERT INTO identity_map (project_id, anonymous_id, user_id, first_seen, last_seen) VALUES ('{}', '{}', '{}', '{}', '{}')",
         project_id,
         escape_ch_string(anonymous_id),
         escape_ch_string(user_id),
@@ -60,7 +60,7 @@ pub async fn process_identify_event(
         .query(&query)
         .execute()
         .await
-        .context("failed to upsert user_identity_map")?;
+        .context("failed to upsert identity_map")?;
 
     tracing::debug!(
         project_id = %event.project_id,

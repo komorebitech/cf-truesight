@@ -102,9 +102,11 @@ pub async fn live_events_stream(
     let initial_cursor = chrono::Utc::now().timestamp_millis() as f64 / 1000.0 - 30.0;
 
     let stream = futures::stream::unfold(
-        (initial_cursor, state, project_id, params),
-        |(cursor, state, project_id, params)| async move {
-            tokio::time::sleep(Duration::from_secs(2)).await;
+        (initial_cursor, state, project_id, params, true),
+        |(cursor, state, project_id, params, is_first)| async move {
+            if !is_first {
+                tokio::time::sleep(Duration::from_secs(2)).await;
+            }
 
             let db = &state.config.clickhouse_database;
 
@@ -195,14 +197,14 @@ pub async fn live_events_stream(
                             .data(serde_json::to_string(&rows).unwrap_or_default())
                     };
 
-                    Some((Ok(event), (new_cursor, state, project_id, params)))
+                    Some((Ok(event), (new_cursor, state, project_id, params, false)))
                 }
                 Err(e) => {
                     tracing::error!("Live events ClickHouse error: {}", e);
                     let event = Event::default()
                         .event("error")
                         .data(format!("Query error: {e}"));
-                    Some((Ok(event), (cursor, state, project_id, params)))
+                    Some((Ok(event), (cursor, state, project_id, params, false)))
                 }
             }
         },
