@@ -8,6 +8,19 @@ use aws_sdk_sqs::{Client, config::Region};
 
 use crate::event::EnrichedEvent;
 
+/// Builds an SQS [`Client`] from the given region and optional endpoint URL.
+pub async fn build_sqs_client(region: &str, endpoint_url: Option<&str>) -> Result<Client> {
+    let mut config_loader = aws_config::defaults(aws_config::BehaviorVersion::latest())
+        .region(Region::new(region.to_string()));
+
+    if let Some(endpoint) = endpoint_url {
+        config_loader = config_loader.endpoint_url(endpoint);
+    }
+
+    let sdk_config = config_loader.load().await;
+    Ok(Client::new(&sdk_config))
+}
+
 pub struct SqsProducer {
     client: Client,
 }
@@ -16,16 +29,7 @@ impl SqsProducer {
     /// Creates a new SQS producer. If `endpoint_url` is provided, it overrides the default
     /// AWS endpoint (useful for local development with LocalStack).
     pub async fn new(region: &str, endpoint_url: Option<&str>) -> Result<Self> {
-        let mut config_loader = aws_config::defaults(aws_config::BehaviorVersion::latest())
-            .region(Region::new(region.to_string()));
-
-        if let Some(endpoint) = endpoint_url {
-            config_loader = config_loader.endpoint_url(endpoint);
-        }
-
-        let sdk_config = config_loader.load().await;
-        let client = Client::new(&sdk_config);
-
+        let client = build_sqs_client(region, endpoint_url).await?;
         Ok(Self { client })
     }
 
@@ -116,16 +120,7 @@ impl SqsConsumer {
     /// Creates a new SQS consumer. If `endpoint_url` is provided, it overrides the default
     /// AWS endpoint (useful for local development with LocalStack).
     pub async fn new(region: &str, endpoint_url: Option<&str>) -> Result<Self> {
-        let mut config_loader = aws_config::defaults(aws_config::BehaviorVersion::latest())
-            .region(Region::new(region.to_string()));
-
-        if let Some(endpoint) = endpoint_url {
-            config_loader = config_loader.endpoint_url(endpoint);
-        }
-
-        let sdk_config = config_loader.load().await;
-        let client = Client::new(&sdk_config);
-
+        let client = build_sqs_client(region, endpoint_url).await?;
         Ok(Self { client })
     }
 

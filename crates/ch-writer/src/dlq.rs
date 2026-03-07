@@ -6,7 +6,6 @@
 
 use anyhow::{Context, Result};
 use aws_sdk_sqs::Client;
-use aws_sdk_sqs::config::Region;
 use aws_sdk_sqs::types::MessageAttributeValue;
 
 /// Wraps an SQS client for sending messages to a dead-letter queue.
@@ -15,25 +14,10 @@ pub struct DlqSender {
 }
 
 impl DlqSender {
-    /// Creates a new `DlqSender` from an existing SQS [`Client`].
-    #[allow(dead_code)]
-    pub fn new(client: Client) -> Self {
-        Self { client }
-    }
-
     /// Creates a new `DlqSender` by building an SQS client from the given
     /// region and optional endpoint URL.
     pub async fn from_config(region: &str, endpoint_url: Option<&str>) -> Result<Self> {
-        let mut config_loader = aws_config::defaults(aws_config::BehaviorVersion::latest())
-            .region(Region::new(region.to_string()));
-
-        if let Some(endpoint) = endpoint_url {
-            config_loader = config_loader.endpoint_url(endpoint);
-        }
-
-        let sdk_config = config_loader.load().await;
-        let client = Client::new(&sdk_config);
-
+        let client = truesight_common::sqs::build_sqs_client(region, endpoint_url).await?;
         Ok(Self { client })
     }
 
