@@ -19,6 +19,7 @@ const sectionNames: Record<string, string> = {
   cohorts: "Cohorts",
   flows: "Flows",
   settings: "Settings",
+  cli: "CLI",
 };
 
 function useBreadcrumbs(): Crumb[] {
@@ -80,6 +81,7 @@ const sectionColors: Record<string, string> = {
   flows: "bg-[#FFE5D9]",
   users: "bg-[#D8E2DC]/80",
   settings: "bg-[#E8E8E4]",
+  cli: "bg-[#D8E2DC]",
 };
 
 export function Header({ title }: { title?: string }) {

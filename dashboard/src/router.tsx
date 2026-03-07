@@ -25,6 +25,8 @@ import { BoardDetailPage } from "@/pages/BoardDetailPage";
 import { TeamsListPage } from "@/pages/TeamsListPage";
 import { TeamDetailPage } from "@/pages/TeamDetailPage";
 import { AcceptInvitationPage } from "@/pages/AcceptInvitationPage";
+import { CliAuthPage } from "@/pages/CliAuthPage";
+import { CliPage } from "@/pages/CliPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
 const STORAGE_KEY = "truesight_last_project";
@@ -55,6 +57,10 @@ export const router = createBrowserRouter([
     element: <AcceptInvitationPage />,
   },
   {
+    path: "/cli/auth",
+    element: <CliAuthPage />,
+  },
+  {
     path: "/",
     element: (
       <ProtectedLayout>
@@ -77,6 +83,10 @@ export const router = createBrowserRouter([
       {
         path: "projects/:id/settings",
         element: <ProjectSettingsPage />,
+      },
+      {
+        path: "projects/:id/cli",
+        element: <CliPage />,
       },
       {
         path: "projects/:id/events",

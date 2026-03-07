@@ -17,6 +17,7 @@ import {
   Users,
   Settings,
   UserCog,
+  Terminal,
   ChevronsRight,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -191,6 +192,11 @@ export function Sidebar() {
               label: "Settings",
               href: `/projects/${projectId}/settings`,
               icon: <Settings className="h-4 w-4" />,
+            },
+            {
+              label: "CLI",
+              href: `/projects/${projectId}/cli`,
+              icon: <Terminal className="h-4 w-4" />,
             },
             {
               label: "Teams",

@@ -82,6 +82,20 @@ Key env vars (see `.env.example` for full list):
 - Backend `list_api_keys` returns a plain `Vec<ApiKeyResponse>`, not `{ data: [...] }`.
 
 
+### CLI
+- Crate: `crates/cli/`, binary: `truesight`
+- Uses clap derive API, reqwest HTTP client, no dependency on truesight-common
+- Config stored in `~/.truesight/` (credentials.json, config.json)
+- Auth: browser-based Google OAuth via dashboard `/cli/auth` page
+- Output: JSON by default (`--format table` for human-readable)
+- All admin API read/query features have corresponding CLI commands
+- Release process:
+  1. Bump version in `crates/cli/Cargo.toml`
+  2. Commit and push
+  3. Tag: `git tag cli-v<version> && git push origin cli-v<version>`
+  4. CI builds 5 platform binaries (linux x86_64/aarch64, darwin x86_64/aarch64, windows x86_64) and creates a GitHub Release
+  5. Install script at `dashboard/public/install.sh` (served at `https://truesight.cityflo.net/install.sh`) auto-fetches the latest release
+
 ## Debugging and Maintenance
 
 - Use aws cli with profile cf and region ap-south-1 to access aws resources
