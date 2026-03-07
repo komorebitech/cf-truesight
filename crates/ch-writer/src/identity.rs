@@ -72,8 +72,12 @@ pub async fn process_identify_event(
     Ok(())
 }
 
-/// Escapes single quotes in a string value for safe inclusion in a ClickHouse
-/// SQL literal. This is a minimal escape suitable for string values only.
+/// Escapes a string value for safe inclusion in a ClickHouse SQL literal.
+///
+/// Handles backslashes, single quotes, and `?` (which the `clickhouse` crate
+/// interprets as bind-parameter placeholders).
 fn escape_ch_string(s: &str) -> String {
-    s.replace('\\', "\\\\").replace('\'', "\\'")
+    s.replace('\\', "\\\\")
+        .replace('\'', "\\'")
+        .replace('?', "??")
 }

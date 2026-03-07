@@ -172,5 +172,7 @@ fn nullable_str(opt: &Option<String>) -> String {
 }
 
 fn escape(s: &str) -> String {
-    s.replace('\\', "\\\\").replace('\'', "\\'")
+    s.replace('\\', "\\\\")
+        .replace('\'', "\\'")
+        .replace('?', "??")
 }
