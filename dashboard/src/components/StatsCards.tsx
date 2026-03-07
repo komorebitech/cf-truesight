@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { cn, formatNumber } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
+import { fadeInUp } from "@/lib/motion";
 
 export interface StatCardData {
   label: string;
@@ -68,8 +69,7 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
       {stats.map((stat, i) => (
         <motion.div
           key={stat.label}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...fadeInUp}
           transition={{ duration: 0.3, delay: i * 0.05 }}
           className="rounded-lg border bg-card p-6"
         >

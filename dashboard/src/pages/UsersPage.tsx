@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Search, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { formatDate, formatNumber } from "@/lib/utils";
 import { motion } from "motion/react";
+import { fadeIn } from "@/lib/motion";
 
 function useDebouncedValue<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -110,8 +111,7 @@ export function UsersPage() {
                 users.map((user, i) => (
                   <motion.tr
                     key={user.user_uid}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    {...fadeIn}
                     transition={{ duration: 0.2, delay: i * 0.02 }}
                     className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/50"
                     onClick={() => navigate(`/projects/${id}/users/${encodeURIComponent(user.user_uid)}`)}

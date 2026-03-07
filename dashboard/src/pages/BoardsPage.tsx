@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, LayoutGrid, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
+import { fadeInUp } from "@/lib/motion";
 
 export function BoardsPage() {
   const { id } = useParams<{ id: string }>();
@@ -92,8 +93,7 @@ export function BoardsPage() {
             {boards.map((board, i) => (
               <motion.div
                 key={board.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
+                {...fadeInUp}
                 transition={{ duration: 0.3, delay: i * 0.05 }}
               >
                 <Card

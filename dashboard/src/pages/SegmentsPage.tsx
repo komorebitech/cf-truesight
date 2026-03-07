@@ -41,6 +41,7 @@ import {
 import { Plus, Users, Trash2, Edit, ChevronRight } from "lucide-react";
 import { formatDateShort } from "@/lib/utils";
 import { motion } from "motion/react";
+import { fadeInUp } from "@/lib/motion";
 import type { SegmentDefinition } from "@/lib/api";
 
 const DEFAULT_DEFINITION: SegmentDefinition = {
@@ -137,8 +138,7 @@ export function SegmentsPage() {
           </div>
         ) : (
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
+            {...fadeInUp}
             transition={{ duration: 0.3 }}
           >
             <Card>

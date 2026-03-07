@@ -25,6 +25,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, FolderOpen } from "lucide-react";
 import { motion } from "motion/react";
+import { fadeInUp } from "@/lib/motion";
 
 function ProjectEventCount({ projectId }: { projectId: string }) {
   const { data, isLoading } = useEventCount(projectId);
@@ -81,8 +82,7 @@ export function ProjectsListPage() {
           </div>
         ) : (
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
+            {...fadeInUp}
             transition={{ duration: 0.3 }}
             className="rounded-lg border bg-card"
           >

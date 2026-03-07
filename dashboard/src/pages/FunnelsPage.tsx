@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Plus, GitBranch, Clock, ArrowRight, Trash2, BarChart } from "lucide-react";
 import { motion } from "motion/react";
+import { fadeInUp } from "@/lib/motion";
 
 export function FunnelsPage() {
   const { id } = useParams<{ id: string }>();
@@ -93,8 +94,7 @@ export function FunnelsPage() {
               return (
                 <motion.div
                   key={funnel.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  {...fadeInUp}
                   transition={{ duration: 0.3, delay: i * 0.05 }}
                 >
                   <Card
