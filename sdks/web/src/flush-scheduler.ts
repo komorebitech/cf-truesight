@@ -35,7 +35,10 @@ export class FlushScheduler {
       this.scheduleFlush();
     }, this.config.flushInterval);
 
-    // Flush on tab hide
+    // Flush on tab hide or page unload via beacon.
+    // visibilitychange fires reliably on tab hide AND page close;
+    // beforeunload is a fallback for browsers that skip visibilitychange.
+    // We use a single handler that guards against double-fire.
     if (typeof document !== 'undefined') {
       this.boundVisibilityHandler = () => {
         if (document.visibilityState === 'hidden') {
@@ -48,7 +51,6 @@ export class FlushScheduler {
       );
     }
 
-    // Flush on page unload
     if (typeof window !== 'undefined') {
       this.boundBeforeUnloadHandler = () => {
         this.flushWithBeacon();
@@ -133,38 +135,41 @@ export class FlushScheduler {
     this.isFlushing = true;
 
     try {
-      const queueSize = await this.queue.size();
-      if (queueSize === 0) {
-        logger.debug('Nothing to flush');
-        return;
-      }
+      // Loop to drain the queue in batches (Bug 6 fix)
+      while (true) {
+        const queueSize = await this.queue.size();
+        if (queueSize === 0) {
+          break;
+        }
 
-      const batchSize = Math.min(this.config.maxBatchSize, queueSize);
-      const events = await this.queue.dequeue(batchSize);
+        const batchSize = Math.min(this.config.maxBatchSize, queueSize);
+        const events = await this.queue.dequeue(batchSize);
 
-      if (events.length === 0) {
-        return;
-      }
+        if (events.length === 0) {
+          break;
+        }
 
-      const payload: BatchPayload = {
-        batch: events,
-        sent_at: new Date().toISOString(),
-      };
+        const payload: BatchPayload = {
+          batch: events,
+          sent_at: new Date().toISOString(),
+        };
 
-      const url = `${this.config.endpoint.replace(/\/+$/, '')}/v1/events/batch`;
-      const response = await sendBatch(
-        url,
-        this.config.apiKey,
-        payload
-      );
+        const url = `${this.config.endpoint.replace(/\/+$/, '')}/v1/events/batch`;
+        const response = await sendBatch(
+          url,
+          this.config.apiKey,
+          payload
+        );
 
-      if (response.ok) {
-        // Remove sent events from queue
-        const ids = events.map((e) => e.event_id);
-        await this.queue.remove(ids);
-        logger.debug(`Flushed ${events.length} events successfully`);
-      } else {
-        logger.error(`Flush failed with status: ${response.status}`);
+        if (response.ok) {
+          const ids = events.map((e) => e.event_id);
+          await this.queue.remove(ids);
+          logger.debug(`Flushed ${events.length} events successfully`);
+        } else {
+          // Stop draining on failure — will retry next cycle
+          logger.error(`Flush failed with status: ${response.status}`);
+          break;
+        }
       }
     } catch (err) {
       logger.error('Flush error:', err);
@@ -173,7 +178,23 @@ export class FlushScheduler {
     }
   }
 
+  /**
+   * Best-effort flush via sendBeacon for tab-hide / page-unload.
+   *
+   * We intentionally do NOT remove events from IndexedDB after beacon send
+   * (Bug 3 fix). sendBeacon returning true only means the browser accepted
+   * the payload — not that the server received it. Leaving events in the
+   * queue means the next page-load fetch flush may re-send them, but the
+   * server deduplicates via event_id (ClickHouse ReplacingMergeTree).
+   * This trades possible duplicates (cheap — server dedupes) for no data
+   * loss (expensive — beacon failures are silent).
+   *
+   * The isFlushing guard prevents concurrent reads with doFlush (Bug 1 fix).
+   */
   private async flushWithBeacon(): Promise<void> {
+    if (this.isFlushing) return;
+    this.isFlushing = true;
+
     try {
       const queueSize = await this.queue.size();
       if (queueSize === 0) return;
@@ -195,12 +216,14 @@ export class FlushScheduler {
         payload
       );
 
-      if (success) {
-        const ids = events.map((e) => e.event_id);
-        await this.queue.remove(ids);
+      if (!success) {
+        logger.warn('sendBeacon rejected, events remain in queue for next flush');
       }
+      // Events are NOT removed — server deduplicates by event_id
     } catch (err) {
       logger.error('Beacon flush error:', err);
+    } finally {
+      this.isFlushing = false;
     }
   }
 }

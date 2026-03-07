@@ -18,7 +18,7 @@ export class EventQueue {
   private db: IDBDatabase | null = null;
   private apiKey: string;
   private maxQueueHard: number;
-  private sequence = 0;
+  private lastTimestamp = 0;
 
   constructor(apiKey: string, maxQueueHard: number) {
     this.apiKey = apiKey;
@@ -26,7 +26,7 @@ export class EventQueue {
   }
 
   async open(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onupgradeneeded = () => {
@@ -49,6 +49,25 @@ export class EventQueue {
         logger.error('Failed to open IndexedDB', request.error);
         reject(request.error);
       };
+    });
+
+    // Initialize lastTimestamp from existing data to ensure monotonicity
+    // across page reloads (Bug 2 fix)
+    this.lastTimestamp = await this.getMaxTimestamp();
+  }
+
+  private getMaxTimestamp(): Promise<number> {
+    return new Promise((resolve, reject) => {
+      if (!this.db) { resolve(0); return; }
+      const tx = this.db.transaction(STORE_NAME, 'readonly');
+      const index = tx.objectStore(STORE_NAME).index('timestamp');
+      const request = index.openCursor(null, 'prev');
+
+      request.onsuccess = () => {
+        const cursor = request.result;
+        resolve(cursor ? (cursor.value as StoredEvent).timestamp : 0);
+      };
+      request.onerror = () => reject(request.error);
     });
   }
 
@@ -73,9 +92,14 @@ export class EventQueue {
     const key = await deriveKey(this.apiKey);
     const encrypted = await encrypt(JSON.stringify(event), key);
 
+    // Ensure strictly monotonic timestamps across page reloads
+    const now = Date.now() * 1000;
+    const timestamp = Math.max(now, this.lastTimestamp + 1);
+    this.lastTimestamp = timestamp;
+
     const stored: StoredEvent = {
       event_id: event.event_id,
-      timestamp: Date.now() * 1000 + this.sequence++,
+      timestamp,
       encrypted,
     };
 
