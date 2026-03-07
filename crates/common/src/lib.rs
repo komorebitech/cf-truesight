@@ -9,6 +9,7 @@ pub mod identity;
 pub mod jwt;
 pub mod project;
 pub mod schema;
+pub mod shutdown;
 pub mod sqs;
 pub mod team;
 pub mod telemetry;

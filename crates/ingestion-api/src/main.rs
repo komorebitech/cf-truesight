@@ -14,6 +14,7 @@ use tracing::info;
 use truesight_common::auth::ApiKeyCache;
 use truesight_common::config::IngestionConfig;
 use truesight_common::db::create_pool;
+use truesight_common::shutdown::shutdown_signal;
 use truesight_common::sqs::SqsProducer;
 use truesight_common::telemetry::init_telemetry;
 
@@ -91,29 +92,4 @@ async fn main() -> anyhow::Result<()> {
 
     info!("Server shut down gracefully");
     Ok(())
-}
-
-/// Wait for a SIGINT (Ctrl+C) or SIGTERM signal for graceful shutdown.
-async fn shutdown_signal() {
-    let ctrl_c = async {
-        tokio::signal::ctrl_c()
-            .await
-            .expect("Failed to install Ctrl+C handler");
-    };
-
-    #[cfg(unix)]
-    let terminate = async {
-        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
-            .expect("Failed to install SIGTERM handler")
-            .recv()
-            .await;
-    };
-
-    #[cfg(not(unix))]
-    let terminate = std::future::pending::<()>();
-
-    tokio::select! {
-        () = ctrl_c => info!("Received Ctrl+C, shutting down"),
-        () = terminate => info!("Received SIGTERM, shutting down"),
-    }
 }

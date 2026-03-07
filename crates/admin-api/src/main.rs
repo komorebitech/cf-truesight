@@ -18,6 +18,7 @@ use truesight_common::auth::hash_api_key;
 use truesight_common::config::AdminConfig;
 use truesight_common::db::create_pool;
 use truesight_common::project::NewProject;
+use truesight_common::shutdown::shutdown_signal;
 use truesight_common::telemetry::init_telemetry;
 
 use crate::state::AppState;
@@ -166,11 +167,4 @@ async fn main() -> anyhow::Result<()> {
 
     info!("Server shut down gracefully");
     Ok(())
-}
-
-async fn shutdown_signal() {
-    tokio::signal::ctrl_c()
-        .await
-        .expect("Failed to install CTRL+C handler");
-    info!("Received shutdown signal");
 }

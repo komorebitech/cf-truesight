@@ -153,26 +153,7 @@ async fn main() -> Result<()> {
 
     // --- Wait for shutdown signal ---
 
-    let ctrl_c = tokio::signal::ctrl_c();
-
-    #[cfg(unix)]
-    let mut sigterm = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
-
-    #[cfg(unix)]
-    tokio::select! {
-        _ = ctrl_c => {
-            tracing::info!("received SIGINT, shutting down");
-        }
-        _ = sigterm.recv() => {
-            tracing::info!("received SIGTERM, shutting down");
-        }
-    }
-
-    #[cfg(not(unix))]
-    {
-        ctrl_c.await?;
-        tracing::info!("received Ctrl-C, shutting down");
-    }
+    truesight_common::shutdown::shutdown_signal().await;
 
     // --- Graceful shutdown ---
 
