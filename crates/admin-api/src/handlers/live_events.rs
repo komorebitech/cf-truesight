@@ -146,8 +146,8 @@ pub async fn live_events_stream(
                  event_name, event_type, \
                  COALESCE(user_id, '') AS user_id, anonymous_id, \
                  COALESCE(email, '') AS email, COALESCE(mobile_number, '') AS mobile_number, \
-                 formatDateTime(client_timestamp, '%Y-%m-%dT%H:%i:%S', 'UTC') AS client_ts, \
-                 formatDateTime(server_timestamp, '%Y-%m-%dT%H:%i:%S', 'UTC') AS server_ts, \
+                 formatDateTime(client_timestamp, '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS client_ts, \
+                 formatDateTime(server_timestamp, '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS server_ts, \
                  toFloat64(toUnixTimestamp64Milli(server_timestamp)) / 1000.0 AS server_ts_raw, \
                  properties, os_name, device_model, sdk_version, platform \
                  FROM {db}.events WHERE {where_clause} \

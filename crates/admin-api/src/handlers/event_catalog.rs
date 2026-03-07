@@ -65,8 +65,8 @@ pub async fn event_catalog(
     let query = format!(
         "SELECT event_name, event_type, \
          sum(event_count) AS event_count, \
-         formatDateTime(min(first_seen), '%Y-%m-%dT%H:%i:%S', 'UTC') AS first_seen, \
-         formatDateTime(max(last_seen), '%Y-%m-%dT%H:%i:%S', 'UTC') AS last_seen \
+         formatDateTime(min(first_seen), '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS first_seen, \
+         formatDateTime(max(last_seen), '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS last_seen \
          FROM {db}.event_catalog \
          WHERE project_id = ?{search_filter}{env_filter} \
          GROUP BY event_name, event_type \
@@ -126,7 +126,7 @@ pub async fn event_properties(
 
     let query = format!(
         "SELECT property_key, \
-         formatDateTime(min(first_seen), '%Y-%m-%dT%H:%i:%S', 'UTC') AS first_seen \
+         formatDateTime(min(first_seen), '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS first_seen \
          FROM {db}.event_property_keys \
          WHERE project_id = ? AND event_name = ?{env_filter} \
          GROUP BY property_key \

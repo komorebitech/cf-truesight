@@ -92,8 +92,8 @@ pub async fn list_users(
          COALESCE(any(p.email), '') AS email, \
          COALESCE(any(p.name), '') AS name, \
          COALESCE(any(p.mobile_number), '') AS mobile_number, \
-         formatDateTime(min(s.first_seen), '%Y-%m-%d %H:%i:%S', 'UTC') AS first_seen, \
-         formatDateTime(max(s.last_seen), '%Y-%m-%d %H:%i:%S', 'UTC') AS last_seen, \
+         formatDateTime(min(s.first_seen), '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS first_seen, \
+         formatDateTime(max(s.last_seen), '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS last_seen, \
          sum(s.event_count) AS event_count \
          FROM {db}.user_stats AS s \
          LEFT JOIN (SELECT * FROM {db}.user_profiles FINAL) AS p \
@@ -215,8 +215,8 @@ pub async fn get_user(
     // Get accurate stats from user_stats
     let stats_query = format!(
         "SELECT sum(event_count) AS event_count, \
-         formatDateTime(min(first_seen), '%Y-%m-%d %H:%i:%S', 'UTC') AS first_seen, \
-         formatDateTime(max(last_seen), '%Y-%m-%d %H:%i:%S', 'UTC') AS last_seen \
+         formatDateTime(min(first_seen), '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS first_seen, \
+         formatDateTime(max(last_seen), '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS last_seen \
          FROM {db}.user_stats \
          WHERE project_id = ? AND user_uid = ?{stats_env_filter}"
     );
@@ -352,8 +352,8 @@ pub async fn user_events(
         "SELECT toString(event_id) AS event_id, toString(project_id) AS project_id, \
          event_name, event_type, \
          COALESCE(user_id, '') AS user_id, anonymous_id, \
-         formatDateTime(client_timestamp, '%Y-%m-%d %H:%i:%S', 'UTC') AS client_ts, \
-         formatDateTime(server_timestamp, '%Y-%m-%d %H:%i:%S', 'UTC') AS server_ts, \
+         formatDateTime(client_timestamp, '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS client_ts, \
+         formatDateTime(server_timestamp, '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS server_ts, \
          properties \
          FROM {db}.events \
          WHERE {where_clause} \
