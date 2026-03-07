@@ -1,4 +1,5 @@
 pub mod boards;
+pub mod update;
 pub mod cohorts;
 pub mod config;
 pub mod event_catalog;

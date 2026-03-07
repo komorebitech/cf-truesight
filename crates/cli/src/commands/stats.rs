@@ -4,6 +4,32 @@ use crate::cli::{OutputFormat, StatsCommand};
 use crate::client::TrueSightClient;
 use crate::output::render;
 
+/// Normalize a date string for the API.
+/// Accepts DD-MM-YYYY, YYYY-MM-DD, or full ISO datetime.
+/// Appends T00:00:00Z for `from` or T23:59:59Z for `to`.
+fn normalize_dt(s: &str, is_end: bool) -> String {
+    if s.contains('T') || s.contains(' ') {
+        return s.to_string();
+    }
+    // Convert DD-MM-YYYY to YYYY-MM-DD
+    let iso_date = if s.len() == 10 && s.chars().nth(2) == Some('-') && s.chars().nth(5) == Some('-')
+    {
+        let parts: Vec<&str> = s.split('-').collect();
+        if parts.len() == 3 {
+            format!("{}-{}-{}", parts[2], parts[1], parts[0])
+        } else {
+            s.to_string()
+        }
+    } else {
+        s.to_string()
+    };
+    if is_end {
+        format!("{iso_date}T23:59:59Z")
+    } else {
+        format!("{iso_date}T00:00:00Z")
+    }
+}
+
 pub async fn run(
     command: &StatsCommand,
     client: &TrueSightClient,
@@ -13,8 +39,9 @@ pub async fn run(
     let base = format!("/v1/stats/projects/{project}");
     match command {
         StatsCommand::EventCount { from, to } => {
+            let (f, t) = (normalize_dt(from, false), normalize_dt(to, true));
             let resp = client
-                .get(&format!("{base}/event-count?from={from}&to={to}"))
+                .get(&format!("{base}/event-count?from={f}&to={t}"))
                 .await?;
             render(format, &resp);
         }
@@ -23,21 +50,24 @@ pub async fn run(
             to,
             granularity,
         } => {
+            let (f, t) = (normalize_dt(from, false), normalize_dt(to, true));
             let resp = client
                 .get(&format!(
-                    "{base}/throughput?from={from}&to={to}&granularity={granularity}"
+                    "{base}/throughput?from={f}&to={t}&granularity={granularity}"
                 ))
                 .await?;
             render(format, &resp);
         }
         StatsCommand::EventTypes { from, to } => {
+            let (f, t) = (normalize_dt(from, false), normalize_dt(to, true));
             let resp = client
-                .get(&format!("{base}/event-types?from={from}&to={to}"))
+                .get(&format!("{base}/event-types?from={f}&to={t}"))
                 .await?;
             render(format, &resp);
         }
         StatsCommand::EventNames { from, to, limit } => {
-            let mut url = format!("{base}/event-names?from={from}&to={to}");
+            let (f, t) = (normalize_dt(from, false), normalize_dt(to, true));
+            let mut url = format!("{base}/event-names?from={f}&to={t}");
             if let Some(l) = limit {
                 url.push_str(&format!("&limit={l}"));
             }
@@ -52,7 +82,8 @@ pub async fn run(
             event_type,
             event_name,
         } => {
-            let mut url = format!("{base}/events?from={from}&to={to}");
+            let (f, t) = (normalize_dt(from, false), normalize_dt(to, true));
+            let mut url = format!("{base}/events?from={f}&to={t}");
             if let Some(l) = limit {
                 url.push_str(&format!("&limit={l}"));
             }
@@ -69,8 +100,9 @@ pub async fn run(
             render(format, &resp);
         }
         StatsCommand::ActiveUsers { from, to } => {
+            let (f, t) = (normalize_dt(from, false), normalize_dt(to, true));
             let resp = client
-                .get(&format!("{base}/active-users?from={from}&to={to}"))
+                .get(&format!("{base}/active-users?from={f}&to={t}"))
                 .await?;
             render(format, &resp);
         }
@@ -79,8 +111,9 @@ pub async fn run(
             render(format, &resp);
         }
         StatsCommand::PlatformDistribution { from, to } => {
+            let (f, t) = (normalize_dt(from, false), normalize_dt(to, true));
             let resp = client
-                .get(&format!("{base}/platform-distribution?from={from}&to={to}"))
+                .get(&format!("{base}/platform-distribution?from={f}&to={t}"))
                 .await?;
             render(format, &resp);
         }

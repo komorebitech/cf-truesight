@@ -136,6 +136,10 @@ fn token() -> Result<()> {
 }
 
 fn derive_dashboard_url(api_url: &str) -> String {
+    // Production: ts-admin.cityflo.net -> truesight.cityflo.net
+    if api_url.contains("ts-admin.cityflo.net") {
+        return api_url.replace("ts-admin.cityflo.net", "truesight.cityflo.net");
+    }
     // Local development: API at :8081, dashboard at :3000
     if api_url.contains("localhost:8081") || api_url.contains("127.0.0.1:8081") {
         return api_url.replace("8081", "3000");

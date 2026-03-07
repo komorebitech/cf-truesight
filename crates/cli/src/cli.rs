@@ -41,6 +41,8 @@ pub enum OutputFormat {
 
 #[derive(Subcommand)]
 pub enum Command {
+    /// Update the CLI to the latest version
+    Update,
     /// Authenticate with TrueSight via Google OAuth
     Auth {
         #[command(subcommand)]
@@ -368,19 +370,19 @@ pub enum StatsCommand {
     /// Get total event count for a time range
     #[command(name = "event-count")]
     EventCount {
-        /// Start date (YYYY-MM-DD)
+        /// Start date (DD-MM-YYYY or YYYY-MM-DD)
         #[arg(long)]
         from: String,
-        /// End date (YYYY-MM-DD)
+        /// End date (DD-MM-YYYY or YYYY-MM-DD)
         #[arg(long)]
         to: String,
     },
     /// Get event throughput over time
     Throughput {
-        /// Start date (YYYY-MM-DD)
+        /// Start date (DD-MM-YYYY or YYYY-MM-DD)
         #[arg(long)]
         from: String,
-        /// End date (YYYY-MM-DD)
+        /// End date (DD-MM-YYYY or YYYY-MM-DD)
         #[arg(long)]
         to: String,
         /// Time granularity (hour, day)

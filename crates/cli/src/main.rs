@@ -31,9 +31,8 @@ fn resolve_api_url(cli: &Cli) -> Result<String> {
     if let Some(url) = cfg.api_url {
         return Ok(url);
     }
-    bail!(
-        "No API URL configured. Use --api-url, TRUESIGHT_API_URL, or `truesight config set api_url <url>`."
-    )
+    // Default to production API
+    Ok("https://ts-admin.cityflo.net".to_string())
 }
 
 fn resolve_project(cli: &Cli) -> Result<String> {
@@ -60,6 +59,7 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match &cli.command {
+        Command::Update => commands::update::run().await,
         Command::Auth { command } => auth::run(command, &cli).await,
         Command::Config { command } => commands::config::run(command),
         Command::Projects { command } => {
