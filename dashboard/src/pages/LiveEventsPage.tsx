@@ -4,14 +4,13 @@ import { useLiveEvents } from "@/hooks/use-live-events";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Header } from "@/components/Header";
 import { LiveEventRow } from "@/components/LiveEventRow";
-import { LiveEventDetail } from "@/components/LiveEventDetail";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Radio, Pause, Play, RotateCcw, Trash2 } from "lucide-react";
-import type { LiveEvent, LiveEventStreamFilters } from "@/lib/api";
+import type { LiveEventStreamFilters } from "@/lib/api";
 
 // ── Debounce hook ───────────────────────────────────────────────────
 
@@ -63,11 +62,19 @@ export function LiveEventsPage() {
     clear,
   } = useLiveEvents(id, filters);
 
-  // Detail drawer
-  const [selectedEvent, setSelectedEvent] = useState<LiveEvent | null>(null);
+  // Expanded cards (multiple allowed)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  const handleSelect = useCallback((event: LiveEvent) => {
-    setSelectedEvent(event);
+  const handleToggleExpand = useCallback((eventId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(eventId)) {
+        next.delete(eventId);
+      } else {
+        next.add(eventId);
+      }
+      return next;
+    });
   }, []);
 
   const handleReset = () => {
@@ -236,7 +243,8 @@ export function LiveEventsPage() {
                   key={event.event_id}
                   event={event}
                   isLast={i === events.length - 1}
-                  onSelect={handleSelect}
+                  expanded={expandedIds.has(event.event_id)}
+                  onToggleExpand={handleToggleExpand}
                 />
               ))}
             </div>
@@ -244,14 +252,6 @@ export function LiveEventsPage() {
         </div>
       </div>
 
-      {/* Detail drawer */}
-      <LiveEventDetail
-        event={selectedEvent}
-        open={!!selectedEvent}
-        onOpenChange={(open) => {
-          if (!open) setSelectedEvent(null);
-        }}
-      />
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import type { LiveEvent } from "@/lib/api";
-import { cn, formatRelativeShort } from "@/lib/utils";
+import { cn, formatRelativeShort, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import { motion } from "motion/react";
+import { ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 // ── Color mapping ───────────────────────────────────────────────────
 
@@ -39,19 +39,43 @@ function userIdentifier(event: LiveEvent): string {
   return event.anonymous_id.slice(0, 12) + "...";
 }
 
+// ── Detail field ────────────────────────────────────────────────────
+
+function DetailField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="mt-0.5 truncate text-sm">{children}</dd>
+    </div>
+  );
+}
+
 // ── Component ───────────────────────────────────────────────────────
 
 interface LiveEventRowProps {
   event: LiveEvent;
   isLast: boolean;
-  onSelect: (event: LiveEvent) => void;
+  expanded: boolean;
+  onToggleExpand: (eventId: string) => void;
 }
 
-export function LiveEventRow({ event, isLast, onSelect }: LiveEventRowProps) {
+export function LiveEventRow({
+  event,
+  isLast,
+  expanded,
+  onToggleExpand,
+}: LiveEventRowProps) {
   const [relTime, setRelTime] = useState(() =>
     formatRelativeShort(event.server_timestamp),
   );
-  const [expanded, setExpanded] = useState(false);
 
   // Auto-update relative timestamp every 5s
   useEffect(() => {
@@ -87,10 +111,11 @@ export function LiveEventRow({ event, isLast, onSelect }: LiveEventRowProps) {
         <div
           className={cn(
             "group cursor-pointer rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50",
+            expanded && "bg-muted/30",
           )}
-          onClick={() => onSelect(event)}
+          onClick={() => onToggleExpand(event.event_id)}
         >
-          {/* Top row: time + type badge + name */}
+          {/* Top row: time + type badge + name + expand chevron */}
           <div className="flex items-center gap-2 text-sm">
             <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
               {relTime}
@@ -110,43 +135,103 @@ export function LiveEventRow({ event, isLast, onSelect }: LiveEventRowProps) {
             <span className="ml-auto shrink-0 truncate text-xs text-muted-foreground max-w-[180px]">
               {userIdentifier(event)}
             </span>
+            <motion.div
+              animate={{ rotate: expanded ? 90 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            </motion.div>
           </div>
 
-          {/* Expand toggle */}
-          <button
-            type="button"
-            className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-            onClick={(e) => {
-              e.stopPropagation();
-              setExpanded(!expanded);
-            }}
-          >
-            {expanded ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : (
-              <ChevronRight className="h-3 w-3" />
-            )}
-            Properties
-          </button>
+          {/* Expanded detail panel */}
+          <AnimatePresence initial={false}>
+            {expanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                className="overflow-hidden"
+              >
+                <div className="mt-3 border-t pt-3">
+                  {/* Metadata grid */}
+                  <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
+                    <DetailField label="Event Name">
+                      <span className="font-medium">{event.event_name}</span>
+                    </DetailField>
 
-          {/* Expanded properties */}
-          {expanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <pre className="mt-2 max-h-48 overflow-auto rounded-md bg-muted p-3 text-xs">
-                {JSON.stringify(
-                  JSON.parse(event.properties || "{}"),
-                  null,
-                  2,
-                )}
-              </pre>
-            </motion.div>
-          )}
+                    <DetailField label="Type">
+                      <Badge variant={badgeVariant(event.event_type)}>
+                        {event.event_type}
+                      </Badge>
+                    </DetailField>
+
+                    {event.user_id && (
+                      <DetailField label="User ID">
+                        {event.user_id}
+                      </DetailField>
+                    )}
+
+                    <DetailField label="Anonymous ID">
+                      <span className="font-mono text-xs">
+                        {event.anonymous_id}
+                      </span>
+                    </DetailField>
+
+                    {event.email && (
+                      <DetailField label="Email">{event.email}</DetailField>
+                    )}
+
+                    {event.mobile_number && (
+                      <DetailField label="Mobile">
+                        {event.mobile_number}
+                      </DetailField>
+                    )}
+
+                    <DetailField label="Client Time">
+                      {formatDate(event.client_timestamp)}
+                    </DetailField>
+
+                    <DetailField label="Server Time">
+                      {formatDate(event.server_timestamp)}
+                    </DetailField>
+
+                    {event.os_name && (
+                      <DetailField label="OS">{event.os_name}</DetailField>
+                    )}
+
+                    {event.device_model && (
+                      <DetailField label="Device">
+                        {event.device_model}
+                      </DetailField>
+                    )}
+
+                    {event.sdk_version && (
+                      <DetailField label="SDK Version">
+                        <span className="font-mono text-xs">
+                          {event.sdk_version}
+                        </span>
+                      </DetailField>
+                    )}
+                  </dl>
+
+                  {/* Properties */}
+                  <div className="mt-3">
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      Properties
+                    </span>
+                    <pre className="mt-1 max-h-48 overflow-auto rounded-md bg-muted p-3 text-xs">
+                      {JSON.stringify(
+                        JSON.parse(event.properties || "{}"),
+                        null,
+                        2,
+                      )}
+                    </pre>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>
