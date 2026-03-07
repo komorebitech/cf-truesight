@@ -4,7 +4,7 @@ set -e
 # TrueSight CLI installer
 # Usage: curl -fsSL https://truesight.cityflo.net/install.sh | sh
 
-REPO="komorebitech/cf-true-sight"
+REPO="komorebitech/cf-truesight"
 BINARY_NAME="truesight"
 INSTALL_DIR="${HOME}/.local/bin"
 
