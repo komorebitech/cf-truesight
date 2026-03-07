@@ -4,8 +4,6 @@
 //! using `INSERT ... FORMAT JSONEachRow`. Failed inserts are retried up to 3
 //! times with exponential back-off before the error is propagated to the caller.
 
-use std::collections::HashMap;
-
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use regex::Regex;
@@ -38,7 +36,7 @@ struct EventRow {
     client_timestamp: String,
     server_timestamp: String,
     properties: String,
-    properties_map: HashMap<String, String>,
+    properties_map: Vec<(String, String)>,
     project_id: Uuid,
     environment: String,
     session_id: Option<String>,
@@ -153,11 +151,11 @@ fn sanitize_value(value: &serde_json::Value) -> serde_json::Value {
 ///
 /// Primitives are converted with `to_string()`, nested objects/arrays are
 /// serialised as JSON strings so nothing is lost.
-fn flatten_properties(props: &Option<serde_json::Value>) -> HashMap<String, String> {
+fn flatten_properties(props: &Option<serde_json::Value>) -> Vec<(String, String)> {
     let Some(serde_json::Value::Object(map)) = props else {
-        return HashMap::new();
+        return Vec::new();
     };
-    let mut out = HashMap::with_capacity(map.len());
+    let mut out = Vec::with_capacity(map.len());
     for (k, v) in map {
         let s = match v {
             serde_json::Value::String(s) => s.clone(),
@@ -167,7 +165,7 @@ fn flatten_properties(props: &Option<serde_json::Value>) -> HashMap<String, Stri
             // Nested objects / arrays — keep as JSON
             other => serde_json::to_string(other).unwrap_or_default(),
         };
-        out.insert(k.clone(), s);
+        out.push((k.clone(), s));
     }
     out
 }
