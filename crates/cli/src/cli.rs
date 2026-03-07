@@ -413,10 +413,12 @@ pub enum StatsCommand {
         from: String,
         #[arg(long)]
         to: String,
+        /// Page number (default: 1)
         #[arg(long)]
-        limit: Option<u32>,
+        page: Option<u32>,
+        /// Results per page (default: 50, max: 200)
         #[arg(long)]
-        offset: Option<u32>,
+        per_page: Option<u32>,
         /// Filter by event type
         #[arg(long)]
         event_type: Option<String>,
@@ -554,10 +556,12 @@ pub enum FlowsCommand {
 pub enum UsersCommand {
     /// List user profiles
     List {
+        /// Page number (default: 1)
         #[arg(long)]
-        limit: Option<u32>,
+        page: Option<u32>,
+        /// Results per page (default: 50, max: 200)
         #[arg(long)]
-        offset: Option<u32>,
+        per_page: Option<u32>,
         /// Search query
         #[arg(long)]
         search: Option<String>,
@@ -571,10 +575,12 @@ pub enum UsersCommand {
     Events {
         /// User ID (distinct_id)
         id: String,
+        /// Page number (default: 1)
         #[arg(long)]
-        limit: Option<u32>,
+        page: Option<u32>,
+        /// Results per page (default: 50, max: 200)
         #[arg(long)]
-        offset: Option<u32>,
+        per_page: Option<u32>,
     },
 }
 
@@ -623,10 +629,12 @@ pub enum SegmentsCommand {
     Users {
         /// Segment ID
         id: String,
+        /// Page number (default: 1)
         #[arg(long)]
-        limit: Option<u32>,
+        page: Option<u32>,
+        /// Results per page (default: 50, max: 200)
         #[arg(long)]
-        offset: Option<u32>,
+        per_page: Option<u32>,
     },
     /// Preview segment results without saving
     Preview {
@@ -684,10 +692,12 @@ pub enum CohortsCommand {
     Users {
         /// Cohort ID
         id: String,
+        /// Page number (default: 1)
         #[arg(long)]
-        limit: Option<u32>,
+        page: Option<u32>,
+        /// Results per page (default: 50, max: 200)
         #[arg(long)]
-        offset: Option<u32>,
+        per_page: Option<u32>,
     },
 }
 

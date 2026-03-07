@@ -41,13 +41,13 @@ pub async fn run(
             let resp = client.get(&format!("{base}/{id}/size")).await?;
             render(format, &resp);
         }
-        CohortsCommand::Users { id, limit, offset } => {
+        CohortsCommand::Users { id, page, per_page } => {
             let mut url = format!("{base}/{id}/users?");
-            if let Some(l) = limit {
-                url.push_str(&format!("limit={l}&"));
+            if let Some(p) = page {
+                url.push_str(&format!("page={p}&"));
             }
-            if let Some(o) = offset {
-                url.push_str(&format!("offset={o}&"));
+            if let Some(pp) = per_page {
+                url.push_str(&format!("per_page={pp}&"));
             }
             let resp = client.get(url.trim_end_matches('&')).await?;
             render(format, &resp);

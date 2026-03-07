@@ -77,18 +77,18 @@ pub async fn run(
         StatsCommand::Events {
             from,
             to,
-            limit,
-            offset,
+            page,
+            per_page,
             event_type,
             event_name,
         } => {
             let (f, t) = (normalize_dt(from, false), normalize_dt(to, true));
             let mut url = format!("{base}/events?from={f}&to={t}");
-            if let Some(l) = limit {
-                url.push_str(&format!("&limit={l}"));
+            if let Some(p) = page {
+                url.push_str(&format!("&page={p}"));
             }
-            if let Some(o) = offset {
-                url.push_str(&format!("&offset={o}"));
+            if let Some(pp) = per_page {
+                url.push_str(&format!("&per_page={pp}"));
             }
             if let Some(et) = event_type {
                 url.push_str(&format!("&event_type={et}"));
