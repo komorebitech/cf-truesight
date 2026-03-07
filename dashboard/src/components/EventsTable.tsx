@@ -12,15 +12,8 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
-import { ChevronDown, ChevronRight, ChevronLeft } from "lucide-react";
-import { motion } from "motion/react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 interface EventsTableProps {
   events: TrackedEvent[] | undefined;
@@ -45,6 +38,23 @@ function EventTypeColor(type: string) {
   }
 }
 
+function DetailField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="mt-0.5 truncate text-sm">{children}</dd>
+    </div>
+  );
+}
+
 export function EventsTable({
   events,
   isLoading,
@@ -52,8 +62,19 @@ export function EventsTable({
   hasMore,
   onPageChange,
 }: EventsTableProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [drawerEvent, setDrawerEvent] = useState<TrackedEvent | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (eventId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(eventId)) {
+        next.delete(eventId);
+      } else {
+        next.add(eventId);
+      }
+      return next;
+    });
+  };
 
   if (isLoading) {
     return (
@@ -88,71 +109,159 @@ export function EventsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {events.map((event, i) => (
-            <>
-              <motion.tr
-                key={event.event_id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2, delay: i * 0.02 }}
-                className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/50"
-                onClick={() => {
-                  setExpandedId(
-                    expandedId === event.event_id ? null : event.event_id,
-                  );
-                  setDrawerEvent(event);
-                }}
-              >
-                <TableCell className="w-8 pr-0">
-                  {expandedId === event.event_id ? (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </TableCell>
-                <TableCell className="font-medium">
-                  {event.event_name}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={EventTypeColor(event.event_type)}>
-                    {event.event_type}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {event.platform ? (
-                    <Badge variant="outline" className="text-xs">
-                      {event.platform}
-                    </Badge>
-                  ) : null}
-                </TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">
-                  {event.anonymous_id.slice(0, 12)}...
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {event.user_id || "-"}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {formatDate(event.client_timestamp)}
-                </TableCell>
-              </motion.tr>
-              {expandedId === event.event_id && (
-                <TableRow key={`${event.event_id}-expanded`}>
-                  <TableCell colSpan={7} className="bg-muted p-0">
-                    <pre className="max-h-64 overflow-auto p-4 text-xs">
-                      {JSON.stringify(cleanProperties(JSON.parse(event.properties || "{}")), null, 2)}
-                    </pre>
+          {events.map((event, i) => {
+            const isExpanded = expandedIds.has(event.event_id);
+            return (
+              <>
+                <motion.tr
+                  key={event.event_id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2, delay: i * 0.02 }}
+                  className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/50"
+                  onClick={() => toggleExpand(event.event_id)}
+                >
+                  <TableCell className="w-8 pr-0">
+                    <motion.div
+                      animate={{ rotate: isExpanded ? 90 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </motion.div>
                   </TableCell>
-                </TableRow>
-              )}
-            </>
-          ))}
+                  <TableCell className="font-medium">
+                    {event.event_name}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={EventTypeColor(event.event_type)}>
+                      {event.event_type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {event.platform ? (
+                      <Badge variant="outline" className="text-xs">
+                        {event.platform}
+                      </Badge>
+                    ) : null}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {event.anonymous_id.slice(0, 12)}...
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {event.user_id || "-"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {formatDate(event.client_timestamp)}
+                  </TableCell>
+                </motion.tr>
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <tr key={`${event.event_id}-detail`}>
+                      <TableCell colSpan={7} className="p-0">
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{
+                            duration: 0.3,
+                            ease: [0.4, 0, 0.2, 1],
+                          }}
+                          className="overflow-hidden"
+                        >
+                          <div className="border-t bg-muted/30 px-6 py-4">
+                            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-5">
+                              <DetailField label="Event Name">
+                                <span className="font-medium">
+                                  {event.event_name}
+                                </span>
+                              </DetailField>
+
+                              <DetailField label="Type">
+                                <Badge
+                                  variant={EventTypeColor(event.event_type)}
+                                >
+                                  {event.event_type}
+                                </Badge>
+                              </DetailField>
+
+                              <DetailField label="Anonymous ID">
+                                <span className="font-mono text-xs">
+                                  {event.anonymous_id}
+                                </span>
+                              </DetailField>
+
+                              {event.user_id && (
+                                <DetailField label="User ID">
+                                  {event.user_id}
+                                </DetailField>
+                              )}
+
+                              {event.platform && (
+                                <DetailField label="Platform">
+                                  {event.platform}
+                                </DetailField>
+                              )}
+
+                              <DetailField label="Client Time">
+                                {formatDate(event.client_timestamp)}
+                              </DetailField>
+
+                              <DetailField label="Server Time">
+                                {formatDate(event.server_timestamp)}
+                              </DetailField>
+
+                              {event.os_name && (
+                                <DetailField label="OS">
+                                  {event.os_name}
+                                </DetailField>
+                              )}
+
+                              {event.device_model && (
+                                <DetailField label="Device">
+                                  {event.device_model}
+                                </DetailField>
+                              )}
+
+                              {event.sdk_version && (
+                                <DetailField label="SDK Version">
+                                  <span className="font-mono text-xs">
+                                    {event.sdk_version}
+                                  </span>
+                                </DetailField>
+                              )}
+                            </dl>
+
+                            <div className="mt-3">
+                              <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                Properties
+                              </span>
+                              <pre className="mt-1 max-h-48 overflow-auto rounded-md bg-muted p-3 text-xs">
+                                {JSON.stringify(
+                                  cleanProperties(
+                                    JSON.parse(event.properties || "{}"),
+                                  ),
+                                  null,
+                                  2,
+                                )}
+                              </pre>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </TableCell>
+                    </tr>
+                  )}
+                </AnimatePresence>
+              </>
+            );
+          })}
         </TableBody>
       </Table>
 
       {/* Pagination */}
       <div className="flex items-center justify-between border-t px-4 py-3">
         <p className="text-sm text-muted-foreground">
-          Page {page} &middot; {events.length} event{events.length !== 1 ? "s" : ""}
+          Page {page} &middot; {events.length} event
+          {events.length !== 1 ? "s" : ""}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -164,9 +273,7 @@ export function EventsTable({
             <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {page}
-          </span>
+          <span className="text-sm text-muted-foreground">Page {page}</span>
           <Button
             variant="outline"
             size="sm"
@@ -178,92 +285,6 @@ export function EventsTable({
           </Button>
         </div>
       </div>
-
-      {/* Side drawer for event detail */}
-      <Sheet
-        open={!!drawerEvent && expandedId === drawerEvent?.event_id}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDrawerEvent(null);
-            setExpandedId(null);
-          }
-        }}
-      >
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Event Detail</SheetTitle>
-            <SheetDescription>Detailed event information</SheetDescription>
-          </SheetHeader>
-          {drawerEvent && (
-            <div className="mt-6 overflow-auto" style={{ height: "calc(100vh - 140px)" }}>
-              <dl className="space-y-4">
-                <div>
-                  <dt className="text-xs font-medium uppercase text-muted-foreground">
-                    Event Name
-                  </dt>
-                  <dd className="mt-1 text-sm font-medium">
-                    {drawerEvent.event_name}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase text-muted-foreground">
-                    Type
-                  </dt>
-                  <dd className="mt-1">
-                    <Badge variant={EventTypeColor(drawerEvent.event_type)}>
-                      {drawerEvent.event_type}
-                    </Badge>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase text-muted-foreground">
-                    Anonymous ID
-                  </dt>
-                  <dd className="mt-1 font-mono text-sm text-muted-foreground">
-                    {drawerEvent.anonymous_id}
-                  </dd>
-                </div>
-                {drawerEvent.user_id && (
-                  <div>
-                    <dt className="text-xs font-medium uppercase text-muted-foreground">
-                      User ID
-                    </dt>
-                    <dd className="mt-1 text-sm text-muted-foreground">
-                      {drawerEvent.user_id}
-                    </dd>
-                  </div>
-                )}
-                <div>
-                  <dt className="text-xs font-medium uppercase text-muted-foreground">
-                    Timestamp
-                  </dt>
-                  <dd className="mt-1 text-sm text-muted-foreground">
-                    {formatDate(drawerEvent.client_timestamp)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase text-muted-foreground">
-                    Received At
-                  </dt>
-                  <dd className="mt-1 text-sm text-muted-foreground">
-                    {formatDate(drawerEvent.server_timestamp)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-                    Properties
-                  </dt>
-                  <dd>
-                    <pre className="rounded-md bg-muted p-4 text-xs overflow-auto">
-                      {JSON.stringify(cleanProperties(JSON.parse(drawerEvent.properties || "{}")), null, 2)}
-                    </pre>
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
