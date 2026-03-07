@@ -26,11 +26,13 @@ pub struct ClickHouseInserter {
 /// ClickHouse `events` table columns.
 ///
 /// Types must match the ClickHouse schema exactly for RowBinary serialization:
+/// - `UUID` → `Uuid` with `serde(with = "clickhouse::serde::uuid")`
 /// - `Nullable(T)` → `Option<T>`
 /// - `DateTime64(3)` → `DateTime<Utc>` with `serde(with = ...millis)`
 /// - `LowCardinality(String)` → `String` (transparent)
 #[derive(Debug, Serialize, clickhouse::Row)]
 struct EventRow {
+    #[serde(with = "clickhouse::serde::uuid")]
     event_id: Uuid,
     event_name: String,
     event_type: String,
@@ -44,6 +46,7 @@ struct EventRow {
     server_timestamp: DateTime<Utc>,
     properties: String,
     properties_map: Vec<(String, String)>,
+    #[serde(with = "clickhouse::serde::uuid")]
     project_id: Uuid,
     environment: String,
     session_id: Option<String>,
