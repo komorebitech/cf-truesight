@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use uuid::Uuid;
 
-use truesight_common::db::DbPool;
+use truesight_common::db::{DbPool, with_conn_app};
 use truesight_common::error::AppError;
 use truesight_common::schema::{board_widgets, boards};
 
@@ -77,32 +77,35 @@ pub struct UpdateBoardWidget {
 // ── Board CRUD ─────────────────────────────────────────────────────
 
 pub fn list_boards(pool: &DbPool, pid: Uuid) -> Result<Vec<Board>, AppError> {
-    let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
-    boards::table
-        .filter(boards::project_id.eq(pid))
-        .order(boards::created_at.desc())
-        .load::<Board>(&mut conn)
-        .map_err(|e| AppError::Database(e.to_string()))
+    with_conn_app(pool, |conn| {
+        boards::table
+            .filter(boards::project_id.eq(pid))
+            .order(boards::created_at.desc())
+            .load::<Board>(conn)
+            .map_err(|e| AppError::Database(e.to_string()))
+    })
 }
 
 pub fn find_board(pool: &DbPool, pid: Uuid, bid: Uuid) -> Result<Board, AppError> {
-    let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
-    boards::table
-        .filter(boards::project_id.eq(pid))
-        .filter(boards::id.eq(bid))
-        .first::<Board>(&mut conn)
-        .map_err(|e| match e {
-            diesel::result::Error::NotFound => AppError::NotFound("Board not found".into()),
-            _ => AppError::Database(e.to_string()),
-        })
+    with_conn_app(pool, |conn| {
+        boards::table
+            .filter(boards::project_id.eq(pid))
+            .filter(boards::id.eq(bid))
+            .first::<Board>(conn)
+            .map_err(|e| match e {
+                diesel::result::Error::NotFound => AppError::NotFound("Board not found".into()),
+                _ => AppError::Database(e.to_string()),
+            })
+    })
 }
 
 pub fn insert_board(pool: &DbPool, new: NewBoard) -> Result<Board, AppError> {
-    let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
-    diesel::insert_into(boards::table)
-        .values(&new)
-        .get_result::<Board>(&mut conn)
-        .map_err(|e| AppError::Database(e.to_string()))
+    with_conn_app(pool, |conn| {
+        diesel::insert_into(boards::table)
+            .values(&new)
+            .get_result::<Board>(conn)
+            .map_err(|e| AppError::Database(e.to_string()))
+    })
 }
 
 pub fn update_board(
@@ -111,62 +114,67 @@ pub fn update_board(
     bid: Uuid,
     changes: UpdateBoard,
 ) -> Result<Board, AppError> {
-    let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
-    diesel::update(
-        boards::table
-            .filter(boards::project_id.eq(pid))
-            .filter(boards::id.eq(bid)),
-    )
-    .set(&changes)
-    .get_result::<Board>(&mut conn)
-    .map_err(|e| match e {
-        diesel::result::Error::NotFound => AppError::NotFound("Board not found".into()),
-        _ => AppError::Database(e.to_string()),
+    with_conn_app(pool, |conn| {
+        diesel::update(
+            boards::table
+                .filter(boards::project_id.eq(pid))
+                .filter(boards::id.eq(bid)),
+        )
+        .set(&changes)
+        .get_result::<Board>(conn)
+        .map_err(|e| match e {
+            diesel::result::Error::NotFound => AppError::NotFound("Board not found".into()),
+            _ => AppError::Database(e.to_string()),
+        })
     })
 }
 
 pub fn delete_board(pool: &DbPool, pid: Uuid, bid: Uuid) -> Result<(), AppError> {
-    let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
-    let rows = diesel::delete(
-        boards::table
-            .filter(boards::project_id.eq(pid))
-            .filter(boards::id.eq(bid)),
-    )
-    .execute(&mut conn)
-    .map_err(|e| AppError::Database(e.to_string()))?;
+    with_conn_app(pool, |conn| {
+        let rows = diesel::delete(
+            boards::table
+                .filter(boards::project_id.eq(pid))
+                .filter(boards::id.eq(bid)),
+        )
+        .execute(conn)
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
-    if rows == 0 {
-        return Err(AppError::NotFound("Board not found".into()));
-    }
-    Ok(())
+        if rows == 0 {
+            return Err(AppError::NotFound("Board not found".into()));
+        }
+        Ok(())
+    })
 }
 
 // ── Widget CRUD ────────────────────────────────────────────────────
 
 pub fn list_widgets(pool: &DbPool, bid: Uuid) -> Result<Vec<BoardWidget>, AppError> {
-    let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
-    board_widgets::table
-        .filter(board_widgets::board_id.eq(bid))
-        .order(board_widgets::position.asc())
-        .load::<BoardWidget>(&mut conn)
-        .map_err(|e| AppError::Database(e.to_string()))
+    with_conn_app(pool, |conn| {
+        board_widgets::table
+            .filter(board_widgets::board_id.eq(bid))
+            .order(board_widgets::position.asc())
+            .load::<BoardWidget>(conn)
+            .map_err(|e| AppError::Database(e.to_string()))
+    })
 }
 
 pub fn count_widgets(pool: &DbPool, bid: Uuid) -> Result<i64, AppError> {
-    let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
-    board_widgets::table
-        .filter(board_widgets::board_id.eq(bid))
-        .count()
-        .get_result::<i64>(&mut conn)
-        .map_err(|e| AppError::Database(e.to_string()))
+    with_conn_app(pool, |conn| {
+        board_widgets::table
+            .filter(board_widgets::board_id.eq(bid))
+            .count()
+            .get_result::<i64>(conn)
+            .map_err(|e| AppError::Database(e.to_string()))
+    })
 }
 
 pub fn insert_widget(pool: &DbPool, new: NewBoardWidget) -> Result<BoardWidget, AppError> {
-    let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
-    diesel::insert_into(board_widgets::table)
-        .values(&new)
-        .get_result::<BoardWidget>(&mut conn)
-        .map_err(|e| AppError::Database(e.to_string()))
+    with_conn_app(pool, |conn| {
+        diesel::insert_into(board_widgets::table)
+            .values(&new)
+            .get_result::<BoardWidget>(conn)
+            .map_err(|e| AppError::Database(e.to_string()))
+    })
 }
 
 pub fn update_widget(
@@ -175,34 +183,36 @@ pub fn update_widget(
     wid: Uuid,
     changes: UpdateBoardWidget,
 ) -> Result<BoardWidget, AppError> {
-    let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
-    diesel::update(
-        board_widgets::table
-            .filter(board_widgets::board_id.eq(bid))
-            .filter(board_widgets::id.eq(wid)),
-    )
-    .set(&changes)
-    .get_result::<BoardWidget>(&mut conn)
-    .map_err(|e| match e {
-        diesel::result::Error::NotFound => AppError::NotFound("Widget not found".into()),
-        _ => AppError::Database(e.to_string()),
+    with_conn_app(pool, |conn| {
+        diesel::update(
+            board_widgets::table
+                .filter(board_widgets::board_id.eq(bid))
+                .filter(board_widgets::id.eq(wid)),
+        )
+        .set(&changes)
+        .get_result::<BoardWidget>(conn)
+        .map_err(|e| match e {
+            diesel::result::Error::NotFound => AppError::NotFound("Widget not found".into()),
+            _ => AppError::Database(e.to_string()),
+        })
     })
 }
 
 pub fn delete_widget(pool: &DbPool, bid: Uuid, wid: Uuid) -> Result<(), AppError> {
-    let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
-    let rows = diesel::delete(
-        board_widgets::table
-            .filter(board_widgets::board_id.eq(bid))
-            .filter(board_widgets::id.eq(wid)),
-    )
-    .execute(&mut conn)
-    .map_err(|e| AppError::Database(e.to_string()))?;
+    with_conn_app(pool, |conn| {
+        let rows = diesel::delete(
+            board_widgets::table
+                .filter(board_widgets::board_id.eq(bid))
+                .filter(board_widgets::id.eq(wid)),
+        )
+        .execute(conn)
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
-    if rows == 0 {
-        return Err(AppError::NotFound("Widget not found".into()));
-    }
-    Ok(())
+        if rows == 0 {
+            return Err(AppError::NotFound("Widget not found".into()));
+        }
+        Ok(())
+    })
 }
 
 pub fn batch_update_layouts(
@@ -210,20 +220,21 @@ pub fn batch_update_layouts(
     bid: Uuid,
     layouts: Vec<(Uuid, serde_json::Value)>,
 ) -> Result<(), AppError> {
-    let mut conn = pool.get().map_err(|e| AppError::Database(e.to_string()))?;
-    let now = chrono::Utc::now();
-    for (wid, layout_value) in layouts {
-        diesel::update(
-            board_widgets::table
-                .filter(board_widgets::board_id.eq(bid))
-                .filter(board_widgets::id.eq(wid)),
-        )
-        .set((
-            board_widgets::layout.eq(&layout_value),
-            board_widgets::updated_at.eq(now),
-        ))
-        .execute(&mut conn)
-        .map_err(|e| AppError::Database(e.to_string()))?;
-    }
-    Ok(())
+    with_conn_app(pool, |conn| {
+        let now = chrono::Utc::now();
+        for (wid, layout_value) in layouts {
+            diesel::update(
+                board_widgets::table
+                    .filter(board_widgets::board_id.eq(bid))
+                    .filter(board_widgets::id.eq(wid)),
+            )
+            .set((
+                board_widgets::layout.eq(&layout_value),
+                board_widgets::updated_at.eq(now),
+            ))
+            .execute(conn)
+            .map_err(|e| AppError::Database(e.to_string()))?;
+        }
+        Ok(())
+    })
 }

@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use truesight_common::api_key::{ApiKey, NewApiKey};
-use truesight_common::db::DbPool;
+use truesight_common::db::{DbPool, with_conn};
 use truesight_common::schema::api_keys;
 use uuid::Uuid;
 
@@ -9,31 +9,21 @@ pub fn list_api_keys_for_project(
     pool: &DbPool,
     project_id: Uuid,
 ) -> Result<Vec<ApiKey>, diesel::result::Error> {
-    let mut conn = pool.get().map_err(|e| {
-        diesel::result::Error::DatabaseError(
-            diesel::result::DatabaseErrorKind::Unknown,
-            Box::new(e.to_string()),
-        )
-    })?;
-
-    api_keys::table
-        .filter(api_keys::project_id.eq(project_id))
-        .order(api_keys::created_at.desc())
-        .load::<ApiKey>(&mut conn)
+    with_conn(pool, |conn| {
+        api_keys::table
+            .filter(api_keys::project_id.eq(project_id))
+            .order(api_keys::created_at.desc())
+            .load::<ApiKey>(conn)
+    })
 }
 
 /// Inserts a new API key.
 pub fn insert_api_key(pool: &DbPool, new: NewApiKey) -> Result<ApiKey, diesel::result::Error> {
-    let mut conn = pool.get().map_err(|e| {
-        diesel::result::Error::DatabaseError(
-            diesel::result::DatabaseErrorKind::Unknown,
-            Box::new(e.to_string()),
-        )
-    })?;
-
-    diesel::insert_into(api_keys::table)
-        .values(&new)
-        .get_result::<ApiKey>(&mut conn)
+    with_conn(pool, |conn| {
+        diesel::insert_into(api_keys::table)
+            .values(&new)
+            .get_result::<ApiKey>(conn)
+    })
 }
 
 /// Revokes a single API key by setting active = false.
@@ -44,22 +34,17 @@ pub fn revoke_api_key(
     project_id: Uuid,
     key_id: Uuid,
 ) -> Result<bool, diesel::result::Error> {
-    let mut conn = pool.get().map_err(|e| {
-        diesel::result::Error::DatabaseError(
-            diesel::result::DatabaseErrorKind::Unknown,
-            Box::new(e.to_string()),
+    with_conn(pool, |conn| {
+        let affected = diesel::update(
+            api_keys::table
+                .filter(api_keys::id.eq(key_id))
+                .filter(api_keys::project_id.eq(project_id)),
         )
-    })?;
+        .set(api_keys::active.eq(false))
+        .execute(conn)?;
 
-    let affected = diesel::update(
-        api_keys::table
-            .filter(api_keys::id.eq(key_id))
-            .filter(api_keys::project_id.eq(project_id)),
-    )
-    .set(api_keys::active.eq(false))
-    .execute(&mut conn)?;
-
-    Ok(affected > 0)
+        Ok(affected > 0)
+    })
 }
 
 /// Revokes all API keys for a given project.
@@ -68,14 +53,9 @@ pub fn revoke_all_keys_for_project(
     pool: &DbPool,
     project_id: Uuid,
 ) -> Result<usize, diesel::result::Error> {
-    let mut conn = pool.get().map_err(|e| {
-        diesel::result::Error::DatabaseError(
-            diesel::result::DatabaseErrorKind::Unknown,
-            Box::new(e.to_string()),
-        )
-    })?;
-
-    diesel::update(api_keys::table.filter(api_keys::project_id.eq(project_id)))
-        .set(api_keys::active.eq(false))
-        .execute(&mut conn)
+    with_conn(pool, |conn| {
+        diesel::update(api_keys::table.filter(api_keys::project_id.eq(project_id)))
+            .set(api_keys::active.eq(false))
+            .execute(conn)
+    })
 }
