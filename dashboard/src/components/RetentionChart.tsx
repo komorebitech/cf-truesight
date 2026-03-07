@@ -12,14 +12,8 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-
-const CHART_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-];
+import { CHART_COLORS, AXIS_DEFAULTS, TOOLTIP_STYLE } from "@/lib/charts";
+import { fadeInLeft } from "@/lib/motion";
 
 interface RetentionChartProps {
   cohorts: RetentionCohort[];
@@ -84,8 +78,7 @@ export function RetentionChart({ cohorts, retentionType, isLoading }: RetentionC
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -12 }}
-      animate={{ opacity: 1, x: 0 }}
+      {...fadeInLeft}
       transition={{ duration: 0.4 }}
     >
       <ResponsiveContainer width="100%" height={300}>
@@ -96,26 +89,16 @@ export function RetentionChart({ cohorts, retentionType, isLoading }: RetentionC
           />
           <XAxis
             dataKey="period"
-            tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-            tickLine={false}
-            axisLine={false}
+            {...AXIS_DEFAULTS}
           />
           <YAxis
             domain={[0, 100]}
-            tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-            tickLine={false}
-            axisLine={false}
+            {...AXIS_DEFAULTS}
             width={50}
             tickFormatter={(v: number) => `${v}%`}
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--popover))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "8px",
-              fontSize: "13px",
-              color: "hsl(var(--popover-foreground))",
-            }}
+            {...TOOLTIP_STYLE}
             formatter={(value: number) => [`${value.toFixed(1)}%`, undefined]}
           />
           <Legend

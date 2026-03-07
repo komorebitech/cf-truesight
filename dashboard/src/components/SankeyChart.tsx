@@ -2,21 +2,13 @@ import { useMemo } from "react";
 import type { FlowNode, FlowLink } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatNumber } from "@/lib/utils";
+import { CHART_COLORS } from "@/lib/charts";
 
 interface SankeyChartProps {
   nodes: FlowNode[];
   links: FlowLink[];
   isLoading: boolean;
 }
-
-// Chart colors matching the theme
-const CHART_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-];
 
 interface PositionedNode extends FlowNode {
   x: number;

@@ -24,6 +24,8 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
+import { AXIS_DEFAULTS, TOOLTIP_STYLE } from "@/lib/charts";
+import { fadeInLeft } from "@/lib/motion";
 
 type Granularity = "day" | "week" | "month";
 
@@ -123,8 +125,7 @@ export function AnalyticsPage() {
               </div>
             ) : (
               <motion.div
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
+                {...fadeInLeft}
                 transition={{ duration: 0.4 }}
               >
                 <ResponsiveContainer width="100%" height={300}>
@@ -145,24 +146,14 @@ export function AnalyticsPage() {
                     />
                     <XAxis
                       dataKey="label"
-                      tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                      tickLine={false}
-                      axisLine={false}
+                      {...AXIS_DEFAULTS}
                     />
                     <YAxis
-                      tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                      tickLine={false}
-                      axisLine={false}
+                      {...AXIS_DEFAULTS}
                       width={50}
                     />
                     <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                        fontSize: "13px",
-                        color: "hsl(var(--popover-foreground))",
-                      }}
+                      {...TOOLTIP_STYLE}
                     />
                     <Area
                       type="monotone"

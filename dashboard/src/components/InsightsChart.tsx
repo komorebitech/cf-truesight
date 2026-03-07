@@ -14,14 +14,8 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-
-const CHART_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-];
+import { CHART_COLORS, AXIS_DEFAULTS, TOOLTIP_STYLE } from "@/lib/charts";
+import { fadeInLeft } from "@/lib/motion";
 
 function seriesLabel(group: Record<string, string>): string {
   const entries = Object.entries(group);
@@ -90,24 +84,10 @@ export function InsightsChart({
     </linearGradient>
   ));
 
-  const commonAxisProps = {
-    tick: { fontSize: 12, fill: "hsl(var(--muted-foreground))" },
-    tickLine: false as const,
-    axisLine: false as const,
-  };
-
-  const tooltipStyle = {
-    backgroundColor: "hsl(var(--popover))",
-    border: "1px solid hsl(var(--border))",
-    borderRadius: "8px",
-    fontSize: "13px",
-    color: "hsl(var(--popover-foreground))",
-  };
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -12 }}
-      animate={{ opacity: 1, x: 0 }}
+      {...fadeInLeft}
       transition={{ duration: 0.4 }}
     >
       <ResponsiveContainer width="100%" height={300}>
@@ -118,9 +98,9 @@ export function InsightsChart({
               strokeDasharray="3 3"
               stroke="hsl(var(--border))"
             />
-            <XAxis dataKey="label" {...commonAxisProps} />
-            <YAxis {...commonAxisProps} width={50} />
-            <Tooltip contentStyle={tooltipStyle} />
+            <XAxis dataKey="label" {...AXIS_DEFAULTS} />
+            <YAxis {...AXIS_DEFAULTS} width={50} />
+            <Tooltip {...TOOLTIP_STYLE} />
             {seriesKeys.length > 1 && <Legend />}
             {seriesKeys.map((key, i) => (
               <Area
@@ -140,9 +120,9 @@ export function InsightsChart({
               strokeDasharray="3 3"
               stroke="hsl(var(--border))"
             />
-            <XAxis dataKey="label" {...commonAxisProps} />
-            <YAxis {...commonAxisProps} width={50} />
-            <Tooltip contentStyle={tooltipStyle} />
+            <XAxis dataKey="label" {...AXIS_DEFAULTS} />
+            <YAxis {...AXIS_DEFAULTS} width={50} />
+            <Tooltip {...TOOLTIP_STYLE} />
             {seriesKeys.length > 1 && <Legend />}
             {seriesKeys.map((key, i) => (
               <Bar

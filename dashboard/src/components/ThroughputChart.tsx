@@ -11,6 +11,8 @@ import { format } from "date-fns";
 import type { ThroughputPoint } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "motion/react";
+import { AXIS_DEFAULTS, TOOLTIP_STYLE } from "@/lib/charts";
+import { fadeInLeft } from "@/lib/motion";
 
 interface ThroughputChartProps {
   data: ThroughputPoint[] | undefined;
@@ -37,8 +39,7 @@ export function ThroughputChart({ data, isLoading }: ThroughputChartProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -12 }}
-      animate={{ opacity: 1, x: 0 }}
+      {...fadeInLeft}
       transition={{ duration: 0.4, ease: "easeOut" }}
     >
       <ResponsiveContainer width="100%" height={260}>
@@ -49,25 +50,15 @@ export function ThroughputChart({ data, isLoading }: ThroughputChartProps) {
           />
           <XAxis
             dataKey="time"
-            tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-            tickLine={false}
-            axisLine={false}
+            {...AXIS_DEFAULTS}
             interval="equidistantPreserveStart"
           />
           <YAxis
-            tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-            tickLine={false}
-            axisLine={false}
+            {...AXIS_DEFAULTS}
             width={50}
           />
           <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--popover))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "8px",
-              fontSize: "13px",
-              color: "hsl(var(--popover-foreground))",
-            }}
+            {...TOOLTIP_STYLE}
             labelFormatter={(label: string) => `Time: ${label}`}
             formatter={(value: number) => [value.toLocaleString(), "Events"]}
           />

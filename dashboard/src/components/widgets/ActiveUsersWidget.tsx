@@ -3,18 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { getActiveUsers } from "@/lib/api";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { resolvePreset } from "@/lib/charts";
 
 interface Props {
   projectId: string;
   config: Record<string, unknown>;
-}
-
-function resolvePreset(preset: string): { from: string; to: string } {
-  const now = new Date();
-  const to = now.toISOString();
-  const ms = preset === "30d" ? 30 * 86400000 : preset === "14d" ? 14 * 86400000 : 7 * 86400000;
-  const from = new Date(now.getTime() - ms).toISOString();
-  return { from, to };
 }
 
 export function ActiveUsersWidget({ projectId, config }: Props) {

@@ -40,6 +40,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { cn, formatNumber } from "@/lib/utils";
+import { CHART_COLORS } from "@/lib/charts";
 
 // ---------------------------------------------------------------------------
 // CountUp animation (inline, same pattern as StatsCards)
@@ -107,18 +108,6 @@ const tooltipStyle = {
   fontSize: "13px",
   color: "hsl(var(--popover-foreground))",
 };
-
-// ---------------------------------------------------------------------------
-// Chart colors
-// ---------------------------------------------------------------------------
-
-const CHART_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-];
 
 // ---------------------------------------------------------------------------
 // Page

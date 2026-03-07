@@ -2,18 +2,11 @@ import { useMemo } from "react";
 import { useInsights } from "@/hooks/use-insights";
 import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { resolvePreset } from "@/lib/charts";
 
 interface Props {
   projectId: string;
   config: Record<string, unknown>;
-}
-
-function resolvePreset(preset: string): { from: string; to: string } {
-  const now = new Date();
-  const to = now.toISOString();
-  const ms = preset === "30d" ? 30 * 86400000 : preset === "14d" ? 14 * 86400000 : 7 * 86400000;
-  const from = new Date(now.getTime() - ms).toISOString();
-  return { from, to };
 }
 
 export function EventTrendWidget({ projectId, config }: Props) {
