@@ -1,6 +1,6 @@
 export interface AutoTracker {
   name: string;
-  start(trackFn: (eventName: string, properties: Record<string, unknown>) => void): void;
+  start(trackFn: (eventName: string, properties: Record<string, unknown>) => void, screenFn?: (screenName: string, properties: Record<string, unknown>) => void): void;
   stop(): void;
 }
 

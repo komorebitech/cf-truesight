@@ -12,13 +12,16 @@ import { PageLoadTracker } from './page-load-tracker.js';
 export class AutoTrackManager {
   private trackers: AutoTracker[] = [];
   private trackFn: (eventName: string, properties: Record<string, unknown>) => void;
+  private screenFn: (screenName: string, properties: Record<string, unknown>) => void;
   private started = false;
 
   constructor(
     config: AutoTrackConfig,
-    trackFn: (eventName: string, properties: Record<string, unknown>) => void
+    trackFn: (eventName: string, properties: Record<string, unknown>) => void,
+    screenFn: (screenName: string, properties: Record<string, unknown>) => void
   ) {
     this.trackFn = trackFn;
+    this.screenFn = screenFn;
 
     if (config.pageViews) this.trackers.push(new PageviewTracker());
     if (config.clicks) this.trackers.push(new ClickTracker());
@@ -34,7 +37,7 @@ export class AutoTrackManager {
     if (this.started) return;
     this.started = true;
     for (const tracker of this.trackers) {
-      tracker.start(this.trackFn);
+      tracker.start(this.trackFn, this.screenFn);
     }
   }
 

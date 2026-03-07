@@ -78,6 +78,11 @@ export class TrueSightSDK {
         void this.track(eventName, properties).catch((error) => {
           logger.warn(`Failed to auto-track event "${eventName}": ${String(error)}`);
         });
+      },
+      (screenName, properties) => {
+        void this.screen(screenName, properties).catch((error) => {
+          logger.warn(`Failed to auto-track screen "${screenName}": ${String(error)}`);
+        });
       }
     );
     this.autoTrackManager.start();

@@ -2,14 +2,14 @@ import type { AutoTracker } from './tracker.js';
 
 export class PageviewTracker implements AutoTracker {
   name = 'pageview';
-  private trackFn: ((eventName: string, properties: Record<string, unknown>) => void) | null = null;
+  private screenFn: ((screenName: string, properties: Record<string, unknown>) => void) | null = null;
   private origPushState: typeof history.pushState | null = null;
   private origReplaceState: typeof history.replaceState | null = null;
   private popstateHandler: (() => void) | null = null;
   private hashchangeHandler: (() => void) | null = null;
 
-  start(trackFn: (eventName: string, properties: Record<string, unknown>) => void): void {
-    this.trackFn = trackFn;
+  start(_trackFn: (eventName: string, properties: Record<string, unknown>) => void, screenFn?: (screenName: string, properties: Record<string, unknown>) => void): void {
+    this.screenFn = screenFn ?? null;
     if (typeof window === 'undefined' || typeof history === 'undefined') return;
     if (this.origPushState || this.origReplaceState || this.popstateHandler || this.hashchangeHandler) {
       return;
@@ -58,18 +58,17 @@ export class PageviewTracker implements AutoTracker {
       window.removeEventListener('hashchange', this.hashchangeHandler);
       this.hashchangeHandler = null;
     }
-    this.trackFn = null;
+    this.screenFn = null;
   }
 
   private firePageview(): void {
-    if (!this.trackFn) return;
+    if (!this.screenFn) return;
     const queryParams: Record<string, string> = {};
     new URLSearchParams(location.search).forEach((v, k) => {
       queryParams[k] = v;
     });
-    this.trackFn('$pageview', {
+    this.screenFn(location.pathname, {
       page_url: location.href,
-      page_path: location.pathname,
       page_title: document.title,
       page_referrer: document.referrer,
       query_params: queryParams,
