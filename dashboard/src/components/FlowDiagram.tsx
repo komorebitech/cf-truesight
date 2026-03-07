@@ -22,13 +22,12 @@ import { Workflow } from "lucide-react";
 // ── Theme colors ─────────────────────────────────────────────────────
 
 const STEP_COLORS = [
-  { bg: "hsl(30, 53%, 64%)",  bgLight: "hsl(43, 82%, 94%)",  border: "hsl(30, 45%, 78%)",  text: "hsl(30, 40%, 35%)" },
-  { bg: "hsl(74, 30%, 50%)",  bgLight: "hsl(74, 30%, 93%)",  border: "hsl(74, 25%, 76%)",  text: "hsl(74, 25%, 30%)" },
-  { bg: "hsl(43, 55%, 52%)",  bgLight: "hsl(52, 70%, 94%)",  border: "hsl(43, 50%, 78%)",  text: "hsl(43, 45%, 30%)" },
-  { bg: "hsl(67, 35%, 48%)",  bgLight: "hsl(67, 47%, 93%)",  border: "hsl(67, 35%, 76%)",  text: "hsl(67, 30%, 28%)" },
-  { bg: "hsl(30, 40%, 45%)",  bgLight: "hsl(30, 50%, 94%)",  border: "hsl(30, 35%, 75%)",  text: "hsl(30, 35%, 28%)" },
-  { bg: "hsl(74, 25%, 42%)",  bgLight: "hsl(74, 25%, 92%)",  border: "hsl(74, 20%, 74%)",  text: "hsl(74, 20%, 25%)" },
-  { bg: "hsl(43, 40%, 45%)",  bgLight: "hsl(43, 55%, 93%)",  border: "hsl(43, 35%, 75%)",  text: "hsl(43, 35%, 28%)" },
+  { bg: "#2d6a4f",  bgLight: "hsl(153, 40%, 94%)",  border: "hsl(153, 30%, 76%)",  text: "hsl(153, 35%, 20%)" },
+  { bg: "#9e2a2b",  bgLight: "hsl(0, 45%, 94%)",    border: "hsl(0, 40%, 78%)",    text: "hsl(0, 45%, 25%)" },
+  { bg: "#d62828",  bgLight: "hsl(0, 60%, 94%)",    border: "hsl(0, 55%, 80%)",    text: "hsl(0, 55%, 28%)" },
+  { bg: "#386641",  bgLight: "hsl(133, 28%, 93%)",  border: "hsl(133, 22%, 76%)",  text: "hsl(133, 25%, 20%)" },
+  { bg: "#ffb700",  bgLight: "hsl(43, 100%, 94%)",  border: "hsl(43, 70%, 78%)",   text: "hsl(43, 70%, 25%)" },
+  { bg: "#1565c0",  bgLight: "hsl(211, 65%, 94%)",  border: "hsl(211, 55%, 78%)",  text: "hsl(211, 60%, 22%)" },
 ];
 
 // ── Layout constants ─────────────────────────────────────────────────

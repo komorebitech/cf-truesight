@@ -4,7 +4,7 @@ import { useLiveEvents } from "@/hooks/use-live-events";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { LiveEventRow } from "@/components/LiveEventRow";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -171,27 +171,29 @@ export function LiveEventsContent() {
 
       {/* Filter bar */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Select
-          value={eventType}
-          onChange={(e) => setEventType(e.target.value)}
-          className="w-32"
-        >
-          <option value="">All types</option>
-          <option value="track">track</option>
-          <option value="identify">identify</option>
-          <option value="screen">screen</option>
+        <Select value={eventType || "__all__"} onValueChange={(v) => setEventType(v === "__all__" ? "" : v)}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="All types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All types</SelectItem>
+            <SelectItem value="track">track</SelectItem>
+            <SelectItem value="identify">identify</SelectItem>
+            <SelectItem value="screen">screen</SelectItem>
+          </SelectContent>
         </Select>
 
-        <Select
-          value={platform}
-          onChange={(e) => setPlatform(e.target.value)}
-          className="w-32"
-        >
-          <option value="">All platforms</option>
-          <option value="web">Web</option>
-          <option value="android">Android</option>
-          <option value="ios">iOS</option>
-          <option value="server">Server</option>
+        <Select value={platform || "__all__"} onValueChange={(v) => setPlatform(v === "__all__" ? "" : v)}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="All platforms" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All platforms</SelectItem>
+            <SelectItem value="web">Web</SelectItem>
+            <SelectItem value="android">Android</SelectItem>
+            <SelectItem value="ios">iOS</SelectItem>
+            <SelectItem value="server">Server</SelectItem>
+          </SelectContent>
         </Select>
 
         <Input

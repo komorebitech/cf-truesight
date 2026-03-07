@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { type AllowedDomain } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -83,14 +83,15 @@ export function AllowedDomainsTable({
           <label htmlFor="new-domain-role" className="mb-1.5 block text-sm font-medium">
             Default Role
           </label>
-          <Select
-            id="new-domain-role"
-            value={newRole}
-            onChange={(e) => setNewRole(e.target.value)}
-          >
-            <option value="viewer">Viewer</option>
-            <option value="editor">Editor</option>
-            <option value="admin">Admin</option>
+          <Select value={newRole} onValueChange={setNewRole}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="viewer">Viewer</SelectItem>
+              <SelectItem value="editor">Editor</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+            </SelectContent>
           </Select>
         </div>
         <Button type="submit" disabled={isAdding}>

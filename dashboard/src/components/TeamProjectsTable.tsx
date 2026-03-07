@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { type TeamProject, type Project } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -125,16 +125,17 @@ export function TeamProjectsTable({
             </p>
           ) : (
             <div className="space-y-4">
-              <Select
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-              >
-                <option value="">Select a project...</option>
-                {unlinkedProjects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
+              <Select value={selectedProjectId || undefined} onValueChange={setSelectedProjectId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a project..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {unlinkedProjects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setShowLinkDialog(false)}>

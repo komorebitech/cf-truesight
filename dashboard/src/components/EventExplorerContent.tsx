@@ -7,7 +7,7 @@ import { TimeRangeSelector, getPresetRange } from "@/components/TimeRangeSelecto
 import type { TimeRange } from "@/components/TimeRangeSelector";
 import { EventsTable } from "@/components/EventsTable";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, RotateCcw } from "lucide-react";
 import type { EventFilters } from "@/lib/api";
@@ -77,20 +77,18 @@ export function EventExplorerContent() {
 
         <div className="h-6 w-px bg-border" />
 
-        <Select
-          value={eventType}
-          onChange={(e) => {
-            setEventType(e.target.value);
-            setPage(1);
-          }}
-          className="w-36"
-        >
-          <option value="">All types</option>
-          {eventTypes.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
+        <Select value={eventType || "__all__"} onValueChange={(v) => { setEventType(v === "__all__" ? "" : v); setPage(1); }}>
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="All types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All types</SelectItem>
+            {eventTypes.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
 
         <div className="relative">

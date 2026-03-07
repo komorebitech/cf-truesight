@@ -1,5 +1,5 @@
 import type { InsightsFilter } from "@/lib/api";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -59,32 +59,31 @@ export function PropertyFilter({
       {filters.map((filter, index) => (
         <div key={index} className="flex items-center gap-2">
           {/* Property key */}
-          <Select
-            value={filter.property}
-            onChange={(e) => updateFilter(index, { property: e.target.value })}
-            className="w-44"
-          >
-            <option value="" disabled>
-              Property...
-            </option>
-            {propertyKeys.map((key) => (
-              <option key={key} value={key}>
-                {key}
-              </option>
-            ))}
+          <Select value={filter.property || undefined} onValueChange={(v) => updateFilter(index, { property: v })}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Property..." />
+            </SelectTrigger>
+            <SelectContent>
+              {propertyKeys.map((key) => (
+                <SelectItem key={key} value={key}>
+                  {key}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
 
           {/* Operator */}
-          <Select
-            value={filter.operator}
-            onChange={(e) => updateFilter(index, { operator: e.target.value })}
-            className="w-32"
-          >
-            {OPERATORS.map((op) => (
-              <option key={op.value} value={op.value}>
-                {op.label}
-              </option>
-            ))}
+          <Select value={filter.operator} onValueChange={(v) => updateFilter(index, { operator: v })}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {OPERATORS.map((op) => (
+                <SelectItem key={op.value} value={op.value}>
+                  {op.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
 
           {/* Value */}

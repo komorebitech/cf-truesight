@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import type { FunnelStep } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EventCombobox } from "@/components/EventCombobox";
 import { Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -181,15 +181,17 @@ export function FunnelBuilder({
         <label className="mb-1.5 block text-sm font-medium">
           Conversion Window
         </label>
-        <Select
-          value={String(windowSeconds)}
-          onChange={(e) => setWindowSeconds(Number(e.target.value))}
-        >
-          {WINDOW_OPTIONS.map((opt) => (
-            <option key={opt.value} value={String(opt.value)}>
-              {opt.label}
-            </option>
-          ))}
+        <Select value={String(windowSeconds)} onValueChange={(v) => setWindowSeconds(Number(v))}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {WINDOW_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={String(opt.value)}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
 

@@ -16,7 +16,11 @@ pub async fn upsert_profiles(client: &clickhouse::Client, events: &[EnrichedEven
         return Ok(());
     }
 
-    let mut rows = Vec::with_capacity(events.len());
+    // Only upsert profiles for identify events (or events that carry profile fields).
+    // Non-identify events with no profile data would overwrite existing name/email
+    // with NULL via ReplacingMergeTree(last_seen), so we skip them.
+    // Event counts and timestamps are handled by the user_stats materialized view.
+    let mut rows = Vec::new();
 
     for event in events {
         let user_uid = match &event.user_id {
@@ -24,12 +28,17 @@ pub async fn upsert_profiles(client: &clickhouse::Client, events: &[EnrichedEven
             _ => event.anonymous_id.clone(),
         };
 
+        let (email, name, mobile_number, props_map) = extract_profile_fields(event);
+
+        // Skip events that carry no profile information
+        if email.is_none() && name.is_none() && mobile_number.is_none() && props_map.is_empty() {
+            continue;
+        }
+
         let timestamp = event
             .server_timestamp
             .format("%Y-%m-%d %H:%M:%S%.3f")
             .to_string();
-
-        let (email, name, mobile_number, props_map) = extract_profile_fields(event);
 
         let email_val = nullable_str(&email);
         let name_val = nullable_str(&name);
@@ -53,6 +62,10 @@ pub async fn upsert_profiles(client: &clickhouse::Client, events: &[EnrichedEven
         ));
     }
 
+    if rows.is_empty() {
+        return Ok(());
+    }
+
     let query = format!(
         "INSERT INTO user_profiles \
          (project_id, user_uid, properties, email, name, mobile_number, first_seen, last_seen, event_count, environment) \
@@ -66,7 +79,7 @@ pub async fn upsert_profiles(client: &clickhouse::Client, events: &[EnrichedEven
         .await
         .context("failed to upsert user_profiles")?;
 
-    tracing::debug!(count = events.len(), "upserted user profiles");
+    tracing::debug!(count = rows.len(), "upserted user profiles");
     Ok(())
 }
 

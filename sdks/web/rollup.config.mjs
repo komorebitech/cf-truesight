@@ -2,10 +2,17 @@ import typescript from '@rollup/plugin-typescript';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
+import replace from '@rollup/plugin-replace';
+import { readFileSync } from 'fs';
 
+const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
 const input = 'src/index.ts';
 
 const plugins = [
+  replace({
+    preventAssignment: true,
+    __SDK_VERSION__: JSON.stringify(pkg.version),
+  }),
   resolve({ browser: true }),
   commonjs(),
   typescript({

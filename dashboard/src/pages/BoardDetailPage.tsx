@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, X } from "lucide-react";
 import type { BatchLayoutItem } from "@/lib/api";
@@ -189,15 +189,17 @@ export function BoardDetailPage() {
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Widget Type</Label>
-              <Select
-                value={widgetType}
-                onChange={(e) => setWidgetType(e.target.value)}
-              >
-                {WIDGET_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
+              <Select value={widgetType} onValueChange={setWidgetType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WIDGET_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">

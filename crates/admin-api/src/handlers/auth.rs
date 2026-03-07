@@ -152,7 +152,7 @@ pub async fn google_login(
     }
 
     // Issue TrueSight JWT
-    let ttl = state.config.jwt_ttl_seconds.unwrap_or(86400);
+    let ttl = state.config.jwt_ttl_seconds.unwrap_or(7 * 86400);
     let token = create_jwt(jwt_secret, user.id, &user.email, &user.name, ttl)
         .map_err(|e| AppError::Internal(format!("Failed to create JWT: {e}")))?;
 

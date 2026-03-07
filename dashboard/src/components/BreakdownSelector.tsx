@@ -1,4 +1,4 @@
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
@@ -49,19 +49,17 @@ export function BreakdownSelector({
 
         {value.length < MAX_BREAKDOWNS && availableKeys.length > 0 && (
           <div className="flex items-center gap-2">
-            <Select
-              value=""
-              onChange={(e) => addBreakdown(e.target.value)}
-              className="w-44"
-            >
-              <option value="" disabled>
-                Add breakdown...
-              </option>
-              {availableKeys.map((key) => (
-                <option key={key} value={key}>
-                  {key}
-                </option>
-              ))}
+            <Select value={undefined} onValueChange={(v) => addBreakdown(v)}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="Add breakdown..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableKeys.map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {key}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
         )}

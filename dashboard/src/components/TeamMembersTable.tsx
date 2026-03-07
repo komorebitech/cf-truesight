@@ -2,7 +2,7 @@ import { type TeamMember } from "@/lib/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
   TableHeader,
@@ -85,14 +85,15 @@ export function TeamMembersTable({
               </TableCell>
               <TableCell>
                 {isAdmin && !isSelf ? (
-                  <Select
-                    value={member.role}
-                    onChange={(e) => onRoleChange(member.user_id, e.target.value)}
-                    className="w-28"
-                  >
-                    <option value="viewer">Viewer</option>
-                    <option value="editor">Editor</option>
-                    <option value="admin">Admin</option>
+                  <Select value={member.role} onValueChange={(v) => onRoleChange(member.user_id, v)}>
+                    <SelectTrigger className="w-28">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="viewer">Viewer</SelectItem>
+                      <SelectItem value="editor">Editor</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
                   </Select>
                 ) : (
                   <Badge variant="secondary">{member.role}</Badge>

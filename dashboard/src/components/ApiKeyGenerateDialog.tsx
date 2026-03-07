@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { copyToClipboard } from "@/lib/utils";
 import { Copy, Check, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -144,15 +144,14 @@ export function ApiKeyGenerateDialog({
                 >
                   Environment
                 </label>
-                <Select
-                  id="key-env"
-                  value={environment}
-                  onChange={(e) =>
-                    setEnvironment(e.target.value as "live" | "test")
-                  }
-                >
-                  <option value="test">Test</option>
-                  <option value="live">Live</option>
+                <Select value={environment} onValueChange={(v) => setEnvironment(v as "live" | "test")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="test">Test</SelectItem>
+                    <SelectItem value="live">Live</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { useSegments } from "@/hooks/use-segments";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface SegmentFilterProps {
   projectId: string | undefined;
@@ -15,16 +15,20 @@ export function SegmentFilter({ projectId, value, onChange, className }: Segment
 
   return (
     <Select
-      value={value ?? ""}
-      onChange={(e) => onChange(e.target.value || undefined)}
-      className={className}
+      value={value || "__all__"}
+      onValueChange={(v) => onChange(v === "__all__" ? undefined : v)}
     >
-      <option value="">All users</option>
-      {segments.map((s) => (
-        <option key={s.id} value={s.id}>
-          {s.name}
-        </option>
-      ))}
+      <SelectTrigger className={className}>
+        <SelectValue placeholder="All users" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__all__">All users</SelectItem>
+        {segments.map((s) => (
+          <SelectItem key={s.id} value={s.id}>
+            {s.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
     </Select>
   );
 }

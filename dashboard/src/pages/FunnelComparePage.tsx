@@ -10,7 +10,7 @@ import {
   getPresetRange,
 } from "@/components/TimeRangeSelector";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -87,21 +87,29 @@ export function FunnelComparePage() {
 
             <div className="h-6 w-px bg-border" />
 
-            <Select value={funnelA} onChange={(e) => setFunnelA(e.target.value)} className="w-48">
-              <option value="">Funnel A...</option>
-              {funnels?.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
+            <Select value={funnelA || undefined} onValueChange={setFunnelA}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Funnel A..." />
+              </SelectTrigger>
+              <SelectContent>
+                {funnels?.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
-            <Select value={funnelB} onChange={(e) => setFunnelB(e.target.value)} className="w-48">
-              <option value="">Funnel B...</option>
-              {funnels?.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
+            <Select value={funnelB || undefined} onValueChange={setFunnelB}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Funnel B..." />
+              </SelectTrigger>
+              <SelectContent>
+                {funnels?.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
 
             <div className="h-6 w-px bg-border" />
@@ -122,17 +130,17 @@ export function FunnelComparePage() {
 
             <div className="h-6 w-px bg-border" />
 
-            <Select
-              value={selectedFunnelId}
-              onChange={(e) => setSelectedFunnelId(e.target.value)}
-              className="w-48"
-            >
-              <option value="">Select funnel...</option>
-              {funnels?.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
+            <Select value={selectedFunnelId || undefined} onValueChange={setSelectedFunnelId}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select funnel..." />
+              </SelectTrigger>
+              <SelectContent>
+                {funnels?.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
 
             <div className="h-6 w-px bg-border" />

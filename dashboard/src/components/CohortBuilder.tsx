@@ -1,6 +1,6 @@
 import type { CohortDefinition, CohortRule } from "@/lib/api";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -142,16 +142,20 @@ export function CohortBuilder({
                           {/* Operator */}
                           <Select
                             value={rule.op ?? "gte"}
-                            onChange={(e) =>
-                              updateRule(i, { ...rule, op: e.target.value })
+                            onValueChange={(v) =>
+                              updateRule(i, { ...rule, op: v })
                             }
-                            className="w-32"
                           >
-                            {EVENT_OPERATORS.map((op) => (
-                              <option key={op.value} value={op.value}>
-                                {op.label}
-                              </option>
-                            ))}
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {EVENT_OPERATORS.map((op) => (
+                                <SelectItem key={op.value} value={op.value}>
+                                  {op.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
                           </Select>
 
                           {/* Count */}
@@ -184,33 +188,40 @@ export function CohortBuilder({
                         <div className="flex flex-wrap items-center gap-2">
                           {/* Property name */}
                           <Select
-                            value={rule.property ?? ""}
-                            onChange={(e) =>
-                              updateRule(i, { ...rule, property: e.target.value })
+                            value={rule.property || undefined}
+                            onValueChange={(v) =>
+                              updateRule(i, { ...rule, property: v })
                             }
-                            className="w-44"
                           >
-                            <option value="">Select property...</option>
-                            {propertyKeys.map((pk) => (
-                              <option key={pk} value={pk}>
-                                {pk}
-                              </option>
-                            ))}
+                            <SelectTrigger className="w-44">
+                              <SelectValue placeholder="Select property..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {propertyKeys.map((pk) => (
+                                <SelectItem key={pk} value={pk}>
+                                  {pk}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
                           </Select>
 
                           {/* Operator */}
                           <Select
                             value={rule.op ?? "eq"}
-                            onChange={(e) =>
-                              updateRule(i, { ...rule, op: e.target.value })
+                            onValueChange={(v) =>
+                              updateRule(i, { ...rule, op: v })
                             }
-                            className="w-32"
                           >
-                            {PROPERTY_OPERATORS.map((op) => (
-                              <option key={op.value} value={op.value}>
-                                {op.label}
-                              </option>
-                            ))}
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {PROPERTY_OPERATORS.map((op) => (
+                                <SelectItem key={op.value} value={op.value}>
+                                  {op.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
                           </Select>
 
                           {/* Value (hidden for "exists") */}

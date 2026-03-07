@@ -14,7 +14,7 @@ import {
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { InsightsFilter, PivotsRequest } from "@/lib/api";
 
 type Metric = "total" | "unique_users" | "avg_per_user";
@@ -109,16 +109,19 @@ export function PivotsPage() {
               Row Dimension
             </label>
             <Select
-              value={rowDimension}
-              onChange={(e) => setRowDimension(e.target.value)}
-              className="w-48"
+              value={rowDimension || undefined}
+              onValueChange={setRowDimension}
             >
-              <option value="">Select property...</option>
-              {propertyKeys.map((key) => (
-                <option key={key} value={key}>
-                  {key}
-                </option>
-              ))}
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select property..." />
+              </SelectTrigger>
+              <SelectContent>
+                {propertyKeys.map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {key}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -127,16 +130,19 @@ export function PivotsPage() {
               Column Dimension
             </label>
             <Select
-              value={columnDimension}
-              onChange={(e) => setColumnDimension(e.target.value)}
-              className="w-48"
+              value={columnDimension || undefined}
+              onValueChange={setColumnDimension}
             >
-              <option value="">Select property...</option>
-              {propertyKeys.map((key) => (
-                <option key={key} value={key}>
-                  {key}
-                </option>
-              ))}
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select property..." />
+              </SelectTrigger>
+              <SelectContent>
+                {propertyKeys.map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {key}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 

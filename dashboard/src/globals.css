@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,100..900;1,100..900&display=swap');
+
 @font-face {
   font-family: 'Chillax';
   src: url('/fonts/Chillax/Chillax-Variable.woff2') format('woff2');
@@ -5,8 +7,6 @@
   font-display: swap;
   font-style: normal;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Asap:ital,wght@0,100..900;1,100..900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -92,11 +92,12 @@
   --sidebar-foreground: 10 12% 18%;
   --sidebar-muted-foreground: 10 6% 45%;
   --sidebar-border: 30 14% 88%;
-  --chart-1: 28 96% 62%;
-  --chart-2: 9 95% 78%;
-  --chart-3: 144 16% 68%;
-  --chart-4: 25 100% 78%;
-  --chart-5: 9 55% 55%;
+  --chart-1: 153 40% 30%;
+  --chart-2: 0 57% 39%;
+  --chart-3: 0 72% 50%;
+  --chart-4: 133 30% 31%;
+  --chart-5: 43 100% 50%;
+  --chart-6: 211 79% 42%;
 }
 
 .dark {
@@ -128,11 +129,12 @@
   --sidebar-foreground: 9 25% 85%;
   --sidebar-muted-foreground: 30 8% 50%;
   --sidebar-border: 10 6% 14%;
-  --chart-1: 28 90% 68%;
-  --chart-2: 9 70% 70%;
-  --chart-3: 144 20% 55%;
-  --chart-4: 25 80% 72%;
-  --chart-5: 9 50% 60%;
+  --chart-1: 153 40% 40%;
+  --chart-2: 0 57% 49%;
+  --chart-3: 0 72% 58%;
+  --chart-4: 133 30% 40%;
+  --chart-5: 43 100% 55%;
+  --chart-6: 211 79% 52%;
 }
 
 /* Scrollbar */

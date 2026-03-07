@@ -1,6 +1,7 @@
 import type { FunnelStepResult } from "@/lib/api";
 import { formatNumber } from "@/lib/utils";
 import { motion } from "motion/react";
+import { CHART_COLORS } from "@/lib/charts";
 
 interface FunnelChartProps {
   steps: FunnelStepResult[];
@@ -18,10 +19,7 @@ export function FunnelChart({ steps }: FunnelChartProps) {
         const prevUsers = i > 0 ? steps[i - 1]!.users : step.users;
         const dropoff = prevUsers > 0 ? ((prevUsers - step.users) / prevUsers) * 100 : 0;
 
-        // Color gradient from success to danger using chart colors
-        const hue = steps.length > 1
-          ? 140 - (i / (steps.length - 1)) * 110
-          : 140;
+        const color = CHART_COLORS[i % CHART_COLORS.length]!;
 
         return (
           <motion.div
@@ -57,7 +55,7 @@ export function FunnelChart({ steps }: FunnelChartProps) {
                   <motion.div
                     className="h-full rounded"
                     style={{
-                      backgroundColor: `hsl(${hue}, 60%, 45%)`,
+                      backgroundColor: color,
                     }}
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.max(widthPct, 2)}%` }}

@@ -1,9 +1,10 @@
 export const CHART_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
+  "#2d6a4f",
+  "#9e2a2b",
+  "#d62828",
+  "#386641",
+  "#ffb700",
+  "#1565c0",
 ];
 
 export function resolvePreset(preset: string): { from: string; to: string } {

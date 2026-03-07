@@ -1,5 +1,5 @@
 import { useCohorts } from "@/hooks/use-cohorts";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CohortFilterProps {
   projectId: string;
@@ -12,17 +12,21 @@ export function CohortFilter({ projectId, value, onChange }: CohortFilterProps) 
 
   return (
     <Select
-      value={value ?? ""}
-      onChange={(e) => onChange(e.target.value || undefined)}
-      className="w-48"
+      value={value || "__all__"}
+      onValueChange={(v) => onChange(v === "__all__" ? undefined : v)}
       disabled={isLoading}
     >
-      <option value="">No cohort filter</option>
-      {cohorts?.map((cohort) => (
-        <option key={cohort.id} value={cohort.id}>
-          {cohort.name}
-        </option>
-      ))}
+      <SelectTrigger className="w-48">
+        <SelectValue placeholder="No cohort filter" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__all__">No cohort filter</SelectItem>
+        {cohorts?.map((cohort) => (
+          <SelectItem key={cohort.id} value={cohort.id}>
+            {cohort.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
     </Select>
   );
 }

@@ -1,6 +1,6 @@
 import type { SegmentDefinition, SegmentRule } from "@/lib/api";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -151,16 +151,20 @@ export function SegmentBuilder({
                             {/* Did / Didn't do toggle */}
                             <Select
                               value={rule.action ?? "did"}
-                              onChange={(e) =>
+                              onValueChange={(v) =>
                                 updateRule(i, {
                                   ...rule,
-                                  action: e.target.value as "did" | "did_not",
+                                  action: v as "did" | "did_not",
                                 })
                               }
-                              className="w-28"
                             >
-                              <option value="did">Did</option>
-                              <option value="did_not">Didn't do</option>
+                              <SelectTrigger className="w-28">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="did">Did</SelectItem>
+                                <SelectItem value="did_not">Didn't do</SelectItem>
+                              </SelectContent>
                             </Select>
 
                             {/* Event name */}
@@ -176,14 +180,18 @@ export function SegmentBuilder({
                             {/* Operator */}
                             <Select
                               value={rule.op ?? "gte"}
-                              onChange={(e) => updateRule(i, { ...rule, op: e.target.value })}
-                              className="w-32"
+                              onValueChange={(v) => updateRule(i, { ...rule, op: v })}
                             >
-                              {EVENT_OPERATORS.map((op) => (
-                                <option key={op.value} value={op.value}>
-                                  {op.label}
-                                </option>
-                              ))}
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {EVENT_OPERATORS.map((op) => (
+                                  <SelectItem key={op.value} value={op.value}>
+                                    {op.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
                             </Select>
 
                             {/* Count */}
@@ -204,9 +212,8 @@ export function SegmentBuilder({
                             {/* Time window type */}
                             <Select
                               value={getTimeWindowType(rule)}
-                              onChange={(e) => {
-                                const twType = e.target.value;
-                                if (twType === "ever") {
+                              onValueChange={(v) => {
+                                if (v === "ever") {
                                   updateRule(i, {
                                     ...rule,
                                     time_window: { type: "ever" },
@@ -215,13 +222,17 @@ export function SegmentBuilder({
                                   updateRule(i, { ...rule, time_window: "30d" });
                                 }
                               }}
-                              className="w-36"
                             >
-                              {TIME_WINDOW_TYPES.map((tw) => (
-                                <option key={tw.value} value={tw.value}>
-                                  {tw.label}
-                                </option>
-                              ))}
+                              <SelectTrigger className="w-36">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {TIME_WINDOW_TYPES.map((tw) => (
+                                  <SelectItem key={tw.value} value={tw.value}>
+                                    {tw.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
                             </Select>
 
                             {/* Time window value (only for relative) */}
@@ -245,45 +256,56 @@ export function SegmentBuilder({
                           {/* Source */}
                           <Select
                             value={rule.source ?? "user"}
-                            onChange={(e) =>
+                            onValueChange={(v) =>
                               updateRule(i, {
                                 ...rule,
-                                source: e.target.value as "user" | "event",
+                                source: v as "user" | "event",
                               })
                             }
-                            className="w-28"
                           >
-                            <option value="user">User</option>
-                            <option value="event">Event</option>
+                            <SelectTrigger className="w-28">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">User</SelectItem>
+                              <SelectItem value="event">Event</SelectItem>
+                            </SelectContent>
                           </Select>
 
                           {/* Property name */}
                           <Select
-                            value={rule.property ?? ""}
-                            onChange={(e) =>
-                              updateRule(i, { ...rule, property: e.target.value })
+                            value={rule.property || undefined}
+                            onValueChange={(v) =>
+                              updateRule(i, { ...rule, property: v })
                             }
-                            className="w-44"
                           >
-                            <option value="">Select property...</option>
-                            {propertyKeys.map((pk) => (
-                              <option key={pk} value={pk}>
-                                {pk}
-                              </option>
-                            ))}
+                            <SelectTrigger className="w-44">
+                              <SelectValue placeholder="Select property..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {propertyKeys.map((pk) => (
+                                <SelectItem key={pk} value={pk}>
+                                  {pk}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
                           </Select>
 
                           {/* Operator */}
                           <Select
                             value={rule.op ?? "eq"}
-                            onChange={(e) => updateRule(i, { ...rule, op: e.target.value })}
-                            className="w-32"
+                            onValueChange={(v) => updateRule(i, { ...rule, op: v })}
                           >
-                            {PROPERTY_OPERATORS.map((op) => (
-                              <option key={op.value} value={op.value}>
-                                {op.label}
-                              </option>
-                            ))}
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {PROPERTY_OPERATORS.map((op) => (
+                                <SelectItem key={op.value} value={op.value}>
+                                  {op.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
                           </Select>
 
                           {/* Value (hidden for "exists") */}
