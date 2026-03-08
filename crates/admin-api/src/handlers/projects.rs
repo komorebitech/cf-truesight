@@ -43,6 +43,8 @@ pub async fn list_projects(
     let page = params.page.unwrap_or(1).max(1);
     let per_page = params.per_page.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * per_page;
+    // Default to active=true so soft-deleted projects are hidden unless explicitly requested
+    let active_filter = Some(params.active.unwrap_or(true));
 
     // For JWT users, filter to accessible projects only
     let accessible = rbac::accessible_project_ids(&state, &auth)?;
@@ -50,14 +52,14 @@ pub async fn list_projects(
     let (projects, total) = if let Some(ref ids) = accessible {
         crate::db::projects::list_projects_filtered(
             &state.db_pool,
-            params.active,
+            active_filter,
             per_page,
             offset,
             ids,
         )
         .map_err(|e| AppError::Database(e.to_string()))?
     } else {
-        crate::db::projects::list_projects(&state.db_pool, params.active, per_page, offset)
+        crate::db::projects::list_projects(&state.db_pool, active_filter, per_page, offset)
             .map_err(|e| AppError::Database(e.to_string()))?
     };
 
