@@ -10,9 +10,12 @@ use uuid::Uuid;
 use truesight_common::error::AppError;
 use truesight_common::team::TeamRole;
 
+use crate::handlers::pagination::{PaginatedResponse, PaginationMeta, SortOrder, validate_sort_column};
 use crate::handlers::rbac;
 use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
+
+const EVENTS_SORT_COLUMNS: &[&str] = &["client_timestamp", "server_timestamp", "event_name", "event_type"];
 
 // ── Event Count ──────────────────────────────────────────────────────
 
@@ -336,6 +339,9 @@ pub struct ListEventsQuery {
     pub page: u64,
     #[serde(default = "default_events_per_page")]
     pub per_page: u64,
+    pub sort_by: Option<String>,
+    #[serde(default)]
+    pub sort_order: SortOrder,
 }
 
 fn default_events_page() -> u64 {
@@ -362,19 +368,6 @@ pub struct EventRow {
     pub platform: String,
 }
 
-#[derive(Debug, Serialize)]
-pub struct ListEventsMetadata {
-    pub page: u64,
-    pub per_page: u64,
-    pub has_more: bool,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ListEventsResponse {
-    pub data: Vec<EventRow>,
-    pub meta: ListEventsMetadata,
-}
-
 pub async fn list_events(
     State(state): State<AppState>,
     auth: AuthUser,
@@ -388,6 +381,12 @@ pub async fn list_events(
     let page = params.page.max(1);
     let per_page = params.per_page.clamp(1, 200);
     let offset = (page - 1) * per_page;
+
+    let sort_col = match params.sort_by.as_deref() {
+        Some(col) => validate_sort_column(col, EVENTS_SORT_COLUMNS)?,
+        None => "client_timestamp",
+    };
+    let sort_dir = params.sort_order.as_sql();
 
     // Build dynamic WHERE clauses
     let mut conditions = vec![
@@ -423,10 +422,9 @@ pub async fn list_events(
          formatDateTime(client_timestamp, '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS client_ts, \
          formatDateTime(server_timestamp, '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS server_ts, \
          properties, platform \
-         FROM {}.events WHERE {} \
-         ORDER BY client_timestamp DESC \
-         LIMIT ? OFFSET ?",
-        db, where_clause
+         FROM {db}.events WHERE {where_clause} \
+         ORDER BY {sort_col} {sort_dir} \
+         LIMIT ? OFFSET ?"
     );
 
     // We fetch per_page + 1 to detect has_more
@@ -470,12 +468,13 @@ pub async fn list_events(
         rows.truncate(per_page as usize);
     }
 
-    Ok(Json(ListEventsResponse {
+    Ok(Json(PaginatedResponse {
         data: rows,
-        meta: ListEventsMetadata {
+        meta: PaginationMeta {
             page,
             per_page,
             has_more,
+            total: None,
         },
     }))
 }

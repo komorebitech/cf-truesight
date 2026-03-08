@@ -9,22 +9,24 @@ use uuid::Uuid;
 use truesight_common::error::AppError;
 use truesight_common::team::TeamRole;
 
+use crate::handlers::pagination::{PaginatedResponse, PaginationMeta, SortOrder, validate_sort_column};
 use crate::handlers::rbac;
 use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
+
+const CATALOG_SORT_COLUMNS: &[&str] = &["event_name", "event_count", "first_seen", "last_seen"];
 
 // ── List Event Catalog ──────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
 pub struct EventCatalogQuery {
     pub q: Option<String>,
-    #[serde(default = "default_catalog_limit")]
-    pub limit: u64,
+    pub page: Option<u64>,
+    pub per_page: Option<u64>,
     pub environment: Option<String>,
-}
-
-fn default_catalog_limit() -> u64 {
-    100
+    pub sort_by: Option<String>,
+    #[serde(default)]
+    pub sort_order: SortOrder,
 }
 
 #[derive(Debug, Serialize, clickhouse::Row, Deserialize)]
@@ -36,11 +38,6 @@ pub struct CatalogEventRow {
     pub last_seen: String,
 }
 
-#[derive(Debug, Serialize)]
-pub struct EventCatalogResponse {
-    pub events: Vec<CatalogEventRow>,
-}
-
 pub async fn event_catalog(
     State(state): State<AppState>,
     auth: AuthUser,
@@ -49,7 +46,17 @@ pub async fn event_catalog(
 ) -> Result<impl IntoResponse, AppError> {
     rbac::require_project_role(&state, &auth, project_id, TeamRole::Viewer)?;
     let db = &state.config.clickhouse_database;
-    let limit = params.limit.clamp(1, 500);
+
+    let page = params.page.unwrap_or(1).max(1);
+    let per_page = params.per_page.unwrap_or(100).clamp(1, 500);
+    let offset = (page - 1) * per_page;
+    let fetch_limit = per_page + 1;
+
+    let sort_col = match params.sort_by.as_deref() {
+        Some(col) => validate_sort_column(col, CATALOG_SORT_COLUMNS)?,
+        None => "event_count",
+    };
+    let sort_dir = params.sort_order.as_sql();
 
     let search_filter = if params.q.as_ref().is_some_and(|q| !q.is_empty()) {
         " AND positionCaseInsensitive(event_name, ?) > 0"
@@ -70,8 +77,8 @@ pub async fn event_catalog(
          FROM {db}.event_catalog \
          WHERE project_id = ?{search_filter}{env_filter} \
          GROUP BY event_name, event_type \
-         ORDER BY event_count DESC \
-         LIMIT ?"
+         ORDER BY {sort_col} {sort_dir} \
+         LIMIT ? OFFSET ?"
     );
 
     let mut q = state.clickhouse_client.query(&query).bind(project_id);
@@ -81,13 +88,27 @@ pub async fn event_catalog(
     if let Some(ref env) = params.environment {
         q = q.bind(env.as_str());
     }
-    let rows = q
-        .bind(limit)
+    let mut rows = q
+        .bind(fetch_limit)
+        .bind(offset)
         .fetch_all::<CatalogEventRow>()
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
 
-    Ok(Json(EventCatalogResponse { events: rows }))
+    let has_more = rows.len() as u64 > per_page;
+    if has_more {
+        rows.truncate(per_page as usize);
+    }
+
+    Ok(Json(PaginatedResponse {
+        data: rows,
+        meta: PaginationMeta {
+            page,
+            per_page,
+            has_more,
+            total: None,
+        },
+    }))
 }
 
 // ── Event Property Keys ─────────────────────────────────────────────

@@ -4,35 +4,28 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use uuid::Uuid;
 
 use truesight_common::error::AppError;
 use truesight_common::project::{NewProject, UpdateProject};
 use truesight_common::team::TeamRole;
 
+use crate::handlers::pagination::{PaginatedResponse, PaginationMeta, SortOrder, validate_sort_column};
 use crate::handlers::rbac;
 use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
+const ALLOWED_SORT_COLUMNS: &[&str] = &["name", "created_at", "updated_at"];
+
 #[derive(Debug, Deserialize)]
 pub struct ListProjectsQuery {
     pub active: Option<bool>,
-    pub page: Option<i64>,
-    pub per_page: Option<i64>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct PaginationMeta {
-    pub page: i64,
-    pub per_page: i64,
-    pub total: i64,
-}
-
-#[derive(Debug, Serialize)]
-pub struct PaginatedResponse<T: Serialize> {
-    pub data: Vec<T>,
-    pub meta: PaginationMeta,
+    pub page: Option<u64>,
+    pub per_page: Option<u64>,
+    pub sort_by: Option<String>,
+    #[serde(default)]
+    pub sort_order: SortOrder,
 }
 
 pub async fn list_projects(
@@ -46,6 +39,11 @@ pub async fn list_projects(
     // Default to active=true so soft-deleted projects are hidden unless explicitly requested
     let active_filter = Some(params.active.unwrap_or(true));
 
+    let sort_col = match params.sort_by.as_deref() {
+        Some(col) => validate_sort_column(col, ALLOWED_SORT_COLUMNS)?,
+        None => "created_at",
+    };
+
     // For JWT users, filter to accessible projects only
     let accessible = rbac::accessible_project_ids(&state, &auth)?;
 
@@ -53,22 +51,34 @@ pub async fn list_projects(
         crate::db::projects::list_projects_filtered(
             &state.db_pool,
             active_filter,
-            per_page,
-            offset,
+            per_page as i64,
+            offset as i64,
             ids,
+            sort_col,
+            &params.sort_order,
         )
         .map_err(|e| AppError::Database(e.to_string()))?
     } else {
-        crate::db::projects::list_projects(&state.db_pool, active_filter, per_page, offset)
-            .map_err(|e| AppError::Database(e.to_string()))?
+        crate::db::projects::list_projects(
+            &state.db_pool,
+            active_filter,
+            per_page as i64,
+            offset as i64,
+            sort_col,
+            &params.sort_order,
+        )
+        .map_err(|e| AppError::Database(e.to_string()))?
     };
+
+    let has_more = (offset + per_page) < total as u64;
 
     Ok(Json(PaginatedResponse {
         data: projects,
         meta: PaginationMeta {
             page,
             per_page,
-            total,
+            has_more,
+            total: Some(total),
         },
     }))
 }

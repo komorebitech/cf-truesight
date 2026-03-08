@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { getUsers, getUser, getUserEvents } from "@/lib/api";
+import { getUsers, getUser, getUserEvents, type SortParams } from "@/lib/api";
 
 export function useUsers(
   projectId: string | undefined,
-  params?: { search?: string; page?: number; per_page?: number; environment?: string },
+  params?: { search?: string; page?: number; per_page?: number; environment?: string } & SortParams,
 ) {
   return useQuery({
     queryKey: ["users", projectId, params],

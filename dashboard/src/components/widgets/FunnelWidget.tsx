@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useFunnelResults } from "@/hooks/use-funnels";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { BarChart, Bar, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { resolvePreset } from "@/lib/charts";
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function FunnelWidget({ projectId, config }: Props) {
+  const { environment } = useEnvironment();
   const { from, to } = useMemo(
     () => resolvePreset((config.from_preset as string) ?? "7d"),
     [config.from_preset],
@@ -20,6 +22,7 @@ export function FunnelWidget({ projectId, config }: Props) {
     config.funnel_id as string,
     from,
     to,
+    environment,
   );
 
   if (isLoading) return <Skeleton className="h-full w-full" />;

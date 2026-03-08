@@ -98,8 +98,11 @@ export function EventCatalogPage() {
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
 
-  const { data, isLoading } = useEventCatalog(id, debouncedSearch, environment);
-  const events = data?.events ?? [];
+  const { data, isLoading } = useEventCatalog(id, {
+    q: debouncedSearch || undefined,
+    environment,
+  });
+  const events = data?.data ?? [];
 
   const toggleExpand = (key: string) => {
     setExpandedEvent((prev) => (prev === key ? null : key));

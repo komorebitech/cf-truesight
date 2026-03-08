@@ -106,7 +106,7 @@ export function ProjectSettingsPage() {
           </CardHeader>
           <CardContent className="p-0">
             <ApiKeyTable
-              apiKeys={apiKeysData}
+              apiKeys={apiKeysData?.data}
               isLoading={keysLoading}
               onRevoke={handleRevoke}
               isRevoking={revokeApiKey.isPending}

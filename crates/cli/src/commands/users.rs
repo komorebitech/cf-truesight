@@ -16,6 +16,8 @@ pub async fn run(
             page,
             per_page,
             search,
+            sort_by,
+            sort_order,
         } => {
             let mut url = format!("{base}/users?");
             if let Some(p) = page {
@@ -27,6 +29,10 @@ pub async fn run(
             if let Some(s) = search {
                 url.push_str(&format!("search={s}&"));
             }
+            if let Some(sb) = sort_by {
+                url.push_str(&format!("sort_by={sb}&"));
+            }
+            url.push_str(&format!("sort_order={sort_order}&"));
             let resp = client.get(url.trim_end_matches('&')).await?;
             render(format, &resp);
         }

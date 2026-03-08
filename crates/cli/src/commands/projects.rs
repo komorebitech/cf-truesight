@@ -11,8 +11,24 @@ pub async fn run(
     format: OutputFormat,
 ) -> Result<()> {
     match command {
-        ProjectsCommand::List => {
-            let resp = client.get("/v1/projects").await?;
+        ProjectsCommand::List {
+            sort_by,
+            sort_order,
+            page,
+            per_page,
+        } => {
+            let mut url = "/v1/projects?".to_string();
+            if let Some(sb) = sort_by {
+                url.push_str(&format!("sort_by={sb}&"));
+            }
+            url.push_str(&format!("sort_order={sort_order}&"));
+            if let Some(p) = page {
+                url.push_str(&format!("page={p}&"));
+            }
+            if let Some(pp) = per_page {
+                url.push_str(&format!("per_page={pp}&"));
+            }
+            let resp = client.get(url.trim_end_matches('&')).await?;
             render(format, &resp);
         }
         ProjectsCommand::Get { id } => {

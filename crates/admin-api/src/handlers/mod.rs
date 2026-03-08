@@ -1,4 +1,5 @@
 pub mod api_keys;
+pub mod pagination;
 pub mod auth;
 pub mod boards;
 pub mod cohorts;

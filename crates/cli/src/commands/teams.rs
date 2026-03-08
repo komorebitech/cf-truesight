@@ -14,8 +14,24 @@ pub async fn run(
     format: OutputFormat,
 ) -> Result<()> {
     match command {
-        TeamsCommand::List => {
-            let resp = client.get("/v1/teams").await?;
+        TeamsCommand::List {
+            sort_by,
+            sort_order,
+            page,
+            per_page,
+        } => {
+            let mut url = "/v1/teams?".to_string();
+            if let Some(sb) = sort_by {
+                url.push_str(&format!("sort_by={sb}&"));
+            }
+            url.push_str(&format!("sort_order={sort_order}&"));
+            if let Some(p) = page {
+                url.push_str(&format!("page={p}&"));
+            }
+            if let Some(pp) = per_page {
+                url.push_str(&format!("per_page={pp}&"));
+            }
+            let resp = client.get(url.trim_end_matches('&')).await?;
             render(format, &resp);
         }
         TeamsCommand::Get { id } => {

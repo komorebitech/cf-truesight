@@ -13,27 +13,44 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable } from "@/components/ui/data-table";
 import { Plus, Users } from "lucide-react";
-import { motion } from "motion/react";
-import { fadeInUp } from "@/lib/motion";
+import { useTableParams } from "@/hooks/use-table-params";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { Team } from "@/lib/api";
 import { type FormEvent } from "react";
 
 export function TeamsListPage() {
   const navigate = useNavigate();
-  const { data: teams, isLoading } = useTeams();
   const createTeam = useCreateTeam();
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [nameError, setNameError] = useState("");
+
+  const {
+    sorting,
+    onSortingChange,
+    page,
+    pageSize,
+    onPageChange,
+    sortParam,
+    orderParam,
+  } = useTableParams({
+    defaultSortField: "created_at",
+    defaultSortOrder: "desc",
+    pageSize: 20,
+  });
+
+  const { data, isLoading } = useTeams({
+    page,
+    per_page: pageSize,
+    sort_by: sortParam,
+    sort_order: orderParam,
+  });
+
+  const teams = data?.data ?? [];
+  const total = data?.meta?.total;
+  const hasMore = data?.meta?.has_more ?? false;
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
@@ -52,6 +69,35 @@ export function TeamsListPage() {
     setShowCreate(false);
   };
 
+  const columns: ColumnDef<Team, unknown>[] = [
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.name}</span>
+      ),
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant={row.original.active ? "success" : "secondary"}>
+          {row.original.active ? "active" : "inactive"}
+        </Badge>
+      ),
+      enableSorting: false,
+    },
+    {
+      accessorKey: "created_at",
+      header: "Created",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {formatDate(row.original.created_at)}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="flex flex-1 flex-col">
       <Header title="Teams" />
@@ -61,7 +107,7 @@ export function TeamsListPage() {
           <p className="text-sm text-muted-foreground">
             {isLoading
               ? "Loading..."
-              : `${teams?.length ?? 0} team${(teams?.length ?? 0) !== 1 ? "s" : ""}`}
+              : `${total ?? teams.length} team${(total ?? teams.length) !== 1 ? "s" : ""}`}
           </p>
           <Button onClick={() => setShowCreate(true)}>
             <Plus className="h-4 w-4" />
@@ -69,13 +115,7 @@ export function TeamsListPage() {
           </Button>
         </div>
 
-        {isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full" />
-            ))}
-          </div>
-        ) : !teams || teams.length === 0 ? (
+        {!isLoading && teams.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Users className="mb-4 h-12 w-12 text-muted-foreground/40" />
             <h3 className="mb-1 font-heading text-lg font-medium">
@@ -90,40 +130,21 @@ export function TeamsListPage() {
             </Button>
           </div>
         ) : (
-          <motion.div
-            {...fadeInUp}
-            transition={{ duration: 0.3 }}
-            className="rounded-lg border bg-card"
-          >
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {teams.map((team) => (
-                  <TableRow
-                    key={team.id}
-                    className="cursor-pointer"
-                    onClick={() => navigate(`/teams/${team.id}`)}
-                  >
-                    <TableCell className="font-medium">{team.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={team.active ? "success" : "secondary"}>
-                        {team.active ? "active" : "inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(team.created_at)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </motion.div>
+          <DataTable
+            columns={columns}
+            data={teams}
+            sorting={sorting}
+            onSortingChange={onSortingChange}
+            pagination={{
+              page,
+              pageSize,
+              hasMore,
+              total: total ?? undefined,
+            }}
+            onPageChange={onPageChange}
+            isLoading={isLoading}
+            onRowClick={(team) => navigate(`/teams/${team.id}`)}
+          />
         )}
       </div>
 

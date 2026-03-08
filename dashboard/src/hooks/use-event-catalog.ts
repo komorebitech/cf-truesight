@@ -1,14 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
-import { getEventCatalog, getEventProperties } from "@/lib/api";
+import { getEventCatalog, getEventProperties, type SortParams } from "@/lib/api";
 
 export function useEventCatalog(
   projectId: string | undefined,
-  query?: string,
-  environment?: string,
+  params?: {
+    q?: string;
+    page?: number;
+    per_page?: number;
+    environment?: string;
+  } & SortParams,
 ) {
   return useQuery({
-    queryKey: ["event-catalog", projectId, query, environment],
-    queryFn: () => getEventCatalog(projectId!, query || undefined, undefined, environment),
+    queryKey: ["event-catalog", projectId, params],
+    queryFn: () => getEventCatalog(projectId!, params),
     enabled: !!projectId,
     staleTime: 60_000,
     placeholderData: (prev) => prev,

@@ -260,8 +260,15 @@ pub async fn me(
         .ok_or_else(|| AppError::NotFound("User not found".to_string()))?;
 
     // Get teams with roles
-    let teams = db::teams::list_teams_for_user(&state.db_pool, user_id)
-        .map_err(|e| AppError::Database(e.to_string()))?;
+    let (teams, _) = db::teams::list_teams_for_user(
+        &state.db_pool,
+        user_id,
+        1000, // fetch all for /auth/me
+        0,
+        "created_at",
+        &crate::handlers::pagination::SortOrder::Desc,
+    )
+    .map_err(|e| AppError::Database(e.to_string()))?;
 
     let mut team_summaries = Vec::new();
     for team in teams {

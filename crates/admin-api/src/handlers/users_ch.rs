@@ -10,6 +10,7 @@ use uuid::Uuid;
 use truesight_common::error::AppError;
 use truesight_common::team::TeamRole;
 
+use crate::handlers::pagination::{PaginatedResponse, PaginationMeta, SortOrder, validate_sort_column};
 use crate::handlers::rbac;
 use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
@@ -24,6 +25,9 @@ fn default_per_page() -> u64 {
     50
 }
 
+const USERS_SORT_COLUMNS: &[&str] = &["last_seen", "first_seen", "event_count"];
+const USER_EVENTS_SORT_COLUMNS: &[&str] = &["server_timestamp", "client_timestamp", "event_name"];
+
 // ── List Users ──────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
@@ -34,6 +38,9 @@ pub struct ListUsersQuery {
     #[serde(default = "default_per_page")]
     pub per_page: u64,
     pub environment: Option<String>,
+    pub sort_by: Option<String>,
+    #[serde(default)]
+    pub sort_order: SortOrder,
 }
 
 #[derive(Debug, Serialize, clickhouse::Row, Deserialize)]
@@ -45,19 +52,6 @@ pub struct UserProfileRow {
     pub first_seen: String,
     pub last_seen: String,
     pub event_count: u64,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ListUsersMetadata {
-    pub page: u64,
-    pub per_page: u64,
-    pub has_more: bool,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ListUsersResponse {
-    pub data: Vec<UserProfileRow>,
-    pub meta: ListUsersMetadata,
 }
 
 pub async fn list_users(
@@ -72,6 +66,12 @@ pub async fn list_users(
     let per_page = params.per_page.clamp(1, 200);
     let offset = (page - 1) * per_page;
     let fetch_limit = per_page + 1;
+
+    let sort_col = match params.sort_by.as_deref() {
+        Some(col) => validate_sort_column(col, USERS_SORT_COLUMNS)?,
+        None => "last_seen",
+    };
+    let sort_dir = params.sort_order.as_sql();
 
     let env_filter = if params.environment.is_some() {
         " AND s.environment = ?"
@@ -100,7 +100,7 @@ pub async fn list_users(
            ON s.project_id = p.project_id AND s.user_uid = p.user_uid AND s.environment = p.environment \
          WHERE s.project_id = ?{env_filter} \
          GROUP BY s.user_uid{search_filter} \
-         ORDER BY last_seen DESC \
+         ORDER BY {sort_col} {sort_dir} \
          LIMIT ? OFFSET ?"
     );
 
@@ -127,12 +127,13 @@ pub async fn list_users(
         rows.truncate(per_page as usize);
     }
 
-    Ok(Json(ListUsersResponse {
+    Ok(Json(PaginatedResponse {
         data: rows,
-        meta: ListUsersMetadata {
+        meta: PaginationMeta {
             page,
             per_page,
             has_more,
+            total: None,
         },
     }))
 }
@@ -288,6 +289,9 @@ pub struct UserEventsQuery {
     pub from: Option<DateTime<Utc>>,
     pub to: Option<DateTime<Utc>>,
     pub environment: Option<String>,
+    pub sort_by: Option<String>,
+    #[serde(default)]
+    pub sort_order: SortOrder,
 }
 
 #[derive(Debug, Serialize, clickhouse::Row, Deserialize)]
@@ -305,19 +309,6 @@ pub struct UserEventRow {
     pub properties: String,
 }
 
-#[derive(Debug, Serialize)]
-pub struct UserEventsMetadata {
-    pub page: u64,
-    pub per_page: u64,
-    pub has_more: bool,
-}
-
-#[derive(Debug, Serialize)]
-pub struct UserEventsResponse {
-    pub data: Vec<UserEventRow>,
-    pub meta: UserEventsMetadata,
-}
-
 pub async fn user_events(
     State(state): State<AppState>,
     auth: AuthUser,
@@ -330,6 +321,12 @@ pub async fn user_events(
     let per_page = params.per_page.clamp(1, 200);
     let offset = (page - 1) * per_page;
     let fetch_limit = per_page + 1;
+
+    let sort_col = match params.sort_by.as_deref() {
+        Some(col) => validate_sort_column(col, USER_EVENTS_SORT_COLUMNS)?,
+        None => "server_timestamp",
+    };
+    let sort_dir = params.sort_order.as_sql();
 
     let mut conditions = vec![
         "project_id = ?".to_string(),
@@ -357,7 +354,7 @@ pub async fn user_events(
          properties \
          FROM {db}.events \
          WHERE {where_clause} \
-         ORDER BY server_timestamp DESC \
+         ORDER BY {sort_col} {sort_dir} \
          LIMIT ? OFFSET ?"
     );
 
@@ -389,12 +386,13 @@ pub async fn user_events(
         rows.truncate(per_page as usize);
     }
 
-    Ok(Json(UserEventsResponse {
+    Ok(Json(PaginatedResponse {
         data: rows,
-        meta: UserEventsMetadata {
+        meta: PaginationMeta {
             page,
             per_page,
             has_more,
+            total: None,
         },
     }))
 }

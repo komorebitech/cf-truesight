@@ -14,12 +14,15 @@ import {
   getAllowedDomains,
   addAllowedDomain,
   removeAllowedDomain,
+  type SortParams,
 } from "@/lib/api";
 
-export function useTeams() {
+export function useTeams(
+  params?: SortParams & { page?: number; per_page?: number },
+) {
   return useQuery({
-    queryKey: ["teams"],
-    queryFn: getTeams,
+    queryKey: ["teams", params],
+    queryFn: () => getTeams(params),
   });
 }
 

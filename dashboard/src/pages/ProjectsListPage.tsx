@@ -14,18 +14,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, FolderOpen } from "lucide-react";
-import { motion } from "motion/react";
-import { fadeInUp } from "@/lib/motion";
+import { useTableParams } from "@/hooks/use-table-params";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { Project } from "@/lib/api";
 
 function ProjectEventCount({ projectId }: { projectId: string }) {
   const { data, isLoading } = useEventCount(projectId);
@@ -35,11 +29,72 @@ function ProjectEventCount({ projectId }: { projectId: string }) {
 
 export function ProjectsListPage() {
   const navigate = useNavigate();
-  const { data, isLoading } = useProjects();
   const createProject = useCreateProject();
   const [showCreate, setShowCreate] = useState(false);
 
+  const {
+    sorting,
+    onSortingChange,
+    page,
+    pageSize,
+    onPageChange,
+    sortParam,
+    orderParam,
+  } = useTableParams({
+    defaultSortField: "created_at",
+    defaultSortOrder: "desc",
+    pageSize: 20,
+  });
+
+  const { data, isLoading } = useProjects({
+    page,
+    per_page: pageSize,
+    sort_by: sortParam,
+    sort_order: orderParam,
+  });
+
   const projects = data?.data ?? [];
+  const total = data?.meta?.total;
+  const hasMore = data?.meta?.has_more ?? false;
+
+  const columns: ColumnDef<Project, unknown>[] = [
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.name}</span>
+      ),
+    },
+    {
+      id: "events",
+      header: "Events",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          <ProjectEventCount projectId={row.original.id} />
+        </span>
+      ),
+      enableSorting: false,
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant={row.original.active ? "success" : "secondary"}>
+          {row.original.active ? "active" : "inactive"}
+        </Badge>
+      ),
+      enableSorting: false,
+    },
+    {
+      accessorKey: "created_at",
+      header: "Created At",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {formatDate(row.original.created_at)}
+        </span>
+      ),
+    },
+  ];
 
   return (
     <div className="flex flex-1 flex-col">
@@ -51,7 +106,7 @@ export function ProjectsListPage() {
           <p className="text-sm text-muted-foreground">
             {isLoading
               ? "Loading..."
-              : `${projects.length} project${projects.length !== 1 ? "s" : ""}`}
+              : `${total ?? projects.length} project${(total ?? projects.length) !== 1 ? "s" : ""}`}
           </p>
           <Button onClick={() => setShowCreate(true)}>
             <Plus className="h-4 w-4" />
@@ -60,13 +115,7 @@ export function ProjectsListPage() {
         </div>
 
         {/* Table */}
-        {isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full" />
-            ))}
-          </div>
-        ) : projects.length === 0 ? (
+        {!isLoading && projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <FolderOpen className="mb-4 h-12 w-12 text-muted-foreground/40" />
             <h3 className="mb-1 font-heading text-lg font-medium">
@@ -81,48 +130,21 @@ export function ProjectsListPage() {
             </Button>
           </div>
         ) : (
-          <motion.div
-            {...fadeInUp}
-            transition={{ duration: 0.3 }}
-            className="rounded-lg border bg-card"
-          >
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Events</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created At</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {projects.map((project) => (
-                  <TableRow
-                    key={project.id}
-                    className="cursor-pointer"
-                    onClick={() => navigate(`/projects/${project.id}`)}
-                  >
-                    <TableCell className="font-medium">
-                      {project.name}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      <ProjectEventCount projectId={project.id} />
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={project.active ? "success" : "secondary"}
-                      >
-                        {project.active ? "active" : "inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(project.created_at)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </motion.div>
+          <DataTable
+            columns={columns}
+            data={projects}
+            sorting={sorting}
+            onSortingChange={onSortingChange}
+            pagination={{
+              page,
+              pageSize,
+              hasMore,
+              total: total ?? undefined,
+            }}
+            onPageChange={onPageChange}
+            isLoading={isLoading}
+            onRowClick={(project) => navigate(`/projects/${project.id}`)}
+          />
         )}
       </div>
 

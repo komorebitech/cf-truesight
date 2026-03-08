@@ -8,33 +8,69 @@ use truesight_common::team::{
 use truesight_common::user::User;
 use uuid::Uuid;
 
+use crate::handlers::pagination::SortOrder;
+
+/// Apply dynamic ORDER BY to a boxed teams query.
+macro_rules! apply_team_sort {
+    ($query:expr, $sort_col:expr, $sort_order:expr) => {
+        match ($sort_col, $sort_order) {
+            ("name", SortOrder::Asc) => $query.order(teams::name.asc()),
+            ("name", SortOrder::Desc) => $query.order(teams::name.desc()),
+            ("created_at", SortOrder::Asc) => $query.order(teams::created_at.asc()),
+            (_, _) => $query.order(teams::created_at.desc()),
+        }
+    };
+}
+
 // ---------------------------------------------------------------------------
 // Teams
 // ---------------------------------------------------------------------------
 
 /// List teams for a specific user (via team_members join).
+/// Returns `(teams, total_count)`.
 pub fn list_teams_for_user(
     pool: &DbPool,
     user_id: Uuid,
-) -> Result<Vec<Team>, diesel::result::Error> {
+    limit: i64,
+    offset: i64,
+    sort_col: &str,
+    sort_order: &SortOrder,
+) -> Result<(Vec<Team>, i64), diesel::result::Error> {
     with_conn(pool, |conn| {
-        teams::table
+        let base = teams::table
             .inner_join(team_members::table.on(team_members::team_id.eq(teams::id)))
             .filter(team_members::user_id.eq(user_id))
-            .filter(teams::active.eq(true))
-            .select(Team::as_select())
-            .order(teams::created_at.desc())
-            .load::<Team>(conn)
+            .filter(teams::active.eq(true));
+
+        let total: i64 = base.count().get_result(conn)?;
+
+        let query = base.select(Team::as_select()).into_boxed();
+        let query = apply_team_sort!(query, sort_col, sort_order);
+        let items = query.limit(limit).offset(offset).load::<Team>(conn)?;
+
+        Ok((items, total))
     })
 }
 
 /// List all active teams (for static token / superadmin).
-pub fn list_all_teams(pool: &DbPool) -> Result<Vec<Team>, diesel::result::Error> {
+/// Returns `(teams, total_count)`.
+pub fn list_all_teams(
+    pool: &DbPool,
+    limit: i64,
+    offset: i64,
+    sort_col: &str,
+    sort_order: &SortOrder,
+) -> Result<(Vec<Team>, i64), diesel::result::Error> {
     with_conn(pool, |conn| {
-        teams::table
-            .filter(teams::active.eq(true))
-            .order(teams::created_at.desc())
-            .load::<Team>(conn)
+        let base = teams::table.filter(teams::active.eq(true));
+
+        let total: i64 = base.count().get_result(conn)?;
+
+        let query = base.into_boxed();
+        let query = apply_team_sort!(query, sort_col, sort_order);
+        let items = query.limit(limit).offset(offset).load::<Team>(conn)?;
+
+        Ok((items, total))
     })
 }
 

@@ -8,7 +8,10 @@ import {
   useDeleteWidget,
   useBatchUpdateLayouts,
 } from "@/hooks/use-boards";
+import { useFunnels } from "@/hooks/use-funnels";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Header } from "@/components/Header";
+import { EventCombobox } from "@/components/EventCombobox";
 import { WidgetRenderer } from "@/components/widgets/WidgetRenderer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -39,6 +42,8 @@ const COLS = 12;
 export function BoardDetailPage() {
   const { id, boardId } = useParams<{ id: string; boardId: string }>();
   const { data: board, isLoading } = useBoard(id, boardId);
+  const { data: funnels } = useFunnels(id);
+  const { environment } = useEnvironment();
   const createWidget = useCreateWidget(id, boardId);
   const deleteWidget = useDeleteWidget(id, boardId);
   const batchLayouts = useBatchUpdateLayouts(id, boardId);
@@ -213,21 +218,30 @@ export function BoardDetailPage() {
             {(widgetType === "event_trend" || widgetType === "metric") && (
               <div className="space-y-2">
                 <Label>Event Name</Label>
-                <Input
-                  placeholder="e.g. page_view"
+                <EventCombobox
+                  projectId={id}
                   value={widgetEventName}
-                  onChange={(e) => setWidgetEventName(e.target.value)}
+                  onChange={setWidgetEventName}
+                  placeholder="Select event"
+                  environment={environment}
                 />
               </div>
             )}
             {widgetType === "funnel" && (
               <div className="space-y-2">
-                <Label>Funnel ID</Label>
-                <Input
-                  placeholder="UUID of the funnel"
-                  value={widgetFunnelId}
-                  onChange={(e) => setWidgetFunnelId(e.target.value)}
-                />
+                <Label>Funnel</Label>
+                <Select value={widgetFunnelId} onValueChange={setWidgetFunnelId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a funnel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {funnels?.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </div>

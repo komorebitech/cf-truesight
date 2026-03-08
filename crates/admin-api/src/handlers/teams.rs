@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
 };
@@ -13,8 +13,11 @@ use truesight_common::team::{
 };
 
 use crate::db;
+use crate::handlers::pagination::{PaginatedResponse, PaginationMeta, SortOrder, validate_sort_column};
 use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
+
+const ALLOWED_SORT_COLUMNS: &[&str] = &["name", "created_at"];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -88,21 +91,63 @@ pub struct ProjectBrief {
 // GET /v1/teams
 // ---------------------------------------------------------------------------
 
+#[derive(Debug, Deserialize)]
+pub struct ListTeamsQuery {
+    pub page: Option<u64>,
+    pub per_page: Option<u64>,
+    pub sort_by: Option<String>,
+    #[serde(default)]
+    pub sort_order: SortOrder,
+}
+
 pub async fn list_teams(
     State(state): State<AppState>,
     auth: AuthUser,
+    Query(params): Query<ListTeamsQuery>,
 ) -> Result<impl IntoResponse, AppError> {
-    let teams = if auth.is_static_token {
-        db::teams::list_all_teams(&state.db_pool)
+    let page = params.page.unwrap_or(1).max(1);
+    let per_page = params.per_page.unwrap_or(50).clamp(1, 200);
+    let offset = (page - 1) * per_page;
+
+    let sort_col = match params.sort_by.as_deref() {
+        Some(col) => validate_sort_column(col, ALLOWED_SORT_COLUMNS)?,
+        None => "created_at",
+    };
+
+    let (teams, total) = if auth.is_static_token {
+        db::teams::list_all_teams(
+            &state.db_pool,
+            per_page as i64,
+            offset as i64,
+            sort_col,
+            &params.sort_order,
+        )
     } else {
         let user_id = auth
             .user_id
             .ok_or_else(|| AppError::Unauthorized("No user identity".to_string()))?;
-        db::teams::list_teams_for_user(&state.db_pool, user_id)
+        db::teams::list_teams_for_user(
+            &state.db_pool,
+            user_id,
+            per_page as i64,
+            offset as i64,
+            sort_col,
+            &params.sort_order,
+        )
     }
     .map_err(|e| AppError::Database(e.to_string()))?;
 
-    Ok(Json(teams))
+    let has_more = (offset + per_page) < total as u64;
+
+    Ok(Json(PaginatedResponse {
+        data: teams,
+        meta: PaginationMeta {
+            page,
+            per_page,
+            has_more,
+            total: Some(total),
+        },
+    }))
 }
 
 // ---------------------------------------------------------------------------

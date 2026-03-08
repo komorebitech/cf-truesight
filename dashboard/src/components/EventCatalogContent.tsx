@@ -4,15 +4,13 @@ import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { useEventCatalog, useEventProperties } from "@/hooks/use-event-catalog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Search, ChevronRight, ChevronDown, Loader2 } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Search, Loader2, List } from "lucide-react";
+import { useTableParams } from "@/hooks/use-table-params";
+import { formatDate, formatNumber } from "@/lib/utils";
+import type { ColumnDef, Row } from "@tanstack/react-table";
+import type { CatalogEvent } from "@/lib/api";
 
 function useDebouncedValue<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -21,23 +19,6 @@ function useDebouncedValue<T>(value: T, delay: number): T {
     return () => clearTimeout(timer);
   }, [value, delay]);
   return debounced;
-}
-
-function formatCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toLocaleString();
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 const typeBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
@@ -90,18 +71,102 @@ function PropertyList({
   );
 }
 
+const columns: ColumnDef<CatalogEvent, unknown>[] = [
+  {
+    accessorKey: "event_name",
+    header: "Event Name",
+    cell: ({ row }) => (
+      <span className="font-mono text-sm">{row.original.event_name}</span>
+    ),
+  },
+  {
+    id: "event_type",
+    header: "Type",
+    cell: ({ row }) => (
+      <Badge variant={typeBadgeVariant[row.original.event_type] ?? "secondary"}>
+        {row.original.event_type}
+      </Badge>
+    ),
+    enableSorting: false,
+  },
+  {
+    accessorKey: "event_count",
+    header: "Count",
+    cell: ({ row }) => (
+      <span className="tabular-nums text-sm">
+        {formatNumber(row.original.event_count)}
+      </span>
+    ),
+    meta: { className: "text-right" },
+  },
+  {
+    accessorKey: "first_seen",
+    header: "First Seen",
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {formatDate(row.original.first_seen)}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "last_seen",
+    header: "Last Seen",
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {formatDate(row.original.last_seen)}
+      </span>
+    ),
+  },
+];
+
 export function EventCatalogContent() {
   const { id } = useParams<{ id: string }>();
   const { environment } = useEnvironment();
   const [search, setSearch] = useState("");
-  const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
 
-  const { data, isLoading } = useEventCatalog(id, debouncedSearch, environment);
-  const events = data?.events ?? [];
+  const {
+    sorting,
+    onSortingChange,
+    page,
+    pageSize,
+    onPageChange,
+    sortParam,
+    orderParam,
+  } = useTableParams({
+    defaultSortField: "event_count",
+    defaultSortOrder: "desc",
+    pageSize: 25,
+  });
 
-  const toggleExpand = (key: string) => {
-    setExpandedEvent((prev) => (prev === key ? null : key));
+  // Reset page when search changes
+  useEffect(() => {
+    onPageChange(1);
+  }, [debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { data, isLoading } = useEventCatalog(id, {
+    q: debouncedSearch || undefined,
+    environment,
+    page,
+    per_page: pageSize,
+    sort_by: sortParam,
+    sort_order: orderParam,
+  });
+
+  const events = data?.data ?? [];
+  const hasMore = data?.meta?.has_more ?? false;
+
+  const renderCatalogSubRow = (row: Row<CatalogEvent>) => {
+    if (!id) return null;
+    return (
+      <div className="border-t bg-muted/30">
+        <PropertyList
+          projectId={id}
+          eventName={row.original.event_name}
+          environment={environment}
+        />
+      </div>
+    );
   };
 
   return (
@@ -116,92 +181,33 @@ export function EventCatalogContent() {
         />
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-8" />
-              <TableHead>Event Name</TableHead>
-              <TableHead className="w-28">Type</TableHead>
-              <TableHead className="w-28 pr-4 text-right">Count</TableHead>
-              <TableHead className="w-48">First Seen</TableHead>
-              <TableHead className="w-48">Last Seen</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
-                </TableCell>
-              </TableRow>
-            ) : events.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center py-8 text-muted-foreground"
-                >
-                  {search ? "No events match your search." : "No events recorded yet."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              events.map((ev) => {
-                const key = `${ev.event_name}::${ev.event_type}`;
-                const isExpanded = expandedEvent === key;
-                return (
-                  <TableRow key={key} className="group">
-                    <TableCell colSpan={6} className="p-0">
-                      <button
-                        type="button"
-                        className="w-full text-left"
-                        onClick={() => toggleExpand(key)}
-                      >
-                        <div className="flex items-center px-4 py-3 hover:bg-muted/50 transition-colors">
-                          <div className="w-8 flex-shrink-0">
-                            {isExpanded ? (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </div>
-                          <div className="flex-1 font-mono text-sm">
-                            {ev.event_name}
-                          </div>
-                          <div className="w-28">
-                            <Badge
-                              variant={typeBadgeVariant[ev.event_type] ?? "secondary"}
-                            >
-                              {ev.event_type}
-                            </Badge>
-                          </div>
-                          <div className="w-28 pr-4 text-right tabular-nums text-sm">
-                            {formatCount(ev.event_count)}
-                          </div>
-                          <div className="w-48 text-sm text-muted-foreground">
-                            {formatDate(ev.first_seen)}
-                          </div>
-                          <div className="w-48 text-sm text-muted-foreground">
-                            {formatDate(ev.last_seen)}
-                          </div>
-                        </div>
-                      </button>
-                      {isExpanded && id && (
-                        <div className="border-t bg-muted/30">
-                          <PropertyList
-                            projectId={id}
-                            eventName={ev.event_name}
-                            environment={environment}
-                          />
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        columns={columns}
+        data={events}
+        sorting={sorting}
+        onSortingChange={onSortingChange}
+        pagination={{
+          page,
+          pageSize,
+          hasMore,
+        }}
+        onPageChange={onPageChange}
+        isLoading={isLoading}
+        renderSubRow={renderCatalogSubRow}
+        emptyState={
+          <EmptyState
+            variant={debouncedSearch ? "search" : "data"}
+            icon={List}
+            title={debouncedSearch ? "No events match your search" : "No events recorded yet"}
+            description={
+              debouncedSearch
+                ? "Try adjusting your search query"
+                : "Events will appear here once they are tracked"
+            }
+            compact
+          />
+        }
+      />
     </div>
   );
 }

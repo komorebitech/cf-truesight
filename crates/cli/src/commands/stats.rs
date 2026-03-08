@@ -81,6 +81,8 @@ pub async fn run(
             per_page,
             event_type,
             event_name,
+            sort_by,
+            sort_order,
         } => {
             let (f, t) = (normalize_dt(from, false), normalize_dt(to, true));
             let mut url = format!("{base}/events?from={f}&to={t}");
@@ -96,6 +98,10 @@ pub async fn run(
             if let Some(en) = event_name {
                 url.push_str(&format!("&event_name={en}"));
             }
+            if let Some(sb) = sort_by {
+                url.push_str(&format!("&sort_by={sb}"));
+            }
+            url.push_str(&format!("&sort_order={sort_order}"));
             let resp = client.get(&url).await?;
             render(format, &resp);
         }

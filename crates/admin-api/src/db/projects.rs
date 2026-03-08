@@ -4,6 +4,22 @@ use truesight_common::project::{NewProject, Project, UpdateProject};
 use truesight_common::schema::projects;
 use uuid::Uuid;
 
+use crate::handlers::pagination::SortOrder;
+
+/// Apply dynamic ORDER BY to a boxed projects query.
+macro_rules! apply_project_sort {
+    ($query:expr, $sort_col:expr, $sort_order:expr) => {
+        match ($sort_col, $sort_order) {
+            ("name", SortOrder::Asc) => $query.order(projects::name.asc()),
+            ("name", SortOrder::Desc) => $query.order(projects::name.desc()),
+            ("updated_at", SortOrder::Asc) => $query.order(projects::updated_at.asc()),
+            ("updated_at", SortOrder::Desc) => $query.order(projects::updated_at.desc()),
+            ("created_at", SortOrder::Asc) => $query.order(projects::created_at.asc()),
+            (_, _) => $query.order(projects::created_at.desc()),
+        }
+    };
+}
+
 /// Lists projects with optional active filter and pagination.
 /// Returns `(projects, total_count)`.
 pub fn list_projects(
@@ -11,6 +27,8 @@ pub fn list_projects(
     active_filter: Option<bool>,
     limit: i64,
     offset: i64,
+    sort_col: &str,
+    sort_order: &SortOrder,
 ) -> Result<(Vec<Project>, i64), diesel::result::Error> {
     with_conn(pool, |conn| {
         let mut query = projects::table.into_boxed();
@@ -23,11 +41,8 @@ pub fn list_projects(
 
         let total: i64 = count_query.count().get_result(conn)?;
 
-        let items = query
-            .order(projects::created_at.desc())
-            .limit(limit)
-            .offset(offset)
-            .load::<Project>(conn)?;
+        let query = apply_project_sort!(query, sort_col, sort_order);
+        let items = query.limit(limit).offset(offset).load::<Project>(conn)?;
 
         Ok((items, total))
     })
@@ -40,6 +55,8 @@ pub fn list_projects_filtered(
     limit: i64,
     offset: i64,
     allowed_ids: &[Uuid],
+    sort_col: &str,
+    sort_order: &SortOrder,
 ) -> Result<(Vec<Project>, i64), diesel::result::Error> {
     with_conn(pool, |conn| {
         let mut query = projects::table.into_boxed();
@@ -55,11 +72,8 @@ pub fn list_projects_filtered(
 
         let total: i64 = count_query.count().get_result(conn)?;
 
-        let items = query
-            .order(projects::created_at.desc())
-            .limit(limit)
-            .offset(offset)
-            .load::<Project>(conn)?;
+        let query = apply_project_sort!(query, sort_col, sort_order);
+        let items = query.limit(limit).offset(offset).load::<Project>(conn)?;
 
         Ok((items, total))
     })

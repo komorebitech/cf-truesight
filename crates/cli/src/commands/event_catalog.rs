@@ -12,8 +12,24 @@ pub async fn run(
 ) -> Result<()> {
     let base = format!("/v1/stats/projects/{project}");
     match command {
-        EventCatalogCommand::List => {
-            let resp = client.get(&format!("{base}/event-catalog")).await?;
+        EventCatalogCommand::List {
+            sort_by,
+            sort_order,
+            page,
+            per_page,
+        } => {
+            let mut url = format!("{base}/event-catalog?");
+            if let Some(sb) = sort_by {
+                url.push_str(&format!("sort_by={sb}&"));
+            }
+            url.push_str(&format!("sort_order={sort_order}&"));
+            if let Some(p) = page {
+                url.push_str(&format!("page={p}&"));
+            }
+            if let Some(pp) = per_page {
+                url.push_str(&format!("per_page={pp}&"));
+            }
+            let resp = client.get(url.trim_end_matches('&')).await?;
             render(format, &resp);
         }
         EventCatalogCommand::Properties { event_name } => {

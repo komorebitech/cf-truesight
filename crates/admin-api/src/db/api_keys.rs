@@ -4,16 +4,36 @@ use truesight_common::db::{DbPool, with_conn};
 use truesight_common::schema::api_keys;
 use uuid::Uuid;
 
-/// Lists all API keys for a given project.
+use crate::handlers::pagination::SortOrder;
+
+/// Lists API keys for a given project with pagination and sorting.
+/// Returns `(keys, total_count)`.
 pub fn list_api_keys_for_project(
     pool: &DbPool,
     project_id: Uuid,
-) -> Result<Vec<ApiKey>, diesel::result::Error> {
+    limit: i64,
+    offset: i64,
+    sort_col: &str,
+    sort_order: &SortOrder,
+) -> Result<(Vec<ApiKey>, i64), diesel::result::Error> {
     with_conn(pool, |conn| {
-        api_keys::table
-            .filter(api_keys::project_id.eq(project_id))
-            .order(api_keys::created_at.desc())
-            .load::<ApiKey>(conn)
+        let base = api_keys::table.filter(api_keys::project_id.eq(project_id));
+
+        let total: i64 = base.count().get_result(conn)?;
+
+        let query = base.into_boxed();
+        let query = match (sort_col, sort_order) {
+            ("label", SortOrder::Asc) => query.order(api_keys::label.asc()),
+            ("label", SortOrder::Desc) => query.order(api_keys::label.desc()),
+            ("environment", SortOrder::Asc) => query.order(api_keys::environment.asc()),
+            ("environment", SortOrder::Desc) => query.order(api_keys::environment.desc()),
+            ("created_at", SortOrder::Asc) => query.order(api_keys::created_at.asc()),
+            (_, _) => query.order(api_keys::created_at.desc()),
+        };
+
+        let items = query.limit(limit).offset(offset).load::<ApiKey>(conn)?;
+
+        Ok((items, total))
     })
 }
 

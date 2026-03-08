@@ -6,12 +6,17 @@ import { Header } from "@/components/Header";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { TimeRangeSelector, getPresetRange } from "@/components/TimeRangeSelector";
 import type { TimeRange } from "@/components/TimeRangeSelector";
-import { EventsTable } from "@/components/EventsTable";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, RotateCcw } from "lucide-react";
-import type { EventFilters } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Search, RotateCcw, Activity } from "lucide-react";
+import { useTableParams } from "@/hooks/use-table-params";
+import { formatDate, cleanProperties } from "@/lib/utils";
+import type { ColumnDef, Row } from "@tanstack/react-table";
+import type { EventFilters, TrackedEvent } from "@/lib/api";
 
 function useDebouncedValue<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -22,11 +27,155 @@ function useDebouncedValue<T>(value: T, delay: number): T {
   return debounced;
 }
 
-const PAGE_SIZE = 25;
+function EventTypeColor(type: string) {
+  switch (type) {
+    case "track":
+      return "default" as const;
+    case "identify":
+      return "success" as const;
+    case "page":
+      return "warning" as const;
+    case "screen":
+      return "secondary" as const;
+    default:
+      return "secondary" as const;
+  }
+}
+
+function DetailField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="mt-0.5 truncate text-sm">{children}</dd>
+    </div>
+  );
+}
+
+const columns: ColumnDef<TrackedEvent, unknown>[] = [
+  {
+    accessorKey: "event_name",
+    header: "Event Name",
+    cell: ({ row }) => (
+      <span className="font-medium">{row.original.event_name}</span>
+    ),
+  },
+  {
+    accessorKey: "event_type",
+    header: "Type",
+    cell: ({ row }) => (
+      <Badge variant={EventTypeColor(row.original.event_type)}>
+        {row.original.event_type}
+      </Badge>
+    ),
+  },
+  {
+    id: "platform",
+    header: "Platform",
+    cell: ({ row }) =>
+      row.original.platform ? (
+        <Badge variant="outline" className="text-xs">
+          {row.original.platform}
+        </Badge>
+      ) : null,
+    enableSorting: false,
+  },
+  {
+    id: "anonymous_id",
+    header: "Anonymous ID",
+    cell: ({ row }) => (
+      <span className="font-mono text-xs text-muted-foreground">
+        {row.original.anonymous_id.slice(0, 12)}...
+      </span>
+    ),
+    enableSorting: false,
+  },
+  {
+    id: "user_id",
+    header: "User ID",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">
+        {row.original.user_id || "-"}
+      </span>
+    ),
+    enableSorting: false,
+  },
+  {
+    accessorKey: "client_timestamp",
+    header: "Timestamp",
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">
+        {formatDate(row.original.client_timestamp)}
+      </span>
+    ),
+  },
+];
+
+function renderEventSubRow(row: Row<TrackedEvent>) {
+  const event = row.original;
+  return (
+    <div className="border-t bg-muted/30 px-6 py-4">
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-5">
+        <DetailField label="Event Name">
+          <span className="font-medium">{event.event_name}</span>
+        </DetailField>
+        <DetailField label="Type">
+          <Badge variant={EventTypeColor(event.event_type)}>
+            {event.event_type}
+          </Badge>
+        </DetailField>
+        <DetailField label="Anonymous ID">
+          <span className="font-mono text-xs">{event.anonymous_id}</span>
+        </DetailField>
+        {event.user_id && (
+          <DetailField label="User ID">{event.user_id}</DetailField>
+        )}
+        {event.platform && (
+          <DetailField label="Platform">{event.platform}</DetailField>
+        )}
+        <DetailField label="Client Time">
+          {formatDate(event.client_timestamp)}
+        </DetailField>
+        <DetailField label="Server Time">
+          {formatDate(event.server_timestamp)}
+        </DetailField>
+        {event.os_name && (
+          <DetailField label="OS">{event.os_name}</DetailField>
+        )}
+        {event.device_model && (
+          <DetailField label="Device">{event.device_model}</DetailField>
+        )}
+        {event.sdk_version && (
+          <DetailField label="SDK Version">
+            <span className="font-mono text-xs">{event.sdk_version}</span>
+          </DetailField>
+        )}
+      </dl>
+      <div className="mt-3">
+        <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          Properties
+        </span>
+        <pre className="mt-1 max-h-48 overflow-auto rounded-md bg-muted p-3 text-xs">
+          {JSON.stringify(
+            cleanProperties(JSON.parse(event.properties || "{}")),
+            null,
+            2,
+          )}
+        </pre>
+      </div>
+    </div>
+  );
+}
 
 export function EventExplorerPage() {
   const { id } = useParams<{ id: string }>();
-
   const { environment } = useEnvironment();
 
   const [timeRange, setTimeRange] = useState<TimeRange>(() => getPresetRange("7d"));
@@ -34,10 +183,28 @@ export function EventExplorerPage() {
   const [platform, setPlatform] = useState("");
   const [eventName, setEventName] = useState("");
   const [userId, setUserId] = useState("");
-  const [page, setPage] = useState(1);
 
   const debouncedEventName = useDebouncedValue(eventName, 300);
   const debouncedUserId = useDebouncedValue(userId, 300);
+
+  const {
+    sorting,
+    onSortingChange,
+    page,
+    pageSize,
+    onPageChange,
+    sortParam,
+    orderParam,
+  } = useTableParams({
+    defaultSortField: "client_timestamp",
+    defaultSortOrder: "desc",
+    pageSize: 25,
+  });
+
+  // Reset page when filters change
+  useEffect(() => {
+    onPageChange(1);
+  }, [debouncedEventName, debouncedUserId, eventType, platform, timeRange]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filters: EventFilters = {
     from: timeRange.from,
@@ -48,11 +215,16 @@ export function EventExplorerPage() {
     user_id: debouncedUserId || undefined,
     environment,
     page,
-    per_page: PAGE_SIZE,
+    per_page: pageSize,
+    sort_by: sortParam,
+    sort_order: orderParam,
   };
 
   const { data, isLoading } = useEvents(id, filters);
   const { data: breakdownData } = useEventTypeBreakdown(id, timeRange.from, timeRange.to, environment);
+
+  const events = data?.data ?? [];
+  const hasMore = data?.meta?.has_more ?? false;
 
   const eventTypes = breakdownData?.by_type
     ? Object.keys(breakdownData.by_type)
@@ -64,7 +236,7 @@ export function EventExplorerPage() {
     setPlatform("");
     setEventName("");
     setUserId("");
-    setPage(1);
+    onPageChange(1);
   };
 
   return (
@@ -78,13 +250,13 @@ export function EventExplorerPage() {
             value={timeRange}
             onChange={(range) => {
               setTimeRange(range);
-              setPage(1);
+              onPageChange(1);
             }}
           />
 
           <div className="h-6 w-px bg-border" />
 
-          <Select value={eventType || "__all__"} onValueChange={(v) => { setEventType(v === "__all__" ? "" : v); setPage(1); }}>
+          <Select value={eventType || "__all__"} onValueChange={(v) => { setEventType(v === "__all__" ? "" : v); onPageChange(1); }}>
             <SelectTrigger className="w-36">
               <SelectValue placeholder="All types" />
             </SelectTrigger>
@@ -98,7 +270,7 @@ export function EventExplorerPage() {
             </SelectContent>
           </Select>
 
-          <Select value={platform || "__all__"} onValueChange={(v) => { setPlatform(v === "__all__" ? "" : v); setPage(1); }}>
+          <Select value={platform || "__all__"} onValueChange={(v) => { setPlatform(v === "__all__" ? "" : v); onPageChange(1); }}>
             <SelectTrigger className="w-36">
               <SelectValue placeholder="All platforms" />
             </SelectTrigger>
@@ -115,10 +287,7 @@ export function EventExplorerPage() {
             <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               value={eventName}
-              onChange={(e) => {
-                setEventName(e.target.value);
-                setPage(1);
-              }}
+              onChange={(e) => setEventName(e.target.value)}
               placeholder="Search events..."
               className="w-44 pl-8"
             />
@@ -126,10 +295,7 @@ export function EventExplorerPage() {
 
           <Input
             value={userId}
-            onChange={(e) => {
-              setUserId(e.target.value);
-              setPage(1);
-            }}
+            onChange={(e) => setUserId(e.target.value)}
             placeholder="Filter by user..."
             className="w-40"
           />
@@ -146,15 +312,29 @@ export function EventExplorerPage() {
         </div>
 
         {/* Events table */}
-        <div className="rounded-lg border bg-card">
-          <EventsTable
-            events={data?.data}
-            isLoading={isLoading}
-            page={page}
-            hasMore={data?.meta?.has_more ?? false}
-            onPageChange={setPage}
-          />
-        </div>
+        <DataTable
+          columns={columns}
+          data={events}
+          sorting={sorting}
+          onSortingChange={onSortingChange}
+          pagination={{
+            page,
+            pageSize,
+            hasMore,
+          }}
+          onPageChange={onPageChange}
+          isLoading={isLoading}
+          renderSubRow={renderEventSubRow}
+          emptyState={
+            <EmptyState
+              variant="search"
+              icon={Activity}
+              title="No events found"
+              description="Try adjusting your filters"
+              compact
+            />
+          }
+        />
       </div>
     </div>
   );

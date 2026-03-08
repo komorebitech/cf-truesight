@@ -163,7 +163,20 @@ pub enum ConfigCommand {
 #[derive(Subcommand)]
 pub enum ProjectsCommand {
     /// List all projects
-    List,
+    List {
+        /// Sort by column (name, created_at, updated_at)
+        #[arg(long)]
+        sort_by: Option<String>,
+        /// Sort order: asc or desc
+        #[arg(long, default_value = "desc")]
+        sort_order: String,
+        /// Page number
+        #[arg(long)]
+        page: Option<u32>,
+        /// Results per page
+        #[arg(long)]
+        per_page: Option<u32>,
+    },
     /// Get a project by ID
     Get {
         /// Project ID
@@ -198,7 +211,20 @@ pub enum ProjectsCommand {
 #[derive(Subcommand)]
 pub enum TeamsCommand {
     /// List all teams
-    List,
+    List {
+        /// Sort by column (name, created_at)
+        #[arg(long)]
+        sort_by: Option<String>,
+        /// Sort order: asc or desc
+        #[arg(long, default_value = "desc")]
+        sort_order: String,
+        /// Page number
+        #[arg(long)]
+        page: Option<u32>,
+        /// Results per page
+        #[arg(long)]
+        per_page: Option<u32>,
+    },
     /// Get a team by ID
     Get {
         /// Team ID
@@ -425,6 +451,12 @@ pub enum StatsCommand {
         /// Filter by event name
         #[arg(long)]
         event_name: Option<String>,
+        /// Sort by column (client_timestamp, server_timestamp, event_name, event_type)
+        #[arg(long)]
+        sort_by: Option<String>,
+        /// Sort order: asc or desc
+        #[arg(long, default_value = "desc")]
+        sort_order: String,
     },
     /// Get active user counts
     #[command(name = "active-users")]
@@ -452,7 +484,20 @@ pub enum StatsCommand {
 #[derive(Subcommand)]
 pub enum EventCatalogCommand {
     /// List all tracked event names
-    List,
+    List {
+        /// Sort by column (event_name, event_count, first_seen, last_seen)
+        #[arg(long)]
+        sort_by: Option<String>,
+        /// Sort order: asc or desc
+        #[arg(long, default_value = "desc")]
+        sort_order: String,
+        /// Page number
+        #[arg(long)]
+        page: Option<u32>,
+        /// Results per page
+        #[arg(long)]
+        per_page: Option<u32>,
+    },
     /// Get properties for a specific event name
     Properties {
         /// Event name to get properties for
@@ -565,6 +610,12 @@ pub enum UsersCommand {
         /// Search query
         #[arg(long)]
         search: Option<String>,
+        /// Sort by column (last_seen, first_seen, event_count)
+        #[arg(long)]
+        sort_by: Option<String>,
+        /// Sort order: asc or desc
+        #[arg(long, default_value = "desc")]
+        sort_order: String,
     },
     /// Get a user profile by ID
     Get {

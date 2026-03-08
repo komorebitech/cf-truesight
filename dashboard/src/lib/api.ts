@@ -31,7 +31,13 @@ export interface UpdateProjectInput {
 export interface PaginationMeta {
   page: number;
   per_page: number;
-  total: number;
+  has_more: boolean;
+  total?: number;
+}
+
+export interface SortParams {
+  sort_by?: string;
+  sort_order?: "asc" | "desc";
 }
 
 export interface PaginatedResponse<T> {
@@ -114,12 +120,16 @@ export interface EventFilters {
   platform?: string;
   page?: number;
   per_page?: number;
+  sort_by?: string;
+  sort_order?: "asc" | "desc";
 }
 
 export interface PaginationParams {
   page?: number;
   per_page?: number;
   active?: boolean;
+  sort_by?: string;
+  sort_order?: "asc" | "desc";
 }
 
 // ---------------------------------------------------------------------------
@@ -191,6 +201,8 @@ export function getProjects(params?: PaginationParams) {
   if (params?.page) qs.set("page", String(params.page));
   if (params?.per_page) qs.set("per_page", String(params.per_page));
   if (params?.active !== undefined) qs.set("active", String(params.active));
+  if (params?.sort_by) qs.set("sort_by", params.sort_by);
+  if (params?.sort_order) qs.set("sort_order", params.sort_order);
   const query = qs.toString();
   return request<PaginatedResponse<Project>>(
     "GET",
@@ -218,10 +230,19 @@ export function deleteProject(id: string) {
 // API key endpoints
 // ---------------------------------------------------------------------------
 
-export function getApiKeys(projectId: string) {
-  return request<ApiKey[]>(
+export function getApiKeys(
+  projectId: string,
+  params?: SortParams & { page?: number; per_page?: number },
+) {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.per_page) qs.set("per_page", String(params.per_page));
+  if (params?.sort_by) qs.set("sort_by", params.sort_by);
+  if (params?.sort_order) qs.set("sort_order", params.sort_order);
+  const query = qs.toString();
+  return request<PaginatedResponse<ApiKey>>(
     "GET",
-    `/projects/${projectId}/api-keys`,
+    `/projects/${projectId}/api-keys${query ? `?${query}` : ""}`,
   );
 }
 
@@ -610,6 +631,8 @@ export function getEvents(projectId: string, filters?: EventFilters) {
   if (filters?.platform) qs.set("platform", filters.platform);
   if (filters?.page) qs.set("page", String(filters.page));
   if (filters?.per_page) qs.set("per_page", String(filters.per_page));
+  if (filters?.sort_by) qs.set("sort_by", filters.sort_by);
+  if (filters?.sort_order) qs.set("sort_order", filters.sort_order);
   const query = qs.toString();
   return request<EventsListResponse>(
     "GET",
@@ -701,8 +724,16 @@ export interface AllowedDomain {
   created_at: string;
 }
 
-export function getTeams() {
-  return request<Team[]>("GET", "/teams");
+export function getTeams(
+  params?: SortParams & { page?: number; per_page?: number },
+) {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.per_page) qs.set("per_page", String(params.per_page));
+  if (params?.sort_by) qs.set("sort_by", params.sort_by);
+  if (params?.sort_order) qs.set("sort_order", params.sort_order);
+  const query = qs.toString();
+  return request<PaginatedResponse<Team>>("GET", `/teams${query ? `?${query}` : ""}`);
 }
 
 export function getTeam(id: string) {
@@ -901,13 +932,15 @@ export interface UserEventsResponse {
 
 export function getUsers(
   projectId: string,
-  params?: { search?: string; page?: number; per_page?: number; environment?: string },
+  params?: { search?: string; page?: number; per_page?: number; environment?: string } & SortParams,
 ) {
   const qs = new URLSearchParams();
   if (params?.search) qs.set("search", params.search);
   if (params?.page) qs.set("page", String(params.page));
   if (params?.per_page) qs.set("per_page", String(params.per_page));
   if (params?.environment) qs.set("environment", params.environment);
+  if (params?.sort_by) qs.set("sort_by", params.sort_by);
+  if (params?.sort_order) qs.set("sort_order", params.sort_order);
   const query = qs.toString();
   return request<UsersListResponse>(
     "GET",
@@ -928,7 +961,7 @@ export function getUser(projectId: string, userId: string, environment?: string)
 export function getUserEvents(
   projectId: string,
   userId: string,
-  params?: { page?: number; per_page?: number; from?: string; to?: string; environment?: string },
+  params?: { page?: number; per_page?: number; from?: string; to?: string; environment?: string } & SortParams,
 ) {
   const qs = new URLSearchParams();
   if (params?.page) qs.set("page", String(params.page));
@@ -936,6 +969,8 @@ export function getUserEvents(
   if (params?.from) qs.set("from", params.from);
   if (params?.to) qs.set("to", params.to);
   if (params?.environment) qs.set("environment", params.environment);
+  if (params?.sort_by) qs.set("sort_by", params.sort_by);
+  if (params?.sort_order) qs.set("sort_order", params.sort_order);
   const query = qs.toString();
   return request<UserEventsResponse>(
     "GET",
@@ -1223,10 +1258,6 @@ export interface CatalogEvent {
   last_seen: string;
 }
 
-export interface EventCatalogResponse {
-  events: CatalogEvent[];
-}
-
 export interface EventProperty {
   property_key: string;
   first_seen: string;
@@ -1239,16 +1270,22 @@ export interface EventPropertiesResponse {
 
 export function getEventCatalog(
   projectId: string,
-  q?: string,
-  limit?: number,
-  environment?: string,
+  params?: {
+    q?: string;
+    page?: number;
+    per_page?: number;
+    environment?: string;
+  } & SortParams,
 ) {
   const qs = new URLSearchParams();
-  if (q) qs.set("q", q);
-  if (limit) qs.set("limit", String(limit));
-  if (environment) qs.set("environment", environment);
+  if (params?.q) qs.set("q", params.q);
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.per_page) qs.set("per_page", String(params.per_page));
+  if (params?.environment) qs.set("environment", params.environment);
+  if (params?.sort_by) qs.set("sort_by", params.sort_by);
+  if (params?.sort_order) qs.set("sort_order", params.sort_order);
   const query = qs.toString();
-  return request<EventCatalogResponse>(
+  return request<PaginatedResponse<CatalogEvent>>(
     "GET",
     `/stats/projects/${projectId}/event-catalog${query ? `?${query}` : ""}`,
   );

@@ -14,6 +14,14 @@ pub fn render(format: OutputFormat, value: &Value) {
 }
 
 fn render_table(value: &Value) {
+    // Unwrap paginated responses: { data: [...], meta: {...} }
+    if let Value::Object(map) = value
+        && let Some(data @ Value::Array(_)) = map.get("data")
+        && map.contains_key("meta")
+    {
+        render_table(data);
+        return;
+    }
     match value {
         Value::Array(arr) if arr.is_empty() => {
             println!("(no results)");
