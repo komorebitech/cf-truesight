@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,6 +6,64 @@ import { toast } from "sonner";
 import { motion } from "motion/react";
 
 const EASE_OUT_QUART = [0.25, 1, 0.5, 1] as const;
+
+// ---------------------------------------------------------------------------
+// Blinking "truesight" logo — the dot on the "i" blinks like an eye
+// ---------------------------------------------------------------------------
+
+function TruesightLogoBlinking() {
+  const [blink, setBlink] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    let first = true;
+    const scheduleBlink = () => {
+      const delay = first ? 1000 : 2000 + Math.random() * 2000;
+      first = false;
+      timeoutRef.current = setTimeout(() => {
+        setBlink(true);
+        setTimeout(() => {
+          setBlink(false);
+          scheduleBlink();
+        }, 150);
+      }, delay);
+    };
+    scheduleBlink();
+    return () => clearTimeout(timeoutRef.current);
+  }, []);
+
+  const fontStyle = {
+    fontFamily: "'Chillax', sans-serif",
+  } as const;
+
+  return (
+    <span
+      className="inline-flex items-baseline cursor-default select-none font-bold tracking-[0.08em] text-[#081c15] text-[2.5rem]"
+      style={fontStyle}
+    >
+      trues
+      {/* "i" with animated dot — clip off the native dot, overlay our own */}
+      <span className="relative inline-block">
+        {/* "i" with its dot clipped away */}
+        <span style={{ clipPath: "inset(34% 0 0 0)" }}>i</span>
+        {/* Animated dot */}
+        <span
+          className="absolute left-1/2 transition-transform duration-[150ms] ease-[cubic-bezier(0.25,1,0.5,1)]"
+          style={{
+            top: "0.2em",
+            width: "0.2em",
+            height: "0.2em",
+            borderRadius: "50%",
+            background: "#081c15",
+            transform: `translateX(-65%) ${blink ? "scaleY(0.15)" : "scaleY(1)"}`,
+            transformOrigin: "center bottom",
+          }}
+        />
+      </span>
+      ght
+    </span>
+  );
+}
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -115,15 +173,14 @@ export function LoginPage() {
       {/* Content */}
       <div className="relative z-10 flex w-full max-w-md flex-col items-center">
         {/* Logo */}
-        <motion.span
+        <motion.div
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: EASE_OUT_QUART }}
-          className="mb-1 text-[2.5rem] font-bold tracking-[0.08em] text-[#081c15]"
-          style={{ fontFamily: "'Chillax', sans-serif" }}
+          className="mb-1"
         >
-          truesight
-        </motion.span>
+          <TruesightLogoBlinking />
+        </motion.div>
 
         {/* Tagline */}
         <motion.p
