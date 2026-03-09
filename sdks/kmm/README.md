@@ -30,7 +30,7 @@ dependencyResolutionManagement {
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("com.truesight:truesight-sdk:1.0.0")
+    implementation("com.truesight:truesight-sdk:0.0.3")
 }
 ```
 
@@ -76,7 +76,7 @@ TrueSight.reset()
 
 ### CocoaPods
 ```ruby
-pod 'TrueSightSDK', '~> 1.0.0'
+pod 'TrueSightSDK', '~> 0.0.3'
 ```
 
 ### Usage (Swift)
@@ -101,8 +101,8 @@ TrueSight.shared.identify(userId: "user-123", traits: ["email": "user@example.co
 Publishing is automated via GitHub Actions. Push a tag to trigger a release:
 
 ```bash
-git tag mobile-sdk-1.0.0
-git push origin mobile-sdk-1.0.0
+git tag mobile-sdk-0.0.3
+git push origin mobile-sdk-0.0.3
 ```
 
 You can also trigger manually from the Actions tab using the "Publish Mobile SDK" workflow.
