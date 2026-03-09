@@ -421,13 +421,18 @@ export function Sidebar() {
           </div>
 
           {/* Nav group icons */}
-          <nav className="flex-1 flex flex-col items-center gap-1.5 px-2 py-3">
+          <nav data-coachmark="sidebar-nav" className="flex-1 flex flex-col items-center gap-1.5 px-2 py-3">
             {groups.map((group) => {
               const isGroupActive = activeGroupId === group.id;
+              const coachmarkId =
+                group.id === "explore" ? "events-nav"
+                : group.id === "insights" ? "insights-nav"
+                : undefined;
               return (
                 <button
                   key={group.id}
                   onClick={() => handleRailClick(group.id)}
+                  {...(coachmarkId ? { "data-coachmark": coachmarkId } : {})}
                   aria-current={isGroupActive ? "true" : undefined}
                   className={cn(
                     "relative flex w-full flex-col items-center gap-1 rounded-xl px-1 py-2.5 text-[10px] font-semibold transition-[background-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
@@ -451,8 +456,10 @@ export function Sidebar() {
           </nav>
 
           {/* Theme toggle + User avatar */}
-          <div className="flex flex-col items-center gap-2 pb-4 pt-2">
-            <ThemeToggle />
+          <div className="flex flex-col items-center gap-3 pb-4 pt-2">
+            <div data-coachmark="theme-toggle">
+              <ThemeToggle />
+            </div>
             {isAuthenticated && <UserMenu />}
           </div>
         </div>
@@ -484,8 +491,12 @@ export function Sidebar() {
 
                 {/* Project switcher + env */}
                 <div className="px-2 py-2 space-y-1.5">
-                  <ProjectSwitcher currentProjectId={projectId} />
-                  {envToggle}
+                  <div data-coachmark="project-switcher">
+                    <ProjectSwitcher currentProjectId={projectId} />
+                  </div>
+                  <div data-coachmark="env-toggle">
+                    {envToggle}
+                  </div>
                 </div>
                 <Separator className="bg-sidebar-border" />
 

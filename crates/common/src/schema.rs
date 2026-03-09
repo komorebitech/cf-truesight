@@ -171,6 +171,7 @@ diesel::table! {
         active -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        onboarding_completed_at -> Nullable<Timestamptz>,
     }
 }
 

@@ -50,3 +50,13 @@ pub fn find_user_by_id(pool: &DbPool, id: Uuid) -> Result<Option<User>, diesel::
         users::table.find(id).first::<User>(conn).optional()
     })
 }
+
+/// Mark onboarding as complete for a user.
+pub fn mark_onboarding_complete(pool: &DbPool, id: Uuid) -> Result<(), diesel::result::Error> {
+    with_conn(pool, |conn| {
+        diesel::update(users::table.find(id))
+            .set(users::onboarding_completed_at.eq(Utc::now()))
+            .execute(conn)?;
+        Ok(())
+    })
+}

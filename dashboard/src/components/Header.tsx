@@ -72,7 +72,7 @@ export function Header({ title }: { title?: string }) {
   const crumbs = useBreadcrumbs();
 
   return (
-    <header className="sticky top-0 z-10 bg-background backdrop-blur-sm">
+    <header data-coachmark="project-overview" className="sticky top-0 z-10 bg-background backdrop-blur-sm">
       <div className="px-8 pb-4 pt-8">
         {/* Breadcrumbs */}
         {crumbs.length > 0 && (

@@ -13,6 +13,7 @@ export interface AuthUser {
   email: string;
   name: string;
   picture_url?: string;
+  onboarding_completed_at?: string | null;
 }
 
 interface AuthContextValue {

@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { EnvironmentProvider } from "@/contexts/EnvironmentContext";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { OnboardingCoachmarks } from "@/components/Coachmark";
 
 /**
  * YouTube/GitHub-style progress bar.
@@ -93,6 +94,7 @@ export function App() {
         </main>
       </div>
       <Toaster />
+      <OnboardingCoachmarks />
     </TooltipProvider>
     </EnvironmentProvider>
   );

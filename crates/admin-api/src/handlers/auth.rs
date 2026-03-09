@@ -58,6 +58,7 @@ pub struct UserResponse {
     pub email: String,
     pub name: String,
     pub picture_url: Option<String>,
+    pub onboarding_completed_at: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -162,9 +163,10 @@ pub async fn google_login(
             token,
             user: UserResponse {
                 id: user.id.to_string(),
-                email: user.email,
-                name: user.name,
-                picture_url: user.picture_url,
+                email: user.email.clone(),
+                name: user.name.clone(),
+                picture_url: user.picture_url.clone(),
+                onboarding_completed_at: user.onboarding_completed_at.map(|t| t.to_rfc3339()),
             },
         }),
     ))
@@ -287,7 +289,32 @@ pub async fn me(
             email: user.email,
             name: user.name,
             picture_url: user.picture_url,
+            onboarding_completed_at: user.onboarding_completed_at.map(|t| t.to_rfc3339()),
         },
         teams: team_summaries,
     }))
+}
+
+// ---------------------------------------------------------------------------
+// POST /v1/auth/me/onboarding-complete
+// ---------------------------------------------------------------------------
+
+pub async fn complete_onboarding(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> Result<impl IntoResponse, AppError> {
+    if auth.is_static_token {
+        return Err(AppError::Unauthorized(
+            "Static token does not have user identity".to_string(),
+        ));
+    }
+
+    let user_id = auth
+        .user_id
+        .ok_or_else(|| AppError::Unauthorized("No user ID in token".to_string()))?;
+
+    db::users::mark_onboarding_complete(&state.db_pool, user_id)
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+    Ok(StatusCode::NO_CONTENT)
 }

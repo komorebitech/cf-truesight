@@ -649,6 +649,7 @@ export interface AuthUser {
   email: string;
   name: string;
   picture_url?: string;
+  onboarding_completed_at?: string | null;
 }
 
 export interface GoogleLoginResponse {
@@ -673,6 +674,10 @@ export function googleLogin(credential: string) {
 
 export function getMe() {
   return request<MeResponse>("GET", "/auth/me");
+}
+
+export function completeOnboarding() {
+  return request<void>("POST", "/auth/me/onboarding-complete");
 }
 
 // ---------------------------------------------------------------------------

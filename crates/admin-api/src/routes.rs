@@ -12,6 +12,7 @@ pub fn create_router(state: AppState) -> Router {
     let api_routes = Router::new()
         // Auth (requires JWT/token)
         .route("/v1/auth/me", get(handlers::auth::me))
+        .route("/v1/auth/me/onboarding-complete", post(handlers::auth::complete_onboarding))
         // Projects
         .route("/v1/projects", get(handlers::projects::list_projects))
         .route("/v1/projects/{id}", get(handlers::projects::get_project))

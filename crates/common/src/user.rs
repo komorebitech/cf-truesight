@@ -17,6 +17,7 @@ pub struct User {
     pub active: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub onboarding_completed_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Insertable)]

@@ -35,7 +35,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className="relative flex h-8 w-8 items-center justify-center rounded-md text-sidebar-muted-foreground hover:bg-sidebar-active hover:text-sidebar-foreground transition-colors"
+      className="relative flex h-10 w-10 items-center justify-center rounded-xl text-sidebar-muted-foreground hover:bg-sidebar-active hover:text-sidebar-foreground transition-colors"
       aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
     >
       <AnimatePresence mode="wait" initial={false}>
@@ -47,7 +47,7 @@ export function ThemeToggle() {
             exit={{ rotate: 90, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <Moon className="h-4 w-4" />
+            <Moon className="h-5 w-5" />
           </motion.span>
         ) : (
           <motion.span
@@ -57,7 +57,7 @@ export function ThemeToggle() {
             exit={{ rotate: -90, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <Sun className="h-4 w-4" />
+            <Sun className="h-5 w-5" />
           </motion.span>
         )}
       </AnimatePresence>
