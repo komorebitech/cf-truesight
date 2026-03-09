@@ -217,6 +217,21 @@ pub fn get_user_role_for_project(
     })
 }
 
+/// Get the first team ID a user belongs to (by earliest membership).
+pub fn first_team_for_user(
+    pool: &DbPool,
+    user_id: Uuid,
+) -> Result<Option<Uuid>, diesel::result::Error> {
+    with_conn(pool, |conn| {
+        team_members::table
+            .filter(team_members::user_id.eq(user_id))
+            .select(team_members::team_id)
+            .order(team_members::created_at.asc())
+            .first::<Uuid>(conn)
+            .optional()
+    })
+}
+
 /// Get all project IDs a user has access to (via team_members + team_projects).
 pub fn list_project_ids_for_user(
     pool: &DbPool,

@@ -104,7 +104,7 @@ pub struct CreateProjectRequest {
 
 pub async fn create_project(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Json(body): Json<CreateProjectRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     // Any authenticated user can create a project
@@ -118,6 +118,21 @@ pub async fn create_project(
             ) => AppError::Validation("A project with this name already exists".to_string()),
             _ => AppError::Database(e.to_string()),
         })?;
+
+    // Auto-link the new project to the creator's team so it shows up in their
+    // project list. Static-token users see all projects, so no linking needed.
+    if let Some(user_id) = auth.user_id
+        && let Some(team_id) = crate::db::teams::first_team_for_user(&state.db_pool, user_id)
+            .map_err(|e| AppError::Database(e.to_string()))?
+    {
+        let _ = crate::db::teams::link_project(
+            &state.db_pool,
+            truesight_common::team::NewTeamProject {
+                team_id,
+                project_id: project.id,
+            },
+        );
+    }
 
     Ok((StatusCode::CREATED, Json(project)))
 }
