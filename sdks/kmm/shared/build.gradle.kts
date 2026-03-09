@@ -1,62 +1,65 @@
+@file:Suppress("UnstableApiUsage")
+
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    kotlin("multiplatform")
-    kotlin("plugin.serialization")
-    id("com.android.library")
-    id("com.vanniktech.maven.publish")
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
+    alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 val TRUESIGHT_SDK_VERSION: String by project
 version = TRUESIGHT_SDK_VERSION
 
 kotlin {
-    androidTarget {
-        compilations.all {
-            kotlinOptions { jvmTarget = "17" }
+    androidLibrary {
+        namespace = "com.truesight.sdk"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
+
+        optimization {
+            consumerKeepRules.apply {
+                publish = true
+                file("consumer-rules.pro")
+            }
+        }
+
+        compilations.configureEach {
+            compilerOptions.configure {
+                jvmTarget.set(JvmTarget.JVM_17)
+            }
         }
     }
+
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach {
         it.binaries.framework {
             baseName = "TrueSightSDK"
             isStatic = true
         }
     }
+
     sourceSets {
         commonMain.dependencies {
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
-            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
-            implementation("io.ktor:ktor-client-core:3.0.0")
-            implementation("io.ktor:ktor-client-content-negotiation:3.0.0")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.0")
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+            implementation(libs.kotlinx.coroutines.test)
         }
         androidMain.dependencies {
-            implementation("io.ktor:ktor-client-okhttp:3.0.0")
-            implementation("androidx.security:security-crypto:1.1.0-alpha06")
-            implementation("androidx.lifecycle:lifecycle-process:2.8.0")
-            implementation("androidx.annotation:annotation:1.9.0")
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.security.crypto)
+            implementation(libs.androidx.lifecycle.process)
+            implementation(libs.androidx.annotation)
         }
         iosMain.dependencies {
-            implementation("io.ktor:ktor-client-darwin:3.0.0")
-        }
-    }
-}
-
-android {
-    namespace = "com.truesight.sdk"
-    compileSdk = 35
-    defaultConfig { minSdk = 21 }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            consumerProguardFiles("consumer-rules.pro")
+            implementation(libs.ktor.client.darwin)
         }
     }
 }
