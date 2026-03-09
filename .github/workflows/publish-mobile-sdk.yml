@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   publish:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: sdks/kmm
@@ -66,6 +66,7 @@ jobs:
 
       - name: Publish to GitHub Packages
         run: |
-          ./gradlew :truesight-sdk:publishAllPublicationsToGitHubPackagesRepository \
+          ./gradlew :truesight-sdk:publishAndroidReleasePublicationToGitHubPackagesRepository \
+            :truesight-sdk:publishKotlinMultiplatformPublicationToGitHubPackagesRepository \
             -PTRUESIGHT_SDK_VERSION=${{ steps.derive.outputs.version }} \
             --stacktrace
