@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { useParams } from "react-router";
 import { useRetention } from "@/hooks/use-retention";
 import type { RetentionRequest } from "@/lib/api";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
+import { ControlDivider } from "@/components/ControlDivider";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { EventCombobox } from "@/components/EventCombobox";
 import {
@@ -60,12 +61,9 @@ export function RetentionPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Retention" />
-
-      <div className="flex-1 space-y-6 p-6">
-        {/* Controls */}
-        <div className="flex flex-wrap items-center gap-2">
+    <PageLayout title="Retention">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-2">
           <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
 
           <SegmentFilter
@@ -74,7 +72,7 @@ export function RetentionPage() {
             onChange={setSegmentId}
           />
 
-          <div className="h-6 w-px bg-border" />
+          <ControlDivider />
 
           <EventCombobox
             projectId={id}
@@ -96,7 +94,7 @@ export function RetentionPage() {
             className="w-44"
           />
 
-          <div className="h-6 w-px bg-border" />
+          <ControlDivider />
 
           <Tabs
             value={retentionType}
@@ -188,7 +186,6 @@ export function RetentionPage() {
             </Card>
           </div>
         )}
-      </div>
-    </div>
+    </PageLayout>
   );
 }

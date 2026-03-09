@@ -10,7 +10,7 @@ import {
 } from "@/hooks/use-boards";
 import { useFunnels } from "@/hooks/use-funnels";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { EventCombobox } from "@/components/EventCombobox";
 import { WidgetRenderer } from "@/components/widgets/WidgetRenderer";
 import { Button } from "@/components/ui/button";
@@ -100,13 +100,10 @@ export function BoardDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header title="Board" />
-        <div className="p-6">
-          <Skeleton className="mb-4 h-8 w-48" />
-          <Skeleton className="h-64 w-full" />
-        </div>
-      </div>
+      <PageLayout title="Board" spacing={false}>
+        <Skeleton className="mb-4 h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </PageLayout>
     );
   }
 
@@ -122,10 +119,7 @@ export function BoardDetailPage() {
     })) ?? [];
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title={board?.name ?? "Board"} />
-
-      <div className="flex-1 p-6">
+    <PageLayout title={board?.name ?? "Board"} spacing={false}>
         <div className="mb-4 flex items-center justify-between">
           {board?.description && (
             <p className="text-sm text-muted-foreground">
@@ -181,8 +175,6 @@ export function BoardDetailPage() {
             ))}
           </GridLayout>
         )}
-      </div>
-
       <Dialog open={showAddWidget} onOpenChange={setShowAddWidget}>
         <DialogContent>
           <DialogHeader>
@@ -258,6 +250,6 @@ export function BoardDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 }

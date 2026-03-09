@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import { useUsers } from "@/hooks/use-users-ch";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/data-table";
@@ -68,76 +68,76 @@ export function UsersPage() {
   const users = data?.data ?? [];
   const hasMore = data?.meta?.has_more ?? false;
 
-  const columns: ColumnDef<UserRow, unknown>[] = [
-    {
-      accessorKey: "user_uid",
-      header: "User ID",
-      cell: ({ row }) => (
-        <Link
-          to={`/projects/${id}/users/${encodeURIComponent(row.original.user_uid)}`}
-          className="font-medium text-foreground hover:underline"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {row.original.user_uid}
-        </Link>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "email",
-      header: "Email",
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {row.original.email || "-"}
-        </span>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "name",
-      header: "Name",
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {row.original.name || "-"}
-        </span>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: "first_seen",
-      header: "First Seen",
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {formatDate(row.original.first_seen)}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "last_seen",
-      header: "Last Seen",
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {formatDate(row.original.last_seen)}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "event_count",
-      header: "Events",
-      cell: ({ row }) => (
-        <span className="font-medium">
-          {formatNumber(row.original.event_count)}
-        </span>
-      ),
-      meta: { className: "text-right" },
-    },
-  ];
+  const columns: ColumnDef<UserRow, unknown>[] = useMemo(
+    () => [
+      {
+        accessorKey: "user_uid",
+        header: "User ID",
+        cell: ({ row }) => (
+          <Link
+            to={`/projects/${id}/users/${encodeURIComponent(row.original.user_uid)}`}
+            className="font-medium text-foreground hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {row.original.user_uid}
+          </Link>
+        ),
+        enableSorting: false,
+      },
+      {
+        accessorKey: "email",
+        header: "Email",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {row.original.email || "-"}
+          </span>
+        ),
+        enableSorting: false,
+      },
+      {
+        accessorKey: "name",
+        header: "Name",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {row.original.name || "-"}
+          </span>
+        ),
+        enableSorting: false,
+      },
+      {
+        accessorKey: "first_seen",
+        header: "First Seen",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {formatDate(row.original.first_seen)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "last_seen",
+        header: "Last Seen",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {formatDate(row.original.last_seen)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "event_count",
+        header: "Events",
+        cell: ({ row }) => (
+          <span className="font-medium">
+            {formatNumber(row.original.event_count)}
+          </span>
+        ),
+        meta: { className: "text-right" },
+      },
+    ],
+    [id],
+  );
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Users" />
-
-      <div className="flex-1 space-y-6 p-6">
+    <PageLayout title="Users">
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative ml-auto w-72">
@@ -182,7 +182,6 @@ export function UsersPage() {
             )
           }
         />
-      </div>
-    </div>
+    </PageLayout>
   );
 }

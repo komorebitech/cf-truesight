@@ -9,7 +9,7 @@ import {
 } from "@/hooks/use-cohorts";
 import { usePropertyKeys } from "@/hooks/use-properties";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { CohortBuilder } from "@/components/CohortBuilder";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -144,32 +144,25 @@ export function CohortDetailPage() {
 
   if (cohortLoading) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
-        <div className="p-6">
-          <Skeleton className="mb-4 h-8 w-64" />
-          <Skeleton className="h-96 w-full" />
-        </div>
-      </div>
+      <PageLayout title="Cohort">
+        <Skeleton className="mb-4 h-8 w-64" />
+        <Skeleton className="h-96 w-full" />
+      </PageLayout>
     );
   }
 
   if (!cohort) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
+      <PageLayout title="Cohort">
         <div className="flex flex-1 items-center justify-center">
           <p className="text-muted-foreground">Cohort not found.</p>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title={cohort.name} />
-
-      <div className="flex-1 space-y-6 p-6">
+    <PageLayout title={cohort.name}>
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -336,8 +329,6 @@ export function CohortDetailPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-
       {/* Edit Dialog */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent className="max-w-2xl">
@@ -424,6 +415,6 @@ export function CohortDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }

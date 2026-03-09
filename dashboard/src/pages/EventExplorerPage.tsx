@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router";
 import { useEvents } from "@/hooks/use-events";
 import { useEventTypeBreakdown } from "@/hooks/use-stats";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
+import { ControlDivider } from "@/components/ControlDivider";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { TimeRangeSelector, getPresetRange } from "@/components/TimeRangeSelector";
 import type { TimeRange } from "@/components/TimeRangeSelector";
@@ -240,10 +241,7 @@ export function EventExplorerPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Event Explorer" />
-
-      <div className="flex-1 p-6">
+    <PageLayout title="Event Explorer" spacing={false}>
         {/* Filters */}
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <TimeRangeSelector
@@ -254,7 +252,7 @@ export function EventExplorerPage() {
             }}
           />
 
-          <div className="h-6 w-px bg-border" />
+          <ControlDivider />
 
           <Select value={eventType || "__all__"} onValueChange={(v) => { setEventType(v === "__all__" ? "" : v); onPageChange(1); }}>
             <SelectTrigger className="w-36">
@@ -335,7 +333,6 @@ export function EventExplorerPage() {
             />
           }
         />
-      </div>
-    </div>
+    </PageLayout>
   );
 }

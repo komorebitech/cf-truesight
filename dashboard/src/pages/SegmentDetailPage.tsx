@@ -9,7 +9,7 @@ import {
 } from "@/hooks/use-segments";
 import { usePropertyKeys } from "@/hooks/use-properties";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { SegmentBuilder } from "@/components/SegmentBuilder";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -151,32 +151,25 @@ export function SegmentDetailPage() {
 
   if (segmentLoading) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
-        <div className="p-6">
-          <Skeleton className="mb-4 h-8 w-64" />
-          <Skeleton className="h-96 w-full" />
-        </div>
-      </div>
+      <PageLayout title="Segment">
+        <Skeleton className="mb-4 h-8 w-64" />
+        <Skeleton className="h-96 w-full" />
+      </PageLayout>
     );
   }
 
   if (!segment) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
+      <PageLayout title="Segment">
         <div className="flex flex-1 items-center justify-center">
           <p className="text-muted-foreground">Segment not found.</p>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title={segment.name} />
-
-      <div className="flex-1 space-y-6 p-6">
+    <PageLayout title={segment.name}>
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -339,8 +332,6 @@ export function SegmentDetailPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-
       {/* Edit Dialog */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent className="max-w-2xl">
@@ -419,6 +410,6 @@ export function SegmentDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }

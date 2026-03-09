@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useLocation } from "react-router";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { EventExplorerContent } from "@/components/EventExplorerContent";
 import { LiveEventsContent } from "@/components/LiveEventsContent";
@@ -28,10 +28,7 @@ export function EventsPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Events" />
-
-      <div className="flex-1 p-6">
+    <PageLayout title="Events" spacing={false}>
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList>
             <TabsTrigger value="explorer" className="gap-1.5">
@@ -60,7 +57,6 @@ export function EventsPage() {
             <EventCatalogContent />
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+    </PageLayout>
   );
 }

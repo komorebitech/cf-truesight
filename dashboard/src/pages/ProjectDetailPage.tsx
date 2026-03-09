@@ -31,7 +31,7 @@ import {
   useActiveUsers,
   usePlatformDistribution,
 } from "@/hooks/use-stats";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/card";
 import { cn, formatNumber } from "@/lib/utils";
 import { CHART_COLORS } from "@/lib/charts";
+import { SetupGuide } from "@/components/SetupGuide";
 
 // ---------------------------------------------------------------------------
 // CountUp animation (inline, same pattern as StatsCards)
@@ -209,27 +210,23 @@ export function ProjectDetailPage() {
   // -- Loading state --
   if (projectLoading) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
-        <div className="p-6 space-y-6">
-          <Skeleton className="h-28 w-full rounded-xl" />
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <Skeleton className="h-80 lg:col-span-2 rounded-xl" />
-            <Skeleton className="h-80 rounded-xl" />
-          </div>
+      <PageLayout title="Project">
+        <Skeleton className="h-28 w-full rounded-xl" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <Skeleton className="h-80 lg:col-span-2 rounded-xl" />
+          <Skeleton className="h-80 rounded-xl" />
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   if (!project) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
+      <PageLayout title="Project">
         <div className="flex flex-1 items-center justify-center">
           <p className="text-muted-foreground">Project not found.</p>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
@@ -259,10 +256,12 @@ export function ProjectDetailPage() {
   ];
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title={project.name} />
+    <PageLayout title={project.name}>
+        {/* ── Setup Guide (shown when no events yet) ─── */}
+        {!eventCountLoading && totalEvents === 0 && (
+          <SetupGuide projectId={id!} />
+        )}
 
-      <div className="flex-1 space-y-6 p-6">
         {/* ── Pulse Strip ─────────────────────────────── */}
         <div className="rounded-xl border border-border/50 bg-gradient-to-r from-secondary/40 to-accent/40 p-5">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -557,7 +556,6 @@ export function ProjectDetailPage() {
             </Card>
           </motion.div>
         </div>
-      </div>
-    </div>
+    </PageLayout>
   );
 }

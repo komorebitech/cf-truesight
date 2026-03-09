@@ -9,5 +9,6 @@ export function usePivots(
     queryKey: ["pivots", projectId, request],
     queryFn: () => getPivots(projectId!, request!),
     enabled: !!projectId && !!request,
+    staleTime: 5 * 60_000,
   });
 }

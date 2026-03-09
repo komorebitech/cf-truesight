@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useFunnel, useFunnelResults, useUpdateFunnel, useDeleteFunnel } from "@/hooks/use-funnels";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { FunnelChart } from "@/components/FunnelChart";
 import { FunnelBuilder } from "@/components/FunnelBuilder";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
@@ -68,24 +68,20 @@ export function FunnelDetailPage() {
 
   if (funnelLoading) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
-        <div className="p-6">
-          <Skeleton className="mb-4 h-8 w-64" />
-          <Skeleton className="h-96 w-full" />
-        </div>
-      </div>
+      <PageLayout title="Funnel">
+        <Skeleton className="mb-4 h-8 w-64" />
+        <Skeleton className="h-96 w-full" />
+      </PageLayout>
     );
   }
 
   if (!funnel) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
+      <PageLayout title="Funnel">
         <div className="flex flex-1 items-center justify-center">
           <p className="text-muted-foreground">Funnel not found.</p>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
@@ -97,10 +93,7 @@ export function FunnelDetailPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title={funnel.name} />
-
-      <div className="flex-1 space-y-6 p-6">
+    <PageLayout title={funnel.name}>
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -228,8 +221,6 @@ export function FunnelDetailPage() {
             </CardContent>
           </Card>
         )}
-      </div>
-
       {/* Edit Dialog */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent>
@@ -280,6 +271,6 @@ export function FunnelDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }

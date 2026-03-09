@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useParams } from "react-router";
 import { useFunnels, useCompareFunnels, useCompareFunnelTimeRanges } from "@/hooks/use-funnels";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
+import { ControlDivider } from "@/components/ControlDivider";
 import { FunnelChart } from "@/components/FunnelChart";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import {
@@ -71,10 +72,7 @@ export function FunnelComparePage() {
   const resultB = data?.funnels?.[1];
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Compare Funnels" />
-
-      <div className="flex-1 space-y-6 p-6">
+    <PageLayout title="Compare Funnels">
         {/* Controls */}
         {mode === "funnels" && (
           <div className="flex flex-wrap items-center gap-2">
@@ -85,7 +83,7 @@ export function FunnelComparePage() {
               </TabsList>
             </Tabs>
 
-            <div className="h-6 w-px bg-border" />
+            <ControlDivider />
 
             <Select value={funnelA || undefined} onValueChange={setFunnelA}>
               <SelectTrigger className="w-48">
@@ -112,7 +110,7 @@ export function FunnelComparePage() {
               </SelectContent>
             </Select>
 
-            <div className="h-6 w-px bg-border" />
+            <ControlDivider />
 
             <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
           </div>
@@ -128,7 +126,7 @@ export function FunnelComparePage() {
               </TabsList>
             </Tabs>
 
-            <div className="h-6 w-px bg-border" />
+            <ControlDivider />
 
             <Select value={selectedFunnelId || undefined} onValueChange={setSelectedFunnelId}>
               <SelectTrigger className="w-48">
@@ -143,7 +141,7 @@ export function FunnelComparePage() {
               </SelectContent>
             </Select>
 
-            <div className="h-6 w-px bg-border" />
+            <ControlDivider />
 
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-muted-foreground">A:</span>
@@ -311,7 +309,6 @@ export function FunnelComparePage() {
               : "Select a funnel and two time periods to compare"}
           </div>
         )}
-      </div>
-    </div>
+    </PageLayout>
   );
 }

@@ -18,7 +18,7 @@ import {
 } from "@/hooks/use-invitations";
 import { useProjects } from "@/hooks/use-projects";
 import { useAuth } from "@/contexts/AuthContext";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { TeamMembersTable } from "@/components/TeamMembersTable";
 import { TeamProjectsTable } from "@/components/TeamProjectsTable";
 import { AllowedDomainsTable } from "@/components/AllowedDomainsTable";
@@ -66,32 +66,25 @@ export function TeamDetailPage() {
 
   if (teamLoading) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
-        <div className="p-6">
-          <Skeleton className="mb-2 h-8 w-48" />
-          <Skeleton className="h-5 w-24" />
-        </div>
-      </div>
+      <PageLayout title="Team">
+        <Skeleton className="mb-2 h-8 w-48" />
+        <Skeleton className="h-5 w-24" />
+      </PageLayout>
     );
   }
 
   if (!team) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
+      <PageLayout title="Team">
         <div className="flex flex-1 items-center justify-center">
           <p className="text-muted-foreground">Team not found.</p>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title={team.name} />
-
-      <div className="flex-1 space-y-6 p-6">
+    <PageLayout title={team.name}>
         <div className="flex items-center gap-4">
           <Badge variant={team.active ? "success" : "secondary"}>
             {team.active ? "active" : "inactive"}
@@ -251,8 +244,6 @@ export function TeamDetailPage() {
             </TabsContent>
           )}
         </Tabs>
-      </div>
-
       <InviteMemberDialog
         open={showInviteDialog}
         onClose={() => setShowInviteDialog(false)}
@@ -261,6 +252,6 @@ export function TeamDetailPage() {
         }}
         isSubmitting={createInvitation.isPending}
       />
-    </div>
+    </PageLayout>
   );
 }

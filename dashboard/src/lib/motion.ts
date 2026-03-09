@@ -12,3 +12,6 @@ export const fadeIn = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
 } as const;
+
+/** Standard stagger delay between sibling animated items (seconds). */
+export const STAGGER_DELAY = 0.05;

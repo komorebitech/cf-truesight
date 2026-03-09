@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useFunnels, useCreateFunnel, useDeleteFunnel } from "@/hooks/use-funnels";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { FunnelBuilder } from "@/components/FunnelBuilder";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,10 +40,7 @@ export function FunnelsPage() {
   const [deleteFunnelId, setDeleteFunnelId] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Funnels" />
-
-      <div className="flex-1 p-6">
+    <PageLayout title="Funnels" spacing={false}>
         <div className="mb-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {isLoading
@@ -156,8 +153,6 @@ export function FunnelsPage() {
             })}
           </div>
         )}
-      </div>
-
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
           <DialogHeader>
@@ -210,6 +205,6 @@ export function FunnelsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }

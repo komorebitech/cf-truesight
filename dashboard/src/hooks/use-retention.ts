@@ -9,5 +9,6 @@ export function useRetention(
     queryKey: ["retention", projectId, request],
     queryFn: () => getRetention(projectId!, request!),
     enabled: !!projectId && !!request,
+    staleTime: 5 * 60_000,
   });
 }

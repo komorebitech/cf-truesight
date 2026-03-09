@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router";
 import { ChevronRight } from "lucide-react";
+import { useIsFetching } from "@tanstack/react-query";
 import { useProject } from "@/hooks/use-projects";
 
 interface Crumb {
@@ -69,30 +71,29 @@ function useBreadcrumbs(): Crumb[] {
   return crumbs;
 }
 
-const sectionColors: Record<string, string> = {
-  analytics: "bg-[#FEC89A]",
-  events: "bg-[#FEC5BB]",
-  catalog: "bg-[#D8E2DC]",
-  live: "bg-[#FFD7BA]",
-  insights: "bg-[#FAE1DD]",
-  funnels: "bg-[#FCD5CE]",
-  retention: "bg-[#D8E2DC]",
-  cohorts: "bg-[#ECE4DB]",
-  flows: "bg-[#FFE5D9]",
-  users: "bg-[#D8E2DC]/80",
-  settings: "bg-[#E8E8E4]",
-  cli: "bg-[#D8E2DC]",
-};
-
 export function Header({ title }: { title?: string }) {
   const crumbs = useBreadcrumbs();
-  const location = useLocation();
-  const params = useParams();
-  const segments = location.pathname.split("/").filter(Boolean);
-  const sectionSlug = params.id ? segments[2] : undefined;
+  const isFetching = useIsFetching();
+  const [visible, setVisible] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+
+  useEffect(() => {
+    if (isFetching > 0) {
+      setVisible(true);
+      setFinishing(false);
+    } else if (visible) {
+      // Fetching done — fast-forward to 100%, then hide
+      setFinishing(true);
+      const timer = setTimeout(() => {
+        setVisible(false);
+        setFinishing(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isFetching > 0]);
 
   return (
-    <header className="sticky top-0 z-10 border-b bg-card">
+    <header className="sticky top-0 z-10 bg-card">
       <div className="px-6 py-4">
         {/* Breadcrumbs */}
         {crumbs.length > 0 && (
@@ -121,10 +122,20 @@ export function Header({ title }: { title?: string }) {
         )}
       </div>
 
-      {/* Section accent bar */}
-      {sectionSlug && sectionColors[sectionSlug] && (
-        <div className={`h-[3px] ${sectionColors[sectionSlug]}`} />
-      )}
+      {/* Bottom border with progress bar */}
+      <div className="relative h-[3px] bg-[#FEC5BB]">
+        {visible && (
+          <div className="absolute inset-0 overflow-hidden">
+            <div
+              className={`h-full bg-[#e07a6a] rounded-full ${
+                finishing
+                  ? "w-full transition-[width] duration-300 ease-out"
+                  : "animate-progress-bar"
+              }`}
+            />
+          </div>
+        )}
+      </div>
     </header>
   );
 }

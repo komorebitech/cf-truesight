@@ -9,5 +9,6 @@ export function useInsights(
     queryKey: ["insights", projectId, request],
     queryFn: () => getInsights(projectId!, request!),
     enabled: !!projectId && !!request,
+    staleTime: 5 * 60_000,
   });
 }

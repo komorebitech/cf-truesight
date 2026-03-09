@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { copyToClipboard } from "@/lib/utils";
 import { Copy, Check, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { SdkSnippets } from "@/components/SetupGuide";
 
 interface ApiKeyGenerateDialogProps {
   open: boolean;
@@ -104,6 +105,11 @@ export function ApiKeyGenerateDialog({
                     <Copy className="h-4 w-4" />
                   )}
                 </Button>
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-medium">Quick start</p>
+                <SdkSnippets apiKey={generatedKey} />
               </div>
             </div>
             <DialogFooter>

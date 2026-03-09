@@ -1,6 +1,32 @@
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 import type { LiveEvent } from "@/lib/api";
 import { cn, formatRelativeShort, formatDate } from "@/lib/utils";
+
+// Shared tick — all LiveEventRow instances subscribe to a single 5s timer
+let tickListeners = new Set<() => void>();
+let tickInterval: ReturnType<typeof setInterval> | null = null;
+let currentTick = 0;
+
+function subscribeTick(callback: () => void) {
+  tickListeners.add(callback);
+  if (!tickInterval) {
+    tickInterval = setInterval(() => {
+      currentTick++;
+      tickListeners.forEach((cb) => cb());
+    }, 5000);
+  }
+  return () => {
+    tickListeners.delete(callback);
+    if (tickListeners.size === 0 && tickInterval) {
+      clearInterval(tickInterval);
+      tickInterval = null;
+    }
+  };
+}
+
+function getTickSnapshot() {
+  return currentTick;
+}
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -73,17 +99,9 @@ export function LiveEventRow({
   expanded,
   onToggleExpand,
 }: LiveEventRowProps) {
-  const [relTime, setRelTime] = useState(() =>
-    formatRelativeShort(event.server_timestamp),
-  );
-
-  // Auto-update relative timestamp every 5s
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRelTime(formatRelativeShort(event.server_timestamp));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [event.server_timestamp]);
+  // Shared tick — one timer for all rows instead of 200 individual setIntervals
+  useSyncExternalStore(subscribeTick, getTickSnapshot);
+  const relTime = formatRelativeShort(event.server_timestamp);
 
   const dotColor = dotColors[event.event_type] ?? "bg-gray-400";
   const lineColor = lineColors[event.event_type] ?? "border-gray-300";

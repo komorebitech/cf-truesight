@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useBoards, useCreateBoard, useDeleteBoard } from "@/hooks/use-boards";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -52,10 +52,7 @@ export function BoardsPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Boards" />
-
-      <div className="flex-1 p-6">
+    <PageLayout title="Boards" spacing={false}>
         <div className="mb-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {isLoading
@@ -139,7 +136,6 @@ export function BoardsPage() {
             ))}
           </div>
         )}
-      </div>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
@@ -214,6 +210,6 @@ export function BoardsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }

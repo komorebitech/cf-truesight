@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router";
 import { useLiveEvents } from "@/hooks/use-live-events";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { LiveEventRow } from "@/components/LiveEventRow";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -86,10 +86,7 @@ export function LiveEventsPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Live Events" />
-
-      <div className="flex flex-1 flex-col p-6">
+    <PageLayout title="Live Events" spacing={false}>
         {/* Status bar */}
         <div className="mb-4 flex items-center gap-3">
           {/* Connection indicator */}
@@ -251,8 +248,7 @@ export function LiveEventsPage() {
             </div>
           )}
         </div>
-      </div>
 
-    </div>
+    </PageLayout>
   );
 }

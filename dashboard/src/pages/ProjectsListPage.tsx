@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useProjects, useCreateProject } from "@/hooks/use-projects";
 import { useEventCount } from "@/hooks/use-stats";
 import { formatDate, formatNumber } from "@/lib/utils";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { ProjectForm } from "@/components/ProjectForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,10 +97,7 @@ export function ProjectsListPage() {
   ];
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Projects" />
-
-      <div className="flex-1 p-6">
+    <PageLayout title="Projects" spacing={false}>
         {/* Actions bar */}
         <div className="mb-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
@@ -146,8 +143,6 @@ export function ProjectsListPage() {
             onRowClick={(project) => navigate(`/projects/${project.id}`)}
           />
         )}
-      </div>
-
       {/* Create Project Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
@@ -159,8 +154,9 @@ export function ProjectsListPage() {
           </DialogHeader>
           <ProjectForm
             onSubmit={async (values) => {
-              await createProject.mutateAsync(values);
+              const project = await createProject.mutateAsync(values);
               setShowCreate(false);
+              navigate(`/projects/${project.id}`);
             }}
             onCancel={() => setShowCreate(false)}
             isSubmitting={createProject.isPending}
@@ -168,6 +164,6 @@ export function ProjectsListPage() {
           />
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 }

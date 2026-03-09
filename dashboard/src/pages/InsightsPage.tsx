@@ -2,10 +2,13 @@ import { useState, useMemo } from "react";
 import { useParams } from "react-router";
 import { useInsights } from "@/hooks/use-insights";
 import { usePropertyKeys } from "@/hooks/use-properties";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { PropertyFilter } from "@/components/PropertyFilter";
 import { BreakdownSelector } from "@/components/BreakdownSelector";
 import { InsightsChart } from "@/components/InsightsChart";
+import { ChartTypeSwitcher } from "@/components/ChartTypeSwitcher";
+import { ControlDivider } from "@/components/ControlDivider";
+import { TotalsCard } from "@/components/TotalsCard";
 import {
   TimeRangeSelector,
   type TimeRange,
@@ -13,33 +16,12 @@ import {
 } from "@/components/TimeRangeSelector";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventCombobox } from "@/components/EventCombobox";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { AreaChart as AreaChartIcon, BarChart3 } from "lucide-react";
-import { motion } from "motion/react";
 import { SegmentFilter } from "@/components/SegmentFilter";
 import type { InsightsFilter, InsightsRequest } from "@/lib/api";
-import { formatNumber } from "@/lib/utils";
-
-type Granularity = "day" | "week" | "month";
-type Metric = "total" | "unique_users" | "avg_per_user";
-type ChartType = "area" | "bar";
-
-const METRIC_OPTIONS: { value: Metric; label: string }[] = [
-  { value: "total", label: "Total Events" },
-  { value: "unique_users", label: "Unique Users" },
-  { value: "avg_per_user", label: "Avg per User" },
-];
+import type { Granularity, Metric, ChartType } from "@/lib/analytics-types";
+import { METRIC_OPTIONS } from "@/lib/analytics-types";
 
 export function InsightsPage() {
   const { id } = useParams<{ id: string }>();
@@ -90,162 +72,89 @@ export function InsightsPage() {
   const totals = insightsData?.totals ?? [];
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Insights" />
+    <PageLayout title="Insights">
+      {/* Query controls */}
+      <div className="flex flex-wrap items-center gap-2">
+        <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
 
-      <div className="flex-1 space-y-6 p-6">
-        {/* Query controls */}
-        <div className="flex flex-wrap items-center gap-2">
-          <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+        <SegmentFilter
+          projectId={id}
+          value={segmentId}
+          onChange={setSegmentId}
+        />
 
-          <SegmentFilter
-            projectId={id}
-            value={segmentId}
-            onChange={setSegmentId}
-          />
+        <ControlDivider />
 
-          <div className="h-6 w-px bg-border" />
+        <EventCombobox
+          projectId={id}
+          value={eventName}
+          onChange={setEventName}
+          placeholder="All Events"
+          allowEmpty
+          emptyLabel="All Events"
+          environment={environment}
+          className="w-44"
+        />
 
-          <EventCombobox
-            projectId={id}
-            value={eventName}
-            onChange={setEventName}
-            placeholder="All Events"
-            allowEmpty
-            emptyLabel="All Events"
-            environment={environment}
-            className="w-44"
-          />
+        <Tabs
+          value={metric}
+          onValueChange={(v) => setMetric(v as Metric)}
+        >
+          <TabsList>
+            {METRIC_OPTIONS.map((opt) => (
+              <TabsTrigger key={opt.value} value={opt.value}>
+                {opt.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
 
-          <Tabs
-            value={metric}
-            onValueChange={(v) => setMetric(v as Metric)}
-          >
-            <TabsList>
-              {METRIC_OPTIONS.map((opt) => (
-                <TabsTrigger key={opt.value} value={opt.value}>
-                  {opt.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+        <ControlDivider />
 
-          <div className="h-6 w-px bg-border" />
+        <Tabs
+          value={granularity}
+          onValueChange={(v) => setGranularity(v as Granularity)}
+        >
+          <TabsList>
+            <TabsTrigger value="day">Day</TabsTrigger>
+            <TabsTrigger value="week">Week</TabsTrigger>
+            <TabsTrigger value="month">Month</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-          <Tabs
-            value={granularity}
-            onValueChange={(v) => setGranularity(v as Granularity)}
-          >
-            <TabsList>
-              <TabsTrigger value="day">Day</TabsTrigger>
-              <TabsTrigger value="week">Week</TabsTrigger>
-              <TabsTrigger value="month">Month</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <div className="flex items-center gap-1">
-            <Button
-              variant={chartType === "area" ? "default" : "outline"}
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setChartType("area")}
-              title="Area chart"
-            >
-              <AreaChartIcon className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={chartType === "bar" ? "default" : "outline"}
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setChartType("bar")}
-              title="Bar chart"
-            >
-              <BarChart3 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Filters + Breakdown */}
-        <div className="flex flex-wrap items-start gap-6">
-          <PropertyFilter
-            filters={filters}
-            onChange={setFilters}
-            propertyKeys={propertyKeys}
-          />
-          <BreakdownSelector
-            value={groupBy}
-            onChange={setGroupBy}
-            propertyKeys={propertyKeys}
-          />
-        </div>
-
-        {/* Chart results */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Results</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <InsightsChart
-              series={series}
-              isLoading={isLoading}
-              chartType={chartType}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Totals table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Totals</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="p-6">
-                <Skeleton className="h-24 w-full" />
-              </div>
-            ) : totals.length === 0 ? (
-              <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">
-                No data
-              </div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Group</TableHead>
-                      <TableHead className="text-right">Value</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {totals.map((total, i) => {
-                      const groupLabel =
-                        Object.keys(total.group).length === 0
-                          ? "All"
-                          : Object.entries(total.group)
-                              .map(([k, v]) => `${k}=${v}`)
-                              .join(", ");
-                      return (
-                        <TableRow key={i}>
-                          <TableCell className="font-medium">
-                            {groupLabel}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            {formatNumber(total.value)}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </motion.div>
-            )}
-          </CardContent>
-        </Card>
+        <ChartTypeSwitcher value={chartType} onChange={setChartType} />
       </div>
-    </div>
+
+      {/* Filters + Breakdown */}
+      <div className="flex flex-wrap items-start gap-6">
+        <PropertyFilter
+          filters={filters}
+          onChange={setFilters}
+          propertyKeys={propertyKeys}
+        />
+        <BreakdownSelector
+          value={groupBy}
+          onChange={setGroupBy}
+          propertyKeys={propertyKeys}
+        />
+      </div>
+
+      {/* Chart results */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Results</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <InsightsChart
+            series={series}
+            isLoading={isLoading}
+            chartType={chartType}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Totals table */}
+      <TotalsCard totals={totals} isLoading={isLoading} />
+    </PageLayout>
   );
 }

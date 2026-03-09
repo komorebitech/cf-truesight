@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { useParams } from "react-router";
 import { usePivots } from "@/hooks/use-pivots";
 import { usePropertyKeys } from "@/hooks/use-properties";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
+import { ControlDivider } from "@/components/ControlDivider";
 import { PivotTable } from "@/components/PivotTable";
 import { PropertyFilter } from "@/components/PropertyFilter";
 import { EventCombobox } from "@/components/EventCombobox";
@@ -16,14 +17,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { InsightsFilter, PivotsRequest } from "@/lib/api";
-
-type Metric = "total" | "unique_users" | "avg_per_user";
-
-const METRIC_OPTIONS: { value: Metric; label: string }[] = [
-  { value: "total", label: "Total Events" },
-  { value: "unique_users", label: "Unique Users" },
-  { value: "avg_per_user", label: "Avg per User" },
-];
+import type { Metric } from "@/lib/analytics-types";
+import { METRIC_OPTIONS } from "@/lib/analytics-types";
 
 export function PivotsPage() {
   const { id } = useParams<{ id: string }>();
@@ -67,15 +62,12 @@ export function PivotsPage() {
   const { data: pivotsData, isLoading } = usePivots(id, pivotsRequest);
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Pivots" />
-
-      <div className="flex-1 space-y-6 p-6">
-        {/* Controls */}
-        <div className="flex flex-wrap items-center gap-2">
+    <PageLayout title="Pivots">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-2">
           <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
 
-          <div className="h-6 w-px bg-border" />
+          <ControlDivider />
 
           <EventCombobox
             projectId={id}
@@ -171,7 +163,6 @@ export function PivotsPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </PageLayout>
   );
 }

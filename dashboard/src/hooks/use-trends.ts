@@ -9,5 +9,6 @@ export function useTrends(
     queryKey: ["trends", projectId, request],
     queryFn: () => getTrends(projectId!, request!),
     enabled: !!projectId && !!request,
+    staleTime: 5 * 60_000,
   });
 }

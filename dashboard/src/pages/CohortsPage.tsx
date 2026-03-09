@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router";
 import { useCohorts, useCreateCohort, useDeleteCohort } from "@/hooks/use-cohorts";
 import { usePropertyKeys } from "@/hooks/use-properties";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { CohortBuilder } from "@/components/CohortBuilder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,10 +103,7 @@ export function CohortsPage() {
   const deleteCohortName = cohorts?.find((c) => c.id === deleteCohortId)?.name;
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Cohorts" />
-
-      <div className="flex-1 p-6">
+    <PageLayout title="Cohorts" spacing={false}>
         <div className="mb-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {isLoading
@@ -219,8 +216,6 @@ export function CohortsPage() {
             </Card>
           </motion.div>
         )}
-      </div>
-
       {/* Create Dialog */}
       <Dialog
         open={showCreate}
@@ -328,6 +323,6 @@ export function CohortsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }

@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router";
 import { useUser, useUserEvents } from "@/hooks/use-users-ch";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { cleanProperties } from "@/lib/utils";
 import {
@@ -88,25 +88,21 @@ export function UserDetailPage() {
 
   if (userLoading) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
-        <div className="flex-1 space-y-6 p-6">
-          <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-8 w-64" />
-          <div className="grid gap-6 md:grid-cols-2">
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-48 w-full" />
-          </div>
-          <Skeleton className="h-96 w-full" />
+      <PageLayout title="User">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-8 w-64" />
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
         </div>
-      </div>
+        <Skeleton className="h-96 w-full" />
+      </PageLayout>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
+      <PageLayout title="User">
         <div className="flex flex-1 items-center justify-center">
           <EmptyState
             variant="search"
@@ -118,15 +114,12 @@ export function UserDetailPage() {
             }}
           />
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title={user.name || user.user_uid} />
-
-      <div className="flex-1 space-y-6 p-6">
+    <PageLayout title={user.name || user.user_uid}>
         {/* Back link */}
         <Link
           to={`/projects/${id}/users`}
@@ -373,7 +366,6 @@ export function UserDetailPage() {
             </CardContent>
           </Card>
         </motion.div>
-      </div>
-    </div>
+    </PageLayout>
   );
 }

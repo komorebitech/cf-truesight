@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { useEventCatalog, useEventProperties } from "@/hooks/use-event-catalog";
 import { Input } from "@/components/ui/input";
@@ -109,10 +109,7 @@ export function EventCatalogPage() {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <Header title="Event Catalog" />
-
-      <div className="flex-1 overflow-auto p-6 space-y-4">
+    <PageLayout title="Event Catalog">
         {/* Search */}
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -211,7 +208,6 @@ export function EventCatalogPage() {
             </TableBody>
           </Table>
         </div>
-      </div>
-    </div>
+    </PageLayout>
   );
 }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useTeams, useCreateTeam } from "@/hooks/use-teams";
 import { formatDate } from "@/lib/utils";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,10 +99,7 @@ export function TeamsListPage() {
   ];
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Teams" />
-
-      <div className="flex-1 p-6">
+    <PageLayout title="Teams" spacing={false}>
         <div className="mb-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {isLoading
@@ -146,8 +143,6 @@ export function TeamsListPage() {
             onRowClick={(team) => navigate(`/teams/${team.id}`)}
           />
         )}
-      </div>
-
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
           <DialogHeader>
@@ -186,6 +181,6 @@ export function TeamsListPage() {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 }

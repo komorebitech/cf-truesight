@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router";
 import { useProject } from "@/hooks/use-projects";
 import { useApiKeys, useGenerateApiKey, useRevokeApiKey } from "@/hooks/use-api-keys";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { ApiKeyTable } from "@/components/ApiKeyTable";
 import { ApiKeyGenerateDialog } from "@/components/ApiKeyGenerateDialog";
 import { Badge } from "@/components/ui/badge";
@@ -38,32 +38,25 @@ export function ProjectSettingsPage() {
 
   if (projectLoading) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
-        <div className="p-6">
-          <Skeleton className="mb-6 h-8 w-48" />
-          <Skeleton className="h-48" />
-        </div>
-      </div>
+      <PageLayout title="Settings">
+        <Skeleton className="mb-6 h-8 w-48" />
+        <Skeleton className="h-48" />
+      </PageLayout>
     );
   }
 
   if (!project) {
     return (
-      <div className="flex flex-1 flex-col">
-        <Header />
+      <PageLayout title="Settings">
         <div className="flex flex-1 items-center justify-center">
           <p className="text-muted-foreground">Project not found.</p>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Settings" />
-
-      <div className="flex-1 space-y-6 p-6">
+    <PageLayout title="Settings">
         {/* Project info */}
         <Card>
           <CardHeader>
@@ -113,8 +106,6 @@ export function ProjectSettingsPage() {
             />
           </CardContent>
         </Card>
-      </div>
-
       <ApiKeyGenerateDialog
         open={showKeyDialog}
         onClose={() => {
@@ -125,6 +116,6 @@ export function ProjectSettingsPage() {
         isGenerating={generateApiKey.isPending}
         generatedKey={generatedKey}
       />
-    </div>
+    </PageLayout>
   );
 }

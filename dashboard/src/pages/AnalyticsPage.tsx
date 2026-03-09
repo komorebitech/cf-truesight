@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useParams } from "react-router";
 import { formatISO, startOfDay, format } from "date-fns";
 import { useActiveUsers, useLiveUsers, useEventCount } from "@/hooks/use-stats";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { StatsCards, type StatCardData } from "@/components/StatsCards";
 import {
   TimeRangeSelector,
@@ -27,7 +27,7 @@ import {
 import { AXIS_DEFAULTS, TOOLTIP_STYLE } from "@/lib/charts";
 import { fadeInLeft } from "@/lib/motion";
 
-type Granularity = "day" | "week" | "month";
+import type { Granularity } from "@/lib/analytics-types";
 
 export function AnalyticsPage() {
   const { id } = useParams<{ id: string }>();
@@ -89,10 +89,7 @@ export function AnalyticsPage() {
   }));
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Analytics" />
-
-      <div className="flex-1 space-y-6 p-6">
+    <PageLayout title="Analytics">
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -177,7 +174,6 @@ export function AnalyticsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </PageLayout>
   );
 }

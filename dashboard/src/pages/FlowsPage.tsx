@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { useParams } from "react-router";
 import { useFlows } from "@/hooks/use-flows";
 import type { FlowsRequest } from "@/lib/api";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
+import { ControlDivider } from "@/components/ControlDivider";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { EventCombobox } from "@/components/EventCombobox";
 import {
@@ -63,12 +64,9 @@ export function FlowsPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Flows" />
-
-      <div className="flex-1 space-y-6 p-6">
-        {/* Controls */}
-        <div className="flex flex-wrap items-center gap-2">
+    <PageLayout title="Flows">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-2">
           <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
 
           <SegmentFilter
@@ -77,7 +75,7 @@ export function FlowsPage() {
             onChange={setSegmentId}
           />
 
-          <div className="h-6 w-px bg-border" />
+          <ControlDivider />
 
           <EventCombobox
             projectId={id}
@@ -98,7 +96,7 @@ export function FlowsPage() {
             </TabsList>
           </Tabs>
 
-          <div className="h-6 w-px bg-border" />
+          <ControlDivider />
 
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-muted-foreground">Steps</span>
@@ -153,7 +151,6 @@ export function FlowsPage() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </div>
+    </PageLayout>
   );
 }

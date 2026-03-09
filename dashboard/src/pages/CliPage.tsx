@@ -22,7 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CSS KEYFRAMES — injected once
@@ -123,10 +123,7 @@ export function CliPage() {
   const { id } = useParams<{ id: string }>();
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="CLI" />
-
-      <div className="flex-1 overflow-y-auto">
+    <PageLayout title="CLI" spacing={false}>
         {/* ── HERO ─────────────────────────────────────────────── */}
         <div className="relative overflow-hidden">
           {/* Subtle gradient wash */}
@@ -306,8 +303,7 @@ export function CliPage() {
             </p>
           </div>
         </div>
-      </div>
-    </div>
+    </PageLayout>
   );
 }
 

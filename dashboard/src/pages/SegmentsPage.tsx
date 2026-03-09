@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router";
 import { useSegments, useCreateSegment, useDeleteSegment } from "@/hooks/use-segments";
 import { usePropertyKeys } from "@/hooks/use-properties";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
-import { Header } from "@/components/Header";
+import { PageLayout } from "@/components/PageLayout";
 import { SegmentBuilder } from "@/components/SegmentBuilder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,10 +102,7 @@ export function SegmentsPage() {
   const deleteSegmentName = segments?.find((s) => s.id === deleteSegmentId)?.name;
 
   return (
-    <div className="flex flex-1 flex-col">
-      <Header title="Segments" />
-
-      <div className="flex-1 p-6">
+    <PageLayout title="Segments" spacing={false}>
         <div className="mb-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {isLoading
@@ -212,8 +209,6 @@ export function SegmentsPage() {
             </Card>
           </motion.div>
         )}
-      </div>
-
       {/* Create Dialog */}
       <Dialog
         open={showCreate}
@@ -321,6 +316,6 @@ export function SegmentsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }

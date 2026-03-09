@@ -9,5 +9,6 @@ export function useFlows(
     queryKey: ["flows", projectId, request],
     queryFn: () => getFlows(projectId!, request!),
     enabled: !!projectId && !!request,
+    staleTime: 5 * 60_000,
   });
 }
