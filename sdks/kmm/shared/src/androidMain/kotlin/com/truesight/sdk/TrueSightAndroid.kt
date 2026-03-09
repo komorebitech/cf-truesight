@@ -1,16 +1,10 @@
-package com.truesight.android
+package com.truesight.sdk
 
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import com.truesight.sdk.AnonymousIdManager
-import com.truesight.sdk.Config
-import com.truesight.sdk.DeviceContextCollector
-import com.truesight.sdk.EventQueue
-import com.truesight.sdk.SessionManager
-import com.truesight.sdk.TrueSight
 
 /**
  * Android-specific wrapper for TrueSight SDK initialization.

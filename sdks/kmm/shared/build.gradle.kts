@@ -2,7 +2,11 @@ plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
     id("com.android.library")
+    id("com.vanniktech.maven.publish")
 }
+
+val TRUESIGHT_SDK_VERSION: String by project
+version = TRUESIGHT_SDK_VERSION
 
 kotlin {
     androidTarget {
@@ -13,6 +17,7 @@ kotlin {
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach {
         it.binaries.framework {
             baseName = "TrueSightSDK"
+            isStatic = true
         }
     }
     sourceSets {
@@ -32,6 +37,7 @@ kotlin {
             implementation("io.ktor:ktor-client-okhttp:3.0.0")
             implementation("androidx.security:security-crypto:1.1.0-alpha06")
             implementation("androidx.lifecycle:lifecycle-process:2.8.0")
+            implementation("androidx.annotation:annotation:1.9.0")
         }
         iosMain.dependencies {
             implementation("io.ktor:ktor-client-darwin:3.0.0")
@@ -46,5 +52,30 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            consumerProguardFiles("consumer-rules.pro")
+        }
+    }
+}
+
+mavenPublishing {
+    val TRUESIGHT_SDK_ARTIFACT_ID: String by project
+    val GH_OWNER: String by project
+    val GH_REPO: String by project
+
+    coordinates(artifactId = TRUESIGHT_SDK_ARTIFACT_ID)
+
+    pom {
+        name = "TrueSight SDK"
+        description = "Kotlin Multiplatform analytics SDK for TrueSight."
+        inceptionYear = "2025"
+        url = "https://github.com/$GH_OWNER/$GH_REPO"
+    }
+
+    if (project.hasProperty("signing.keyId")) {
+        signAllPublications()
     }
 }

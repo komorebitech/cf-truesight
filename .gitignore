@@ -32,6 +32,8 @@ sdks/kmm/build/
 sdks/kmm/**/build/
 sdks/kmm/local.properties
 sdks/kmm/gradle/wrapper/gradle-wrapper.jar
+sdks/kmm/.kotlin/
+**/*.klib
 
 # Database
 *.db

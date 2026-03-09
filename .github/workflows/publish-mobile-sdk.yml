@@ -1,0 +1,71 @@
+name: Publish Mobile SDK (GitHub Packages)
+
+on:
+  push:
+    tags:
+      - "mobile-sdk-*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g. 1.0.0)"
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: publish-mobile-sdk-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: sdks/kmm
+    env:
+      GITHUB_ACTOR: ${{ github.actor }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Derive version
+        id: derive
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+            echo "Tag: $TAG"
+            VERSION=$(echo "$TAG" | sed -E 's/^mobile-sdk-//')
+          fi
+
+          echo "Version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Show module properties
+        run: |
+          ./gradlew :truesight-sdk:properties \
+            -PTRUESIGHT_SDK_VERSION=${{ steps.derive.outputs.version }} \
+            --no-daemon \
+            | grep -E "^(version|group|artifactId):" || true
+
+      - name: Publish to GitHub Packages
+        run: |
+          ./gradlew :truesight-sdk:publishAllPublicationsToGitHubPackagesRepository \
+            -PTRUESIGHT_SDK_VERSION=${{ steps.derive.outputs.version }} \
+            --stacktrace

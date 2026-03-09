@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "truesight-kmm"
 include(":shared")
-include(":truesight-android")
+project(":shared").name = "truesight-sdk"

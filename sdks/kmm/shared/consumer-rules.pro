@@ -2,6 +2,7 @@
 
 # Keep SDK public API
 -keep class com.truesight.sdk.TrueSight { *; }
+-keep class com.truesight.sdk.TrueSightAndroid { *; }
 -keep class com.truesight.sdk.Config { *; }
 -keep class com.truesight.sdk.Config$Builder { *; }
 
@@ -14,9 +15,6 @@
 -keep class com.truesight.sdk.DeviceContextModel { *; }
 -keep class com.truesight.sdk.NetworkResult { *; }
 -keep class com.truesight.sdk.NetworkResult$* { *; }
-
-# Keep Android wrapper
--keep class com.truesight.android.** { *; }
 
 # kotlinx.serialization
 -keepattributes *Annotation*, InnerClasses
