@@ -90,28 +90,6 @@ export function LiveEventsContent() {
       <div className="mb-4 flex items-center gap-3">
         {/* Connection indicator */}
         <div className="flex items-center gap-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span
-              className={cn(
-                "absolute inline-flex h-full w-full rounded-full opacity-75",
-                isPaused
-                  ? "bg-amber-400"
-                  : isConnected
-                    ? "animate-ping bg-green-400"
-                    : "bg-red-400",
-              )}
-            />
-            <span
-              className={cn(
-                "relative inline-flex h-2.5 w-2.5 rounded-full",
-                isPaused
-                  ? "bg-amber-500"
-                  : isConnected
-                    ? "bg-green-500"
-                    : "bg-red-500",
-              )}
-            />
-          </span>
           <span
             className={cn(
               "text-sm font-medium",
