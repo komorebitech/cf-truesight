@@ -8,8 +8,6 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import java.io.ByteArrayOutputStream
-import java.util.zip.Deflater
 
 actual class NetworkClient {
 
@@ -31,14 +29,12 @@ actual class NetworkClient {
     ): NetworkResult {
         return try {
             val jsonString = Serializer.serializeBatchPayload(payload)
-            val compressed = compressDeflate(jsonString.encodeToByteArray())
 
             val response = client.post("$endpoint/v1/events/batch") {
                 header("X-API-Key", apiKey)
-                header("Content-Encoding", "deflate")
                 header("User-Agent", "TrueSight-KMM/${TrueSight.SDK_VERSION}")
                 contentType(ContentType.Application.Json)
-                setBody(compressed)
+                setBody(jsonString)
             }
 
             when (response.status.value) {
@@ -57,20 +53,5 @@ actual class NetworkClient {
         } catch (e: Exception) {
             NetworkResult.NetworkFailure(e)
         }
-    }
-
-    private fun compressDeflate(data: ByteArray): ByteArray {
-        val deflater = Deflater(Deflater.DEFAULT_COMPRESSION)
-        deflater.setInput(data)
-        deflater.finish()
-
-        val outputStream = ByteArrayOutputStream(data.size)
-        val buffer = ByteArray(1024)
-        while (!deflater.finished()) {
-            val count = deflater.deflate(buffer)
-            outputStream.write(buffer, 0, count)
-        }
-        deflater.end()
-        return outputStream.toByteArray()
     }
 }
