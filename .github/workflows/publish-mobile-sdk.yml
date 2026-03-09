@@ -66,7 +66,7 @@ jobs:
 
       - name: Publish to GitHub Packages
         run: |
-          ./gradlew :truesight-sdk:publishAndroidReleasePublicationToGitHubPackagesRepository \
+          ./gradlew :truesight-sdk:publishAndroidPublicationToGitHubPackagesRepository \
             :truesight-sdk:publishKotlinMultiplatformPublicationToGitHubPackagesRepository \
             -PTRUESIGHT_SDK_VERSION=${{ steps.derive.outputs.version }} \
             --stacktrace
