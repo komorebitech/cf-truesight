@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router";
 import { ChevronRight } from "lucide-react";
-import { useIsFetching } from "@tanstack/react-query";
 import { useProject } from "@/hooks/use-projects";
 
 interface Crumb {
@@ -13,7 +11,6 @@ const sectionNames: Record<string, string> = {
   events: "Events",
   catalog: "Catalog",
   live: "Live Events",
-  analytics: "Analytics",
   funnels: "Funnels",
   insights: "Insights",
   users: "Users",
@@ -73,38 +70,20 @@ function useBreadcrumbs(): Crumb[] {
 
 export function Header({ title }: { title?: string }) {
   const crumbs = useBreadcrumbs();
-  const isFetching = useIsFetching();
-  const [visible, setVisible] = useState(false);
-  const [finishing, setFinishing] = useState(false);
-
-  useEffect(() => {
-    if (isFetching > 0) {
-      setVisible(true);
-      setFinishing(false);
-    } else if (visible) {
-      // Fetching done — fast-forward to 100%, then hide
-      setFinishing(true);
-      const timer = setTimeout(() => {
-        setVisible(false);
-        setFinishing(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isFetching > 0]);
 
   return (
-    <header className="sticky top-0 z-10 bg-card">
-      <div className="px-6 py-4">
+    <header className="sticky top-0 z-10 bg-background backdrop-blur-sm">
+      <div className="px-8 pb-4 pt-8">
         {/* Breadcrumbs */}
         {crumbs.length > 0 && (
-          <nav className="mb-1 flex items-center gap-1 text-sm text-muted-foreground">
+          <nav className="mb-2 flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground">
             {crumbs.map((crumb, i) => (
-              <span key={i} className="flex items-center gap-1">
-                {i > 0 && <ChevronRight className="h-3 w-3" />}
+              <span key={i} className="flex items-center gap-1.5">
+                {i > 0 && <ChevronRight className="h-3 w-3 opacity-40" />}
                 {crumb.href ? (
                   <Link
                     to={crumb.href}
-                    className="hover:text-foreground hover:underline"
+                    className="hover:text-foreground transition-colors"
                   >
                     {crumb.label}
                   </Link>
@@ -116,24 +95,11 @@ export function Header({ title }: { title?: string }) {
           </nav>
         )}
 
-        {/* Title */}
+        {/* Title — Chillax display font, big and confident */}
         {title && (
-          <h1 className="font-heading text-3xl font-extrabold tracking-wide">{title}</h1>
-        )}
-      </div>
-
-      {/* Bottom border with progress bar */}
-      <div className="relative h-[3px] bg-[#FEC5BB]">
-        {visible && (
-          <div className="absolute inset-0 overflow-hidden">
-            <div
-              className={`h-full bg-[#e07a6a] rounded-full ${
-                finishing
-                  ? "w-full transition-[width] duration-300 ease-out"
-                  : "animate-progress-bar"
-              }`}
-            />
-          </div>
+          <h1 className="font-display text-[2rem] font-semibold tracking-tight text-foreground leading-none">
+            {title}
+          </h1>
         )}
       </div>
     </header>

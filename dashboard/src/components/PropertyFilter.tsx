@@ -50,6 +50,20 @@ export function PropertyFilter({
     onChange(filters.filter((_, i) => i !== index));
   };
 
+  if (filters.length === 0) {
+    return (
+      <div className="flex items-center gap-3">
+        <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+          Filters
+        </Label>
+        <Button variant="outline" onClick={addFilter} className="h-10 font-normal">
+          <Plus className="h-4 w-4" />
+          Add filter
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <Label className="text-xs uppercase tracking-wider text-muted-foreground">

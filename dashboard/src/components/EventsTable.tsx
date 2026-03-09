@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import type { TrackedEvent } from "@/lib/api";
 import { formatDate, cleanProperties } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,8 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ChevronRight, ChevronLeft, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 interface EventsTableProps {
@@ -88,9 +89,13 @@ export function EventsTable({
 
   if (!events || events.length === 0) {
     return (
-      <div className="py-12 text-center text-sm text-muted-foreground">
-        No events found matching your filters.
-      </div>
+      <EmptyState
+        variant="search"
+        icon={Activity}
+        title="No events matched"
+        description="Try widening the time range or loosening a filter"
+        compact
+      />
     );
   }
 
@@ -112,14 +117,21 @@ export function EventsTable({
           {events.map((event, i) => {
             const isExpanded = expandedIds.has(event.event_id);
             return (
-              <>
+              <Fragment key={event.event_id}>
                 <motion.tr
-                  key={event.event_id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.2, delay: i * 0.02 }}
-                  className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/50"
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
+                  className="cursor-pointer border-b border-border/50 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                   onClick={() => toggleExpand(event.event_id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggleExpand(event.event_id);
+                    }
+                  }}
                 >
                   <TableCell className="w-8 pr-0">
                     <motion.div
@@ -251,7 +263,7 @@ export function EventsTable({
                     </tr>
                   )}
                 </AnimatePresence>
-              </>
+              </Fragment>
             );
           })}
         </TableBody>
@@ -260,8 +272,7 @@ export function EventsTable({
       {/* Pagination */}
       <div className="flex items-center justify-between border-t px-4 py-3">
         <p className="text-sm text-muted-foreground">
-          Page {page} &middot; {events.length} event
-          {events.length !== 1 ? "s" : ""}
+          {events.length} event{events.length !== 1 ? "s" : ""}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -273,7 +284,7 @@ export function EventsTable({
             <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
-          <span className="text-sm text-muted-foreground">Page {page}</span>
+          <span className="text-sm tabular-nums text-muted-foreground">Page {page}</span>
           <Button
             variant="outline"
             size="sm"

@@ -92,7 +92,7 @@ export function EventExplorerContent() {
         </Select>
 
         <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={eventName}
             onChange={(e) => {
@@ -118,6 +118,7 @@ export function EventExplorerContent() {
           variant="ghost"
           size="icon"
           onClick={handleReset}
+          aria-label="Reset filters"
           title="Reset filters"
           className="shrink-0"
         >

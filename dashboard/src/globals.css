@@ -51,7 +51,12 @@
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
   }
-  h1, h2, h3, h4, h5, h6 {
+  h1 {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+    font-weight: 600;
+  }
+  h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
     letter-spacing: -0.02em;
   }
@@ -60,6 +65,7 @@
 :root {
   --font-sans: 'Asap', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
   --font-heading: 'Asap', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Chillax', 'Asap', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Palette: #FEC5BB #FCD5CE #FAE1DD #F8EDEB #E8E8E4 #D8E2DC #ECE4DB #FFE5D9 #FFD7BA #FEC89A */
   --background: 8 45% 97%;
@@ -85,13 +91,13 @@
   --border: 30 14% 87%;
   --input: 30 14% 87%;
   --ring: 152 50% 7%;
-  --radius: 0.5rem;
+  --radius: 0.625rem;
   --sidebar-width: 240px;
-  --sidebar-bg: 32 16% 95%;
-  --sidebar-active-bg: 19 60% 91%;
+  --sidebar-bg: 20 30% 95%;
+  --sidebar-active-bg: 19 50% 90%;
   --sidebar-foreground: 10 12% 18%;
   --sidebar-muted-foreground: 10 6% 45%;
-  --sidebar-border: 30 14% 88%;
+  --sidebar-border: 20 20% 89%;
   --chart-1: 153 40% 30%;
   --chart-2: 0 57% 39%;
   --chart-3: 0 72% 50%;
@@ -124,11 +130,11 @@
   --border: 10 6% 18%;
   --input: 10 6% 18%;
   --ring: 152 35% 55%;
-  --sidebar-bg: 10 8% 9%;
-  --sidebar-active-bg: 19 15% 14%;
-  --sidebar-foreground: 9 25% 85%;
+  --sidebar-bg: 15 10% 8%;
+  --sidebar-active-bg: 15 8% 13%;
+  --sidebar-foreground: 30 20% 85%;
   --sidebar-muted-foreground: 30 8% 50%;
-  --sidebar-border: 10 6% 14%;
+  --sidebar-border: 15 6% 14%;
   --chart-1: 153 40% 40%;
   --chart-2: 0 57% 49%;
   --chart-3: 0 72% 58%;

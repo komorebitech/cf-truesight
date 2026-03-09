@@ -231,7 +231,7 @@ export function TimeRangeSelector({
 
   return (
     <div className="flex items-center">
-      <div className="inline-flex items-center rounded-lg border bg-muted overflow-hidden">
+      <div className="inline-flex h-9 items-center rounded-lg border bg-muted overflow-hidden">
         {/* Custom button + popover */}
         <Popover open={customOpen} onOpenChange={handleCustomOpen}>
           <PopoverTrigger asChild>

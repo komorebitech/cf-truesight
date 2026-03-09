@@ -64,42 +64,43 @@ export function PivotsPage() {
   return (
     <PageLayout title="Pivots">
       {/* Controls */}
-      <div className="flex flex-wrap items-center gap-2">
-          <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+      <div className="flex flex-wrap items-center gap-3">
+        <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
 
-          <ControlDivider />
+        <ControlDivider />
 
-          <EventCombobox
-            projectId={id}
-            value={eventName}
-            onChange={setEventName}
-            placeholder="All Events"
-            allowEmpty
-            emptyLabel="All Events"
-            environment={environment}
-            className="w-44"
-          />
+        <EventCombobox
+          projectId={id}
+          value={eventName}
+          onChange={setEventName}
+          placeholder="All Events"
+          allowEmpty
+          emptyLabel="All Events"
+          environment={environment}
+          className="w-44"
+        />
 
-          <Tabs
-            value={metric}
-            onValueChange={(v) => setMetric(v as Metric)}
-          >
-            <TabsList>
-              {METRIC_OPTIONS.map((opt) => (
-                <TabsTrigger key={opt.value} value={opt.value}>
-                  {opt.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
+        <Tabs
+          value={metric}
+          onValueChange={(v) => setMetric(v as Metric)}
+        >
+          <TabsList>
+            {METRIC_OPTIONS.map((opt) => (
+              <TabsTrigger key={opt.value} value={opt.value}>
+                {opt.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
 
-        {/* Dimension selectors */}
-        <div className="flex flex-wrap items-start gap-4">
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">
-              Row Dimension
-            </label>
+      {/* Dimension selectors + Filters */}
+      <Card>
+        <CardContent className="flex flex-wrap items-center gap-8">
+          <div className="flex items-center gap-3">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">
+              Rows
+            </span>
             <Select
               value={rowDimension || undefined}
               onValueChange={setRowDimension}
@@ -117,10 +118,10 @@ export function PivotsPage() {
             </Select>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-muted-foreground">
-              Column Dimension
-            </label>
+          <div className="flex items-center gap-3">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">
+              Columns
+            </span>
             <Select
               value={columnDimension || undefined}
               onValueChange={setColumnDimension}
@@ -138,31 +139,30 @@ export function PivotsPage() {
             </Select>
           </div>
 
-          <div className="pt-5">
-            <PropertyFilter
-              filters={filters}
-              onChange={setFilters}
-              propertyKeys={propertyKeys}
-            />
-          </div>
-        </div>
+          <div className="hidden sm:block self-stretch w-px bg-border" />
 
-        {/* Pivot table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Cross-tabulation</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="p-4">
-              <PivotTable
-                data={pivotsData}
-                isLoading={isLoading}
-                rowLabel={rowDimension || "Row"}
-                columnLabel={columnDimension || "Column"}
-              />
-            </div>
-          </CardContent>
-        </Card>
+          <PropertyFilter
+            filters={filters}
+            onChange={setFilters}
+            propertyKeys={propertyKeys}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Pivot table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cross-tabulation</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 overflow-auto">
+          <PivotTable
+            data={pivotsData}
+            isLoading={isLoading}
+            rowLabel={rowDimension || "Row"}
+            columnLabel={columnDimension || "Column"}
+          />
+        </CardContent>
+      </Card>
     </PageLayout>
   );
 }

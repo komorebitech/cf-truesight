@@ -9,7 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus } from "lucide-react";
+import { Plus, Copy, Check } from "lucide-react";
+import { motion } from "motion/react";
+import { fadeInUp, STAGGER_DELAY } from "@/lib/motion";
+import { formatDate, copyToClipboard } from "@/lib/utils";
+import { toast } from "sonner";
 
 export function ProjectSettingsPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +24,7 @@ export function ProjectSettingsPage() {
 
   const [showKeyDialog, setShowKeyDialog] = useState(false);
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState(false);
 
   const handleGenerate = async (label: string, env: "live" | "test") => {
     if (!id) return;
@@ -36,11 +41,23 @@ export function ProjectSettingsPage() {
     revokeApiKey.mutate({ projectId: id, keyId });
   };
 
+  const handleCopyId = async () => {
+    if (!project?.id) return;
+    const ok = await copyToClipboard(project.id);
+    if (ok) {
+      setCopiedId(true);
+      toast.success("Project ID copied");
+      setTimeout(() => setCopiedId(false), 2000);
+    }
+  };
+
   if (projectLoading) {
     return (
       <PageLayout title="Settings">
-        <Skeleton className="mb-6 h-8 w-48" />
-        <Skeleton className="h-48" />
+        <div className="space-y-6">
+          <Skeleton className="h-40" />
+          <Skeleton className="h-64" />
+        </div>
       </PageLayout>
     );
   }
@@ -57,30 +74,54 @@ export function ProjectSettingsPage() {
 
   return (
     <PageLayout title="Settings">
-        {/* Project info */}
+      {/* Project info */}
+      <motion.div {...fadeInUp} transition={{ duration: 0.3 }}>
         <Card>
           <CardHeader>
             <CardTitle>Project Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">Name</span>
-              <span className="text-sm font-medium">{project.name}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">Status</span>
-              <Badge variant={project.active ? "success" : "secondary"}>
-                {project.active ? "active" : "inactive"}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">ID</span>
-              <code className="text-xs text-muted-foreground">{project.id}</code>
-            </div>
+          <CardContent>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-8 gap-y-4 text-sm">
+              <dt className="text-muted-foreground">Name</dt>
+              <dd className="font-medium">{project.name}</dd>
+
+              <dt className="text-muted-foreground">Status</dt>
+              <dd>
+                <Badge variant={project.active ? "success" : "secondary"}>
+                  {project.active ? "Active" : "Inactive"}
+                </Badge>
+              </dd>
+
+              <dt className="text-muted-foreground">Created</dt>
+              <dd className="text-muted-foreground">{formatDate(project.created_at)}</dd>
+
+              <dt className="text-muted-foreground">Project ID</dt>
+              <dd className="flex items-center gap-2">
+                <code className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  {project.id}
+                </code>
+                <button
+                  onClick={handleCopyId}
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label="Copy project ID"
+                >
+                  {copiedId ? (
+                    <Check className="h-3.5 w-3.5 text-success" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              </dd>
+            </dl>
           </CardContent>
         </Card>
+      </motion.div>
 
-        {/* API Keys */}
+      {/* API Keys */}
+      <motion.div
+        {...fadeInUp}
+        transition={{ duration: 0.3, delay: STAGGER_DELAY }}
+      >
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -106,6 +147,8 @@ export function ProjectSettingsPage() {
             />
           </CardContent>
         </Card>
+      </motion.div>
+
       <ApiKeyGenerateDialog
         open={showKeyDialog}
         onClose={() => {

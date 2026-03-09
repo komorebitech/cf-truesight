@@ -28,6 +28,34 @@ export function BreakdownSelector({
     onChange(value.filter((k) => k !== key));
   };
 
+  if (value.length === 0) {
+    return (
+      <div className="flex items-center gap-3">
+        <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+          Breakdown
+        </Label>
+        {availableKeys.length > 0 ? (
+          <Select value={undefined} onValueChange={(v) => addBreakdown(v)}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Add breakdown..." />
+            </SelectTrigger>
+            <SelectContent>
+              {availableKeys.map((key) => (
+                <SelectItem key={key} value={key}>
+                  {key}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No properties available
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <Label className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -48,26 +76,18 @@ export function BreakdownSelector({
         ))}
 
         {value.length < MAX_BREAKDOWNS && availableKeys.length > 0 && (
-          <div className="flex items-center gap-2">
-            <Select value={undefined} onValueChange={(v) => addBreakdown(v)}>
-              <SelectTrigger className="w-44">
-                <SelectValue placeholder="Add breakdown..." />
-              </SelectTrigger>
-              <SelectContent>
-                {availableKeys.map((key) => (
-                  <SelectItem key={key} value={key}>
-                    {key}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {value.length === 0 && availableKeys.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            No properties available
-          </p>
+          <Select value={undefined} onValueChange={(v) => addBreakdown(v)}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Add breakdown..." />
+            </SelectTrigger>
+            <SelectContent>
+              {availableKeys.map((key) => (
+                <SelectItem key={key} value={key}>
+                  {key}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
       </div>
 

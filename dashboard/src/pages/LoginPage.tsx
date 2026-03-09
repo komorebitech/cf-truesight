@@ -1,13 +1,35 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 
+const EASE_OUT_QUART = [0.25, 1, 0.5, 1] as const;
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 5) return "Good evening";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+const TAGLINES = [
+  "Your data, distilled.",
+  "See what matters.",
+  "Clarity in every event.",
+  "Insights, not noise.",
+];
+
 export function LoginPage() {
   const { isAuthenticated, isLoading, login } = useAuth();
   const navigate = useNavigate();
+  const greeting = useMemo(getGreeting, []);
+  const tagline = useMemo(
+    () => TAGLINES[Math.floor(Math.random() * TAGLINES.length)],
+    [],
+  );
 
   useEffect(() => {
     if (isAuthenticated) navigate("/", { replace: true });
@@ -23,8 +45,11 @@ export function LoginPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#F8EDEB]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#081c15]" />
+      <div
+        className="flex h-screen items-center justify-center"
+        style={{ background: "linear-gradient(160deg, #F8EDEB 0%, #FAE1DD 30%, #FFE5D9 60%, #FCD5CE 100%)" }}
+      >
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#081c15]/15 border-t-[#081c15]" />
       </div>
     );
   }
@@ -37,17 +62,53 @@ export function LoginPage() {
           "linear-gradient(160deg, #F8EDEB 0%, #FAE1DD 30%, #FFE5D9 60%, #FCD5CE 100%)",
       }}
     >
-      {/* Subtle decorative shapes */}
-      <div
+      {/* Floating decorative shapes */}
+      <motion.div
         className="pointer-events-none absolute -top-32 -right-32 h-[500px] w-[500px] rounded-full opacity-30"
         style={{
           background: "radial-gradient(circle, #FEC89A 0%, transparent 70%)",
         }}
+        animate={{
+          y: [0, -18, 0],
+          x: [0, 10, 0],
+          scale: [1, 1.04, 1],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
       />
-      <div
+      <motion.div
         className="pointer-events-none absolute -bottom-40 -left-40 h-[600px] w-[600px] rounded-full opacity-20"
         style={{
           background: "radial-gradient(circle, #D8E2DC 0%, transparent 70%)",
+        }}
+        animate={{
+          y: [0, 14, 0],
+          x: [0, -8, 0],
+          scale: [1, 1.03, 1],
+        }}
+        transition={{
+          duration: 10,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+      {/* Third accent blob */}
+      <motion.div
+        className="pointer-events-none absolute top-1/3 -left-20 h-[300px] w-[300px] rounded-full opacity-15"
+        style={{
+          background: "radial-gradient(circle, #FEC5BB 0%, transparent 70%)",
+        }}
+        animate={{
+          y: [0, 20, 0],
+          x: [0, 12, 0],
+        }}
+        transition={{
+          duration: 12,
+          repeat: Infinity,
+          ease: "easeInOut",
         }}
       />
 
@@ -57,31 +118,35 @@ export function LoginPage() {
         <motion.span
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="mb-2 text-[2rem] font-bold tracking-[0.08em] bg-gradient-to-r from-[#081c15] to-[#52b788] bg-clip-text text-transparent"
+          transition={{ duration: 0.7, ease: EASE_OUT_QUART }}
+          className="mb-1 text-[2.5rem] font-bold tracking-[0.08em] text-[#081c15]"
           style={{ fontFamily: "'Chillax', sans-serif" }}
         >
           truesight
         </motion.span>
 
+        {/* Tagline */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="mb-6 text-sm text-[#081c15]/50 tracking-wide"
-        ></motion.p>
+          transition={{ duration: 0.8, delay: 0.3, ease: EASE_OUT_QUART }}
+          className="mb-6 text-sm font-medium tracking-wide text-[#081c15]/40"
+          style={{ fontFamily: "'Chillax', sans-serif" }}
+        >
+          {tagline}
+        </motion.p>
 
         {/* Illustration */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-          className="mb-8 w-full"
+          transition={{ duration: 0.7, delay: 0.15, ease: EASE_OUT_QUART }}
+          className="mb-6 w-full"
         >
           <img
             src="/images/analytics-hero.png"
             alt="Analytics dashboard illustration"
-            className="mx-auto w-full max-w-[360px] drop-shadow-lg"
+            className="mx-auto w-full max-w-[340px]"
           />
         </motion.div>
 
@@ -89,17 +154,23 @@ export function LoginPage() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.35, ease: "easeOut" }}
-          className="w-full rounded-2xl border border-white/60 bg-white/70 px-8 py-8 shadow-xl shadow-[#FEC5BB]/20 backdrop-blur-sm"
+          transition={{ duration: 0.6, delay: 0.3, ease: EASE_OUT_QUART }}
+          whileHover={{
+            boxShadow: "0 20px 60px -12px rgba(212, 165, 154, 0.3), 0 0 0 1px rgba(8, 28, 21, 0.04)",
+          }}
+          className="w-full rounded-2xl bg-white/85 px-8 py-8 shadow-xl shadow-[#d4a59a]/15 ring-1 ring-[#081c15]/[0.04] backdrop-blur-sm transition-shadow duration-500"
         >
-          <h1 className="text-center text-xl font-semibold tracking-tight text-[#081c15]">
-            Welcome back
+          <h1
+            className="text-center text-xl font-semibold tracking-tight text-[#081c15]"
+            style={{ fontFamily: "'Chillax', sans-serif" }}
+          >
+            {greeting}
           </h1>
-          <p className="mt-1.5 text-center text-sm text-[#081c15]/45">
+          <p className="mt-1.5 text-center text-sm text-[#081c15]/55">
             Sign in to your account to continue
           </p>
 
-          <div className="mt-7 flex justify-center">
+          <div className="mt-6 flex justify-center">
             <GoogleLogin
               onSuccess={async (response) => {
                 if (!response.credential) {
@@ -121,9 +192,17 @@ export function LoginPage() {
               width="320"
             />
           </div>
-
-          <p className="mt-6 text-center text-[11px] text-[#081c15]/30"></p>
         </motion.div>
+
+        {/* Footer detail */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.6, ease: EASE_OUT_QUART }}
+          className="mt-6 text-xs text-[#081c15]/30"
+        >
+          Analytics by Cityflo
+        </motion.p>
       </div>
     </div>
   );

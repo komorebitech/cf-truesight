@@ -85,9 +85,10 @@ export function FunnelBuilder({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Name */}
       <div>
         <label className="mb-1.5 block text-sm font-medium">
-          Funnel Name
+          Name
         </label>
         <Input
           value={name}
@@ -100,89 +101,114 @@ export function FunnelBuilder({
         />
       </div>
 
+      {/* Steps */}
       <div>
         <label className="mb-2 block text-sm font-medium">
           Steps
         </label>
-        <div className="space-y-2">
-          <AnimatePresence initial={false}>
-            {steps.map((step, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex items-center gap-2"
-              >
-                <span className="w-6 shrink-0 text-center text-xs font-bold text-muted-foreground">
-                  {i + 1}
-                </span>
-                <div className="flex-1">
-                  <EventCombobox
-                    projectId={projectId}
-                    value={step.event_name}
-                    onChange={(val) => updateStep(i, val)}
-                    placeholder="Select event..."
-                    environment={environment}
-                  />
-                </div>
-                <div className="flex shrink-0 gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => moveStep(i, -1)}
-                    disabled={i === 0}
-                  >
-                    <ArrowUp className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => moveStep(i, 1)}
-                    disabled={i === steps.length - 1}
-                  >
-                    <ArrowDown className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive"
-                    onClick={() => removeStep(i)}
-                    disabled={steps.length <= 2}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+        <div className="relative">
+          {/* Vertical connector line */}
+          {steps.length > 1 && (
+            <div
+              className="absolute left-3 top-5 w-px bg-border"
+              style={{ height: `calc(100% - 2.5rem)` }}
+            />
+          )}
+
+          <div className="space-y-0">
+            <AnimatePresence initial={false}>
+              {steps.map((step, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="relative flex items-center gap-2.5 py-1.5"
+                >
+                  {/* Step badge */}
+                  <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+                    {i + 1}
+                  </span>
+
+                  {/* Event selector */}
+                  <div className="flex-1">
+                    <EventCombobox
+                      projectId={projectId}
+                      value={step.event_name}
+                      onChange={(val) => updateStep(i, val)}
+                      placeholder="Select event..."
+                      environment={environment}
+                    />
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => moveStep(i, -1)}
+                      disabled={i === 0}
+                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                      title="Move up"
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveStep(i, 1)}
+                      disabled={i === steps.length - 1}
+                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                      title="Move down"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeStep(i)}
+                      disabled={steps.length <= 2}
+                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-30"
+                      title="Remove step"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
         </div>
+
+        {/* Connector to add button */}
         {steps.length < 10 && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addStep}
-            className="mt-2"
-          >
-            <Plus className="h-3 w-3" />
-            Add Step
-          </Button>
+          <div className="relative ml-3 mt-0.5 flex items-center gap-2.5 pl-5 pt-1">
+            {/* Short connector stub */}
+            <div className="absolute -top-1 left-0 h-3 w-px bg-border" />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addStep}
+              className="border-dashed"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Step
+            </Button>
+            {steps.length >= 8 && (
+              <span className="text-xs text-muted-foreground">
+                {10 - steps.length} remaining
+              </span>
+            )}
+          </div>
         )}
       </div>
 
-      <div>
-        <label className="mb-1.5 block text-sm font-medium">
+      {/* Window */}
+      <div className="flex items-center gap-3">
+        <label className="shrink-0 text-sm font-medium">
           Conversion Window
         </label>
         <Select value={String(windowSeconds)} onValueChange={(v) => setWindowSeconds(Number(v))}>
-          <SelectTrigger>
+          <SelectTrigger className="w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -199,8 +225,9 @@ export function FunnelBuilder({
         <p className="text-sm text-destructive">{error}</p>
       )}
 
-      <div className="flex items-center justify-end gap-3">
-        <Button type="button" variant="outline" onClick={onCancel}>
+      {/* Actions */}
+      <div className="flex items-center justify-end gap-3 border-t pt-4">
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>

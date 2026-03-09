@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router";
 import { useUser, useUserEvents } from "@/hooks/use-users-ch";
 import { PageLayout } from "@/components/PageLayout";
@@ -25,13 +25,10 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowLeft,
-  Mail,
-  Users,
-  Clock,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { formatDate, formatNumber } from "@/lib/utils";
+import { cn, formatDate, formatNumber, formatRelativeShort } from "@/lib/utils";
 import { motion } from "motion/react";
 
 function EventTypeColor(type: string) {
@@ -47,6 +44,34 @@ function EventTypeColor(type: string) {
     default:
       return "secondary" as const;
   }
+}
+
+function CountUp({ value }: { value: number }) {
+  const [display, setDisplay] = useState(0);
+  const ref = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    const duration = 600;
+    const start = performance.now();
+    const animate = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 4);
+      setDisplay(Math.round(value * eased));
+      if (progress < 1) ref.current = requestAnimationFrame(animate);
+    };
+    ref.current = requestAnimationFrame(animate);
+    return () => { if (ref.current) cancelAnimationFrame(ref.current); };
+  }, [value]);
+  return <>{formatNumber(display)}</>;
+}
+
+/** Returns a color class based on how recently the user was seen */
+function recencyColor(lastSeen: string): string {
+  const diffMs = Date.now() - new Date(lastSeen).getTime();
+  const diffH = diffMs / 3_600_000;
+  if (diffH < 1) return "text-emerald-600 dark:text-emerald-400";
+  if (diffH < 24) return "text-amber-600 dark:text-amber-400";
+  return "text-muted-foreground";
 }
 
 const EVENT_PAGE_SIZE = 25;
@@ -123,7 +148,7 @@ export function UserDetailPage() {
         {/* Back link */}
         <Link
           to={`/projects/${id}/users`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Users
@@ -143,30 +168,24 @@ export function UserDetailPage() {
               </CardHeader>
               <CardContent>
                 <dl className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Users className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <dt className="text-xs font-medium uppercase text-muted-foreground">
-                        User ID
-                      </dt>
-                      <dd className="mt-0.5 break-all font-mono text-sm">
-                        {user.user_uid}
-                      </dd>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Mail className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <dt className="text-xs font-medium uppercase text-muted-foreground">
-                        Email
-                      </dt>
-                      <dd className="mt-0.5 text-sm">
-                        {user.email || <span className="text-muted-foreground">-</span>}
-                      </dd>
-                    </div>
+                  <div>
+                    <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      User ID
+                    </dt>
+                    <dd className="mt-0.5 break-all font-mono text-sm">
+                      {user.user_uid}
+                    </dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-medium uppercase text-muted-foreground">
+                    <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      Email
+                    </dt>
+                    <dd className="mt-0.5 text-sm">
+                      {user.email || <span className="text-muted-foreground">-</span>}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                       Name
                     </dt>
                     <dd className="mt-0.5 text-sm">
@@ -174,42 +193,37 @@ export function UserDetailPage() {
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-medium uppercase text-muted-foreground">
+                    <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                       Mobile Number
                     </dt>
                     <dd className="mt-0.5 text-sm">
                       {user.mobile_number || <span className="text-muted-foreground">-</span>}
                     </dd>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <Clock className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                    <div className="flex-1">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <dt className="text-xs font-medium uppercase text-muted-foreground">
-                            First Seen
-                          </dt>
-                          <dd className="mt-0.5 text-sm">
-                            {formatDate(user.first_seen)}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-xs font-medium uppercase text-muted-foreground">
-                            Last Seen
-                          </dt>
-                          <dd className="mt-0.5 text-sm">
-                            {formatDate(user.last_seen)}
-                          </dd>
-                        </div>
-                      </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                        First Seen
+                      </dt>
+                      <dd className="mt-0.5 text-sm">
+                        {formatDate(user.first_seen)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                        Last Seen
+                      </dt>
+                      <dd className={cn("mt-0.5 text-sm font-medium", recencyColor(user.last_seen))}>
+                        {formatRelativeShort(user.last_seen)}
+                      </dd>
                     </div>
                   </div>
                   <div>
-                    <dt className="text-xs font-medium uppercase text-muted-foreground">
+                    <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                       Total Events
                     </dt>
-                    <dd className="mt-0.5 text-lg font-bold">
-                      {formatNumber(user.event_count)}
+                    <dd className="mt-0.5 text-lg font-bold tabular-nums">
+                      <CountUp value={user.event_count} />
                     </dd>
                   </div>
                 </dl>
@@ -252,8 +266,9 @@ export function UserDetailPage() {
                     </TableBody>
                   </Table>
                 ) : (
-                  <div className="py-8 text-center text-sm text-muted-foreground">
-                    No custom properties set
+                  <div className="flex flex-col items-center justify-center py-8 gap-1">
+                    <span className="text-sm text-muted-foreground">No custom properties yet</span>
+                    <span className="text-xs text-muted-foreground/60">Properties appear when identify events include traits</span>
                   </div>
                 )}
               </CardContent>
@@ -295,8 +310,8 @@ export function UserDetailPage() {
                       <TableCell colSpan={4} className="p-0">
                         <EmptyState
                           variant="data"
-                          title="No events"
-                          description="No events found for this user in the selected time range"
+                          title="No activity in this range"
+                          description="Try widening the time range to see more events"
                           compact
                         />
                       </TableCell>
@@ -336,7 +351,7 @@ export function UserDetailPage() {
               {events && events.length > 0 && (
                 <div className="flex items-center justify-between border-t px-4 py-3">
                   <p className="text-sm text-muted-foreground">
-                    Page {eventPage} &middot; {events.length} event{events.length !== 1 ? "s" : ""}
+                    {events.length} event{events.length !== 1 ? "s" : ""}
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -348,7 +363,7 @@ export function UserDetailPage() {
                       <ChevronLeft className="h-4 w-4" />
                       Previous
                     </Button>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm tabular-nums text-muted-foreground">
                       Page {eventPage}
                     </span>
                     <Button

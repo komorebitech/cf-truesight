@@ -8,6 +8,7 @@ export default {
       fontFamily: {
         sans: ["var(--font-sans)"],
         heading: ["var(--font-heading)"],
+        display: ["var(--font-display)"],
       },
       colors: {
         border: "hsl(var(--border) / <alpha-value>)",

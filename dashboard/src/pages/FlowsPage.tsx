@@ -66,91 +66,91 @@ export function FlowsPage() {
   return (
     <PageLayout title="Flows">
       {/* Controls */}
-      <div className="flex flex-wrap items-center gap-2">
-          <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+      <div className="flex flex-wrap items-center gap-3">
+        <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
 
-          <SegmentFilter
-            projectId={id}
-            value={segmentId}
-            onChange={setSegmentId}
+        <SegmentFilter
+          projectId={id}
+          value={segmentId}
+          onChange={setSegmentId}
+        />
+
+        <ControlDivider />
+
+        <EventCombobox
+          projectId={id}
+          value={anchorEvent}
+          onChange={setAnchorEvent}
+          placeholder="Anchor event..."
+          environment={environment}
+          className="w-48"
+        />
+
+        <Tabs
+          value={direction}
+          onValueChange={(v) => setDirection(v as Direction)}
+        >
+          <TabsList>
+            <TabsTrigger value="forward">Forward</TabsTrigger>
+            <TabsTrigger value="backward">Backward</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <ControlDivider />
+
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">Steps</span>
+          <Input
+            type="number"
+            min={2}
+            max={7}
+            value={steps}
+            onChange={handleStepsChange}
+            className="h-9 w-16"
           />
-
-          <ControlDivider />
-
-          <EventCombobox
-            projectId={id}
-            value={anchorEvent}
-            onChange={setAnchorEvent}
-            placeholder="Anchor event..."
-            environment={environment}
-            className="w-48"
-          />
-
-          <Tabs
-            value={direction}
-            onValueChange={(v) => setDirection(v as Direction)}
-          >
-            <TabsList>
-              <TabsTrigger value="forward">Forward</TabsTrigger>
-              <TabsTrigger value="backward">Backward</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <ControlDivider />
-
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">Steps</span>
-            <Input
-              type="number"
-              min={2}
-              max={7}
-              value={steps}
-              onChange={handleStepsChange}
-              className="w-16"
-            />
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">Paths</span>
-            <Input
-              type="number"
-              min={1}
-              max={20}
-              value={topPaths}
-              onChange={handleTopPathsChange}
-              className="w-16"
-            />
-          </div>
         </div>
 
-        {/* Results */}
-        {!anchorEvent ? (
-          <EmptyState
-            variant="data"
-            icon={Workflow}
-            title="Select an anchor event"
-            description="Choose an anchor event above to visualize how users move through your product"
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">Paths</span>
+          <Input
+            type="number"
+            min={1}
+            max={20}
+            value={topPaths}
+            onChange={handleTopPathsChange}
+            className="h-9 w-16"
           />
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {direction === "forward" ? "What happens after" : "What happens before"}{" "}
-                &ldquo;{anchorEvent}&rdquo;
-              </CardTitle>
-              <CardDescription>
-                Showing top {topPaths} paths across {steps} steps &middot; Drag to pan, scroll to zoom
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-2">
-              <FlowDiagram
-                nodes={flowsData?.nodes ?? []}
-                links={flowsData?.links ?? []}
-                isLoading={isLoading}
-              />
-            </CardContent>
-          </Card>
-        )}
+        </div>
+      </div>
+
+      {/* Results */}
+      {!anchorEvent ? (
+        <EmptyState
+          variant="data"
+          icon={Workflow}
+          title="Select an anchor event"
+          description="Choose an anchor event above to visualize how users move through your product"
+        />
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {direction === "forward" ? "What happens after" : "What happens before"}{" "}
+              &ldquo;{anchorEvent}&rdquo;
+            </CardTitle>
+            <CardDescription>
+              Top {topPaths} paths across {steps} steps &middot; Drag to pan, scroll to zoom
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <FlowDiagram
+              nodes={flowsData?.nodes ?? []}
+              links={flowsData?.links ?? []}
+              isLoading={isLoading}
+            />
+          </CardContent>
+        </Card>
+      )}
     </PageLayout>
   );
 }

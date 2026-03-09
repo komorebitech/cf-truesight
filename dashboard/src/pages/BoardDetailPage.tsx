@@ -13,6 +13,7 @@ import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { PageLayout } from "@/components/PageLayout";
 import { EventCombobox } from "@/components/EventCombobox";
 import { WidgetRenderer } from "@/components/widgets/WidgetRenderer";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -27,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, X } from "lucide-react";
+import { Plus, X, LayoutGrid } from "lucide-react";
 import type { BatchLayoutItem } from "@/lib/api";
 
 const WIDGET_TYPES = [
@@ -55,6 +56,13 @@ export function BoardDetailPage() {
   const [widgetFunnelId, setWidgetFunnelId] = useState("");
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetWidgetForm = () => {
+    setWidgetType("event_trend");
+    setWidgetTitle("");
+    setWidgetEventName("");
+    setWidgetFunnelId("");
+  };
 
   const handleLayoutChange = useCallback(
     (layout: Layout) => {
@@ -93,9 +101,7 @@ export function BoardDetailPage() {
       position: widgetCount,
     });
     setShowAddWidget(false);
-    setWidgetTitle("");
-    setWidgetEventName("");
-    setWidgetFunnelId("");
+    resetWidgetForm();
   };
 
   if (isLoading) {
@@ -120,70 +126,88 @@ export function BoardDetailPage() {
 
   return (
     <PageLayout title={board?.name ?? "Board"} spacing={false}>
-        <div className="mb-4 flex items-center justify-between">
-          {board?.description && (
-            <p className="text-sm text-muted-foreground">
-              {board.description}
-            </p>
-          )}
-          <Button
-            onClick={() => setShowAddWidget(true)}
-            disabled={(board?.widgets?.length ?? 0) >= 20}
-          >
-            <Plus className="h-4 w-4" />
-            Add Widget
-          </Button>
-        </div>
-
-        {!board?.widgets?.length ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="mb-2 text-sm text-muted-foreground">
-              This board has no widgets yet.
-            </p>
-            <Button onClick={() => setShowAddWidget(true)}>
-              <Plus className="h-4 w-4" />
-              Add Widget
-            </Button>
-          </div>
+      <div className="mb-4 flex items-center justify-between">
+        {board?.description ? (
+          <p className="text-sm text-muted-foreground">
+            {board.description}
+          </p>
         ) : (
-          <GridLayout
-            layout={gridLayout}
-            width={1200}
-            gridConfig={{ cols: COLS, rowHeight: 80 }}
-            dragConfig={{ handle: ".widget-drag-handle" }}
-            onLayoutChange={handleLayoutChange}
-          >
-            {board.widgets.map((widget) => (
-              <div key={widget.id}>
-                <Card className="relative h-full overflow-hidden">
-                  <div className="widget-drag-handle flex cursor-grab items-center justify-between border-b px-3 py-1.5">
-                    <span className="text-xs font-medium truncate">
-                      {widget.title}
-                    </span>
-                    <button
-                      onClick={() => deleteWidget.mutate(widget.id)}
-                      className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <div className="h-[calc(100%-32px)]">
-                    <WidgetRenderer widget={widget} projectId={id!} />
-                  </div>
-                </Card>
-              </div>
-            ))}
-          </GridLayout>
+          <div />
         )}
-      <Dialog open={showAddWidget} onOpenChange={setShowAddWidget}>
+        <Button
+          onClick={() => setShowAddWidget(true)}
+          disabled={(board?.widgets?.length ?? 0) >= 20}
+        >
+          <Plus className="h-4 w-4" />
+          Add Widget
+        </Button>
+      </div>
+
+      {!board?.widgets?.length ? (
+        <EmptyState
+          variant="data"
+          icon={LayoutGrid}
+          title="No widgets yet"
+          description="Add a widget to start building your dashboard"
+          action={{
+            label: "Add Widget",
+            onClick: () => setShowAddWidget(true),
+          }}
+        />
+      ) : (
+        <GridLayout
+          layout={gridLayout}
+          width={1200}
+          gridConfig={{ cols: COLS, rowHeight: 80 }}
+          dragConfig={{ handle: ".widget-drag-handle" }}
+          onLayoutChange={handleLayoutChange}
+        >
+          {board.widgets.map((widget) => (
+            <div key={widget.id}>
+              <Card className="relative h-full overflow-hidden">
+                <div className="widget-drag-handle flex cursor-grab items-center justify-between border-b px-3 py-1.5">
+                  <span className="text-xs font-medium truncate">
+                    {widget.title}
+                  </span>
+                  <button
+                    onClick={() => deleteWidget.mutate(widget.id)}
+                    className="rounded p-0.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="h-[calc(100%-32px)]">
+                  <WidgetRenderer widget={widget} projectId={id!} />
+                </div>
+              </Card>
+            </div>
+          ))}
+        </GridLayout>
+      )}
+
+      {/* Add Widget Dialog */}
+      <Dialog
+        open={showAddWidget}
+        onOpenChange={(open) => {
+          setShowAddWidget(open);
+          if (!open) resetWidgetForm();
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Widget</DialogTitle>
-            <DialogDescription>
-              Add a new widget to this board.
-            </DialogDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <Plus className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle>Add Widget</DialogTitle>
+                <DialogDescription>
+                  Choose a widget type and configure it
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label>Widget Type</Label>
               <Select value={widgetType} onValueChange={setWidgetType}>
@@ -202,9 +226,10 @@ export function BoardDetailPage() {
             <div className="space-y-2">
               <Label>Title</Label>
               <Input
-                placeholder="Widget title"
+                placeholder="e.g. Daily Signups"
                 value={widgetTitle}
                 onChange={(e) => setWidgetTitle(e.target.value)}
+                autoFocus
               />
             </div>
             {(widgetType === "event_trend" || widgetType === "metric") && (
@@ -238,14 +263,20 @@ export function BoardDetailPage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddWidget(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddWidget(false);
+                resetWidgetForm();
+              }}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleAddWidget}
               disabled={!widgetTitle.trim() || createWidget.isPending}
             >
-              {createWidget.isPending ? "Adding..." : "Add"}
+              {createWidget.isPending ? "Adding..." : "Add Widget"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -6,16 +6,20 @@ import { PageLayout } from "@/components/PageLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { Plus, Users } from "lucide-react";
 import { useTableParams } from "@/hooks/use-table-params";
+import { motion } from "motion/react";
+import { fadeInUp } from "@/lib/motion";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Team } from "@/lib/api";
 import { type FormEvent } from "react";
@@ -82,7 +86,7 @@ export function TeamsListPage() {
       header: "Status",
       cell: ({ row }) => (
         <Badge variant={row.original.active ? "success" : "secondary"}>
-          {row.original.active ? "active" : "inactive"}
+          {row.original.active ? "Active" : "Inactive"}
         </Badge>
       ),
       enableSorting: false,
@@ -100,33 +104,31 @@ export function TeamsListPage() {
 
   return (
     <PageLayout title="Teams" spacing={false}>
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {isLoading
-              ? "Loading..."
-              : `${total ?? teams.length} team${(total ?? teams.length) !== 1 ? "s" : ""}`}
-          </p>
-          <Button onClick={() => setShowCreate(true)}>
-            <Plus className="h-4 w-4" />
-            Create Team
-          </Button>
-        </div>
+      <div className="mb-6 flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          {isLoading
+            ? "\u00A0"
+            : `${total ?? teams.length} team${(total ?? teams.length) !== 1 ? "s" : ""}`}
+        </p>
+        <Button onClick={() => setShowCreate(true)}>
+          <Plus className="h-4 w-4" />
+          Create Team
+        </Button>
+      </div>
 
-        {!isLoading && teams.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Users className="mb-4 h-12 w-12 text-muted-foreground/40" />
-            <h3 className="mb-1 font-heading text-lg font-medium">
-              No teams yet
-            </h3>
-            <p className="mb-6 text-sm text-muted-foreground">
-              Create a team to collaborate with others.
-            </p>
-            <Button onClick={() => setShowCreate(true)}>
-              <Plus className="h-4 w-4" />
-              Create Team
-            </Button>
-          </div>
-        ) : (
+      {!isLoading && teams.length === 0 ? (
+        <EmptyState
+          variant="data"
+          icon={Users}
+          title="No teams yet"
+          description="Create a team to collaborate with others"
+          action={{
+            label: "Create Team",
+            onClick: () => setShowCreate(true),
+          }}
+        />
+      ) : (
+        <motion.div {...fadeInUp} transition={{ duration: 0.3 }}>
           <DataTable
             columns={columns}
             data={teams}
@@ -142,18 +144,36 @@ export function TeamsListPage() {
             isLoading={isLoading}
             onRowClick={(team) => navigate(`/teams/${team.id}`)}
           />
-        )}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        </motion.div>
+      )}
+
+      <Dialog
+        open={showCreate}
+        onOpenChange={(open) => {
+          setShowCreate(open);
+          if (!open) {
+            setNewName("");
+            setNameError("");
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Team</DialogTitle>
-            <DialogDescription>
-              Create a new team to manage projects collaboratively.
-            </DialogDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle>Create Team</DialogTitle>
+                <DialogDescription>
+                  Create a new team to manage projects collaboratively
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4">
-            <div>
-              <label htmlFor="team-name" className="mb-1.5 block text-sm font-medium">
+            <div className="space-y-2">
+              <label htmlFor="team-name" className="block text-sm font-medium">
                 Team Name
               </label>
               <Input
@@ -163,21 +183,21 @@ export function TeamsListPage() {
                   setNewName(e.target.value);
                   if (nameError) setNameError("");
                 }}
-                placeholder="My Team"
+                placeholder="e.g. Engineering"
                 autoFocus
               />
               {nameError && (
-                <p className="mt-1 text-sm text-destructive">{nameError}</p>
+                <p className="text-sm text-destructive">{nameError}</p>
               )}
             </div>
-            <div className="flex items-center justify-end gap-3">
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={createTeam.isPending}>
                 {createTeam.isPending ? "Creating..." : "Create Team"}
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

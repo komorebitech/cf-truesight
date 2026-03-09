@@ -26,11 +26,6 @@ const ProjectSettingsPage = lazy(() =>
 const EventsPage = lazy(() =>
   import("@/pages/EventsPage").then((m) => ({ default: m.EventsPage })),
 );
-const AnalyticsPage = lazy(() =>
-  import("@/pages/AnalyticsPage").then((m) => ({
-    default: m.AnalyticsPage,
-  })),
-);
 const InsightsPage = lazy(() =>
   import("@/pages/InsightsPage").then((m) => ({ default: m.InsightsPage })),
 );
@@ -207,10 +202,6 @@ export const router = createBrowserRouter([
       {
         path: "projects/:id/event-catalog",
         element: <Navigate to="../events/catalog" replace />,
-      },
-      {
-        path: "projects/:id/analytics",
-        element: lazy$(<AnalyticsPage />),
       },
       {
         path: "projects/:id/funnels",

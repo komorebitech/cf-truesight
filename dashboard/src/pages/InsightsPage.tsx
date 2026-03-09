@@ -74,7 +74,7 @@ export function InsightsPage() {
   return (
     <PageLayout title="Insights">
       {/* Query controls */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3">
         <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
 
         <SegmentFilter
@@ -122,29 +122,34 @@ export function InsightsPage() {
           </TabsList>
         </Tabs>
 
+        <ControlDivider />
+
         <ChartTypeSwitcher value={chartType} onChange={setChartType} />
       </div>
 
       {/* Filters + Breakdown */}
-      <div className="flex flex-wrap items-start gap-6">
-        <PropertyFilter
-          filters={filters}
-          onChange={setFilters}
-          propertyKeys={propertyKeys}
-        />
-        <BreakdownSelector
-          value={groupBy}
-          onChange={setGroupBy}
-          propertyKeys={propertyKeys}
-        />
-      </div>
+      <Card>
+        <CardContent className="flex flex-wrap items-start gap-8">
+          <PropertyFilter
+            filters={filters}
+            onChange={setFilters}
+            propertyKeys={propertyKeys}
+          />
+          <div className="hidden sm:block self-stretch w-px bg-border" />
+          <BreakdownSelector
+            value={groupBy}
+            onChange={setGroupBy}
+            propertyKeys={propertyKeys}
+          />
+        </CardContent>
+      </Card>
 
       {/* Chart results */}
       <Card>
         <CardHeader>
           <CardTitle>Results</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 py-5">
           <InsightsChart
             series={series}
             isLoading={isLoading}

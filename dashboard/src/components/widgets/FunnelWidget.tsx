@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { useFunnelResults } from "@/hooks/use-funnels";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
-import { BarChart, Bar, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { resolvePreset } from "@/lib/charts";
+import { resolvePreset, CHART_COLORS } from "@/lib/charts";
+import { formatNumber } from "@/lib/utils";
 
 interface Props {
   projectId: string;
@@ -27,27 +27,51 @@ export function FunnelWidget({ projectId, config }: Props) {
 
   if (isLoading) return <Skeleton className="h-full w-full" />;
 
-  const chartData =
-    data?.steps?.map((s) => ({
-      name: s.event_name.length > 12 ? s.event_name.slice(0, 12) + "..." : s.event_name,
-      rate: s.conversion_rate,
-    })) ?? [];
+  const steps = data?.steps ?? [];
+  const maxUsers = steps[0]?.users ?? 1;
 
   return (
-    <div className="flex h-full flex-col p-3">
-      <p className="mb-1 text-xs text-muted-foreground">
-        {data?.overall_conversion != null
-          ? `${data.overall_conversion.toFixed(1)}% conversion`
-          : "Funnel"}
-      </p>
-      <div className="flex-1 min-h-0">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData}>
-            <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} />
-            <Tooltip />
-            <Bar dataKey="rate" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+    <div className="flex h-full flex-col p-4">
+      <div className="mb-3 flex items-baseline gap-1.5">
+        {data?.overall_conversion != null ? (
+          <>
+            <span className="font-heading text-2xl font-bold tracking-tight text-foreground">
+              {data.overall_conversion.toFixed(1)}%
+            </span>
+            <span className="text-xs text-muted-foreground">conversion</span>
+          </>
+        ) : (
+          <span className="text-sm text-muted-foreground">Funnel</span>
+        )}
+      </div>
+      <div className="flex-1 min-h-0 space-y-2.5 overflow-y-auto scrollbar-none">
+        {steps.map((step, i) => {
+          const widthPct = maxUsers > 0 ? (step.users / maxUsers) * 100 : 0;
+          const color = CHART_COLORS[i % CHART_COLORS.length]!;
+
+          return (
+            <div key={step.step}>
+              <div className="mb-1 flex items-baseline justify-between gap-2">
+                <span className="truncate text-sm font-medium">
+                  {step.event_name}
+                </span>
+                <div className="flex shrink-0 items-center gap-2 text-xs tabular-nums text-muted-foreground">
+                  <span>{formatNumber(step.users)}</span>
+                  <span>{step.conversion_rate.toFixed(1)}%</span>
+                </div>
+              </div>
+              <div className="h-6 w-full rounded-sm bg-muted">
+                <div
+                  className="h-full rounded-sm transition-[width] duration-500 ease-out"
+                  style={{
+                    width: `${Math.max(widthPct, 3)}%`,
+                    backgroundColor: color,
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

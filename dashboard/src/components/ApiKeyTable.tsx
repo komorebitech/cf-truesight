@@ -91,7 +91,7 @@ export function ApiKeyTable({
                 <Badge
                   variant={key.active ? "success" : "danger"}
                 >
-                  {key.active ? "active" : "revoked"}
+                  {key.active ? "Active" : "Revoked"}
                 </Badge>
               </TableCell>
               <TableCell className="text-muted-foreground">

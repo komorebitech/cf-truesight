@@ -18,7 +18,7 @@ export function SegmentFilter({ projectId, value, onChange, className }: Segment
       value={value || "__all__"}
       onValueChange={(v) => onChange(v === "__all__" ? undefined : v)}
     >
-      <SelectTrigger className={className}>
+      <SelectTrigger className={className || "w-40"}>
         <SelectValue placeholder="All users" />
       </SelectTrigger>
       <SelectContent>

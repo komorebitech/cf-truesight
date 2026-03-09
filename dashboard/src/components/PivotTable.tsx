@@ -18,9 +18,9 @@ interface PivotTableProps {
 }
 
 function heatmapBg(value: number, max: number): string {
-  if (max === 0) return "";
+  if (max === 0 || value === 0) return "";
   const opacity = Math.round((value / max) * 40 + 5);
-  return `rgba(59, 130, 246, ${opacity / 100})`;
+  return `rgba(45, 106, 79, ${opacity / 100})`;
 }
 
 export function PivotTable({
@@ -30,13 +30,17 @@ export function PivotTable({
   columnLabel = "Column",
 }: PivotTableProps) {
   if (isLoading) {
-    return <Skeleton className="h-64 w-full" />;
+    return (
+      <div className="p-6">
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
   }
 
   if (!data || data.rows.length === 0 || data.columns.length === 0) {
     return (
       <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-        No data — select row and column dimensions to generate a pivot table.
+        Select row and column dimensions to generate a pivot table
       </div>
     );
   }

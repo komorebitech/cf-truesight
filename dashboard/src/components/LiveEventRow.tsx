@@ -45,6 +45,9 @@ const lineColors: Record<string, string> = {
   screen: "border-amber-500/30",
 };
 
+const DOT_FALLBACK = "bg-stone-400";
+const LINE_FALLBACK = "border-stone-300";
+
 function badgeVariant(type: string) {
   switch (type) {
     case "track":
@@ -103,15 +106,15 @@ export function LiveEventRow({
   useSyncExternalStore(subscribeTick, getTickSnapshot);
   const relTime = formatRelativeShort(event.server_timestamp);
 
-  const dotColor = dotColors[event.event_type] ?? "bg-gray-400";
-  const lineColor = lineColors[event.event_type] ?? "border-gray-300";
+  const dotColor = dotColors[event.event_type] ?? DOT_FALLBACK;
+  const lineColor = lineColors[event.event_type] ?? LINE_FALLBACK;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="relative flex gap-4"
+      className="relative flex gap-4 group/row"
     >
       {/* Timeline rail */}
       <div className="flex flex-col items-center pt-1.5">
@@ -126,12 +129,24 @@ export function LiveEventRow({
 
       {/* Event card */}
       <div className="flex-1 pb-4">
-        <div
+        <motion.div
+          role="button"
+          tabIndex={0}
+          aria-expanded={expanded}
+          initial={{ backgroundColor: "hsl(var(--accent))" }}
+          animate={{ backgroundColor: "hsl(var(--card))" }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
           className={cn(
-            "group cursor-pointer rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50",
+            "group cursor-pointer rounded-lg border p-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
             expanded && "bg-muted/30",
           )}
           onClick={() => onToggleExpand(event.event_id)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onToggleExpand(event.event_id);
+            }
+          }}
         >
           {/* Top row: time + type badge + name + expand chevron */}
           <div className="flex items-center gap-2 text-sm">
@@ -250,7 +265,7 @@ export function LiveEventRow({
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   );

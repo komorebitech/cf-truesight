@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Radio, Pause, Play, RotateCcw, Trash2 } from "lucide-react";
+import { motion } from "motion/react";
 import type { LiveEventStreamFilters } from "@/lib/api";
 
 function useDebouncedValue<T>(value: T, delay: number): T {
@@ -52,7 +53,7 @@ export function LiveEventsContent() {
     events,
     isConnected,
     isPaused,
-    error: _error,
+    error,
     bufferedCount,
     pause,
     resume,
@@ -163,10 +164,23 @@ export function LiveEventsContent() {
           Clear
         </Button>
 
+        {/* Connection error */}
+        {error && !isConnected && (
+          <span className="text-sm text-destructive">
+            Connection lost
+          </span>
+        )}
+
         {/* Event count */}
-        <span className="ml-auto text-sm text-muted-foreground">
+        <motion.span
+          key={events.length}
+          initial={{ opacity: 0.5, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="ml-auto text-sm tabular-nums text-muted-foreground"
+        >
           {events.length} event{events.length !== 1 ? "s" : ""}
-        </span>
+        </motion.span>
       </div>
 
       {/* Filter bar */}
@@ -228,6 +242,7 @@ export function LiveEventsContent() {
           variant="ghost"
           size="icon"
           onClick={handleReset}
+          aria-label="Reset filters"
           title="Reset filters"
           className="shrink-0"
         >
@@ -239,10 +254,33 @@ export function LiveEventsContent() {
       <div className="flex-1 overflow-auto rounded-lg border bg-card">
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-            <Radio className="mb-3 h-10 w-10 opacity-40" />
-            <p className="text-sm font-medium">Waiting for events...</p>
-            <p className="mt-1 text-xs">
-              Events will appear here as they arrive
+            {/* Radar pulse — concentric rings radiate outward */}
+            <div className="relative mb-5 flex h-20 w-20 items-center justify-center">
+              {isConnected && !isPaused && (
+                <>
+                  {[0, 1, 2].map((i) => (
+                    <motion.span
+                      key={i}
+                      className="absolute inset-0 rounded-full border border-primary/20"
+                      initial={{ scale: 0.3, opacity: 0.6 }}
+                      animate={{ scale: 1.2, opacity: 0 }}
+                      transition={{
+                        duration: 2.4,
+                        delay: i * 0.8,
+                        repeat: Infinity,
+                        ease: "easeOut",
+                      }}
+                    />
+                  ))}
+                </>
+              )}
+              <Radio className="h-8 w-8 text-muted-foreground/50" />
+            </div>
+            <p className="text-sm font-medium">
+              {isPaused ? "Stream paused" : isConnected ? "Listening for events..." : "Reconnecting..."}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground/60">
+              {isPaused ? "Hit resume to start receiving events" : "Events will appear here the moment they arrive"}
             </p>
           </div>
         ) : (

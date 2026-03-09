@@ -3,11 +3,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { EventCombobox } from "@/components/EventCombobox";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Zap, SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { cn } from "@/lib/utils";
 
 const EVENT_OPERATORS = [
   { label: ">= (at least)", value: "gte" },
@@ -101,12 +100,12 @@ export function SegmentBuilder({
   return (
     <div className="space-y-4">
       {/* AND / OR toggle */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-muted-foreground">Match</span>
+      <div className="flex items-center gap-3 rounded-lg border bg-muted/40 px-4 py-3">
+        <span className="text-sm font-medium text-foreground">Match</span>
         <Tabs value={operator} onValueChange={setOperator}>
           <TabsList>
-            <TabsTrigger value="and">All rules (AND)</TabsTrigger>
-            <TabsTrigger value="or">Any rule (OR)</TabsTrigger>
+            <TabsTrigger value="and" className="font-semibold">All rules (AND)</TabsTrigger>
+            <TabsTrigger value="or" className="font-semibold">Any rule (OR)</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -122,230 +121,236 @@ export function SegmentBuilder({
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <Card>
-                <CardContent className="p-3">
-                  <div className="flex items-start gap-2">
-                    <Badge variant="secondary" className="mt-1 shrink-0">
-                      {i + 1}
-                    </Badge>
+              <div
+                className={cn(
+                  "rounded-lg border-l-[3px] border bg-card p-3",
+                  rule.type === "event"
+                    ? "border-l-primary"
+                    : "border-l-[hsl(var(--chart-6))]",
+                )}
+              >
+                <div className="flex items-start gap-2">
+                  <div
+                    className={cn(
+                      "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-bold",
+                      rule.type === "event"
+                        ? "bg-primary/10 text-primary"
+                        : "bg-[hsl(var(--chart-6)/0.1)] text-[hsl(var(--chart-6))]",
+                    )}
+                  >
+                    {i + 1}
+                  </div>
 
-                    <div className="flex-1 space-y-2">
-                      {/* Type toggle */}
-                      <Tabs
-                        value={rule.type}
-                        onValueChange={(v) => switchRuleType(i, v as "event" | "property")}
-                      >
-                        <TabsList className="h-8">
-                          <TabsTrigger value="event" className="text-xs">
-                            Event
-                          </TabsTrigger>
-                          <TabsTrigger value="property" className="text-xs">
-                            Property
-                          </TabsTrigger>
-                        </TabsList>
-                      </Tabs>
+                  <div className="flex-1 space-y-2">
+                    {/* Type toggle */}
+                    <Tabs
+                      value={rule.type}
+                      onValueChange={(v) => switchRuleType(i, v as "event" | "property")}
+                    >
+                      <TabsList className="h-8">
+                        <TabsTrigger value="event" className="gap-1 text-xs">
+                          <Zap className="h-3 w-3" />
+                          Event
+                        </TabsTrigger>
+                        <TabsTrigger value="property" className="gap-1 text-xs">
+                          <SlidersHorizontal className="h-3 w-3" />
+                          Property
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
 
-                      {rule.type === "event" ? (
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {/* Did / Didn't do toggle */}
-                            <Select
-                              value={rule.action ?? "did"}
-                              onValueChange={(v) =>
-                                updateRule(i, {
-                                  ...rule,
-                                  action: v as "did" | "did_not",
-                                })
-                              }
-                            >
-                              <SelectTrigger className="w-28">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="did">Did</SelectItem>
-                                <SelectItem value="did_not">Didn't do</SelectItem>
-                              </SelectContent>
-                            </Select>
+                    {rule.type === "event" ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Select
+                          value={rule.action ?? "did"}
+                          onValueChange={(v) =>
+                            updateRule(i, {
+                              ...rule,
+                              action: v as "did" | "did_not",
+                            })
+                          }
+                        >
+                          <SelectTrigger className="w-28">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="did">Did</SelectItem>
+                            <SelectItem value="did_not">Didn't do</SelectItem>
+                          </SelectContent>
+                        </Select>
 
-                            {/* Event name */}
-                            <EventCombobox
-                              projectId={projectId}
-                              value={rule.event_name ?? ""}
-                              onChange={(val) => updateRule(i, { ...rule, event_name: val })}
-                              placeholder="Select event..."
-                              environment={environment}
-                              className="w-44"
-                            />
+                        <EventCombobox
+                          projectId={projectId}
+                          value={rule.event_name ?? ""}
+                          onChange={(val) => updateRule(i, { ...rule, event_name: val })}
+                          placeholder="Select event..."
+                          environment={environment}
+                          className="w-44"
+                        />
 
-                            {/* Operator */}
-                            <Select
-                              value={rule.op ?? "gte"}
-                              onValueChange={(v) => updateRule(i, { ...rule, op: v })}
-                            >
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {EVENT_OPERATORS.map((op) => (
-                                  <SelectItem key={op.value} value={op.value}>
-                                    {op.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                        <Select
+                          value={rule.op ?? "gte"}
+                          onValueChange={(v) => updateRule(i, { ...rule, op: v })}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {EVENT_OPERATORS.map((op) => (
+                              <SelectItem key={op.value} value={op.value}>
+                                {op.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
 
-                            {/* Count */}
-                            <Input
-                              type="number"
-                              min={0}
-                              value={rule.count ?? 1}
-                              onChange={(e) =>
-                                updateRule(i, {
-                                  ...rule,
-                                  count: parseInt(e.target.value) || 0,
-                                })
-                              }
-                              className="w-20"
-                              placeholder="Count"
-                            />
+                        <Input
+                          type="number"
+                          min={0}
+                          value={rule.count ?? 1}
+                          onChange={(e) =>
+                            updateRule(i, {
+                              ...rule,
+                              count: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          className="w-20"
+                          placeholder="Count"
+                        />
 
-                            {/* Time window type */}
-                            <Select
-                              value={getTimeWindowType(rule)}
-                              onValueChange={(v) => {
-                                if (v === "ever") {
-                                  updateRule(i, {
-                                    ...rule,
-                                    time_window: { type: "ever" },
-                                  });
-                                } else {
-                                  updateRule(i, { ...rule, time_window: "30d" });
-                                }
-                              }}
-                            >
-                              <SelectTrigger className="w-36">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {TIME_WINDOW_TYPES.map((tw) => (
-                                  <SelectItem key={tw.value} value={tw.value}>
-                                    {tw.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-
-                            {/* Time window value (only for relative) */}
-                            {getTimeWindowType(rule) === "relative" && (
-                              <>
-                                <span className="text-xs text-muted-foreground">in</span>
-                                <Input
-                                  value={getTimeWindowValue(rule)}
-                                  onChange={(e) =>
-                                    updateRule(i, { ...rule, time_window: e.target.value })
-                                  }
-                                  className="w-20"
-                                  placeholder="e.g. 30d"
-                                />
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-wrap items-center gap-2">
-                          {/* Source */}
-                          <Select
-                            value={rule.source ?? "user"}
-                            onValueChange={(v) =>
+                        <Select
+                          value={getTimeWindowType(rule)}
+                          onValueChange={(v) => {
+                            if (v === "ever") {
                               updateRule(i, {
                                 ...rule,
-                                source: v as "user" | "event",
-                              })
+                                time_window: { type: "ever" },
+                              });
+                            } else {
+                              updateRule(i, { ...rule, time_window: "30d" });
                             }
-                          >
-                            <SelectTrigger className="w-28">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="user">User</SelectItem>
-                              <SelectItem value="event">Event</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          }}
+                        >
+                          <SelectTrigger className="w-36">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TIME_WINDOW_TYPES.map((tw) => (
+                              <SelectItem key={tw.value} value={tw.value}>
+                                {tw.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
 
-                          {/* Property name */}
-                          <Select
-                            value={rule.property || undefined}
-                            onValueChange={(v) =>
-                              updateRule(i, { ...rule, property: v })
-                            }
-                          >
-                            <SelectTrigger className="w-44">
-                              <SelectValue placeholder="Select property..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {propertyKeys.map((pk) => (
-                                <SelectItem key={pk} value={pk}>
-                                  {pk}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-
-                          {/* Operator */}
-                          <Select
-                            value={rule.op ?? "eq"}
-                            onValueChange={(v) => updateRule(i, { ...rule, op: v })}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {PROPERTY_OPERATORS.map((op) => (
-                                <SelectItem key={op.value} value={op.value}>
-                                  {op.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-
-                          {/* Value (hidden for "exists") */}
-                          {rule.op !== "exists" && (
+                        {getTimeWindowType(rule) === "relative" && (
+                          <>
+                            <span className="text-xs text-muted-foreground">in</span>
                             <Input
-                              value={rule.value ?? ""}
+                              value={getTimeWindowValue(rule)}
                               onChange={(e) =>
-                                updateRule(i, { ...rule, value: e.target.value })
+                                updateRule(i, { ...rule, time_window: e.target.value })
                               }
-                              className="w-40"
-                              placeholder="Value"
+                              className="w-20"
+                              placeholder="e.g. 30d"
                             />
-                          )}
-                        </div>
-                      )}
-                    </div>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Select
+                          value={rule.source ?? "user"}
+                          onValueChange={(v) =>
+                            updateRule(i, {
+                              ...rule,
+                              source: v as "user" | "event",
+                            })
+                          }
+                        >
+                          <SelectTrigger className="w-28">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="event">Event</SelectItem>
+                          </SelectContent>
+                        </Select>
 
-                    {/* Remove button */}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeRule(i)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                        <Select
+                          value={rule.property || undefined}
+                          onValueChange={(v) =>
+                            updateRule(i, { ...rule, property: v })
+                          }
+                        >
+                          <SelectTrigger className="w-44">
+                            <SelectValue placeholder="Select property..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {propertyKeys.map((pk) => (
+                              <SelectItem key={pk} value={pk}>
+                                {pk}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <Select
+                          value={rule.op ?? "eq"}
+                          onValueChange={(v) => updateRule(i, { ...rule, op: v })}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PROPERTY_OPERATORS.map((op) => (
+                              <SelectItem key={op.value} value={op.value}>
+                                {op.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {rule.op !== "exists" && (
+                          <Input
+                            value={rule.value ?? ""}
+                            onChange={(e) =>
+                              updateRule(i, { ...rule, value: e.target.value })
+                            }
+                            className="w-40"
+                            placeholder="Value"
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
+
+                  {/* Remove button */}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeRule(i)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
 
       {/* Add rule button */}
-      <Button type="button" variant="outline" size="sm" onClick={addRule}>
-        <Plus className="h-3 w-3" />
+      <button
+        type="button"
+        onClick={addRule}
+        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/20 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
+      >
+        <Plus className="h-4 w-4" />
         Add Rule
-      </Button>
+      </button>
     </div>
   );
 }

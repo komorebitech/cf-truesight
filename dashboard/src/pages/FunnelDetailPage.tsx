@@ -94,133 +94,131 @@ export function FunnelDetailPage() {
 
   return (
     <PageLayout title={funnel.name}>
-        {/* Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
-            <SegmentFilter
-              projectId={id}
-              value={segmentId}
-              onChange={setSegmentId}
-            />
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {funnel.window_seconds >= 86400
-                ? `${Math.round(funnel.window_seconds / 86400)}d`
-                : `${Math.round(funnel.window_seconds / 3600)}h`}{" "}
-              window
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowEdit(true)}>
-              <Pencil className="h-3 w-3" />
-              Edit
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="text-destructive"
-            >
-              <Trash2 className="h-3 w-3" />
-              Delete
-            </Button>
-          </div>
+      {/* Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+          <SegmentFilter
+            projectId={id}
+            value={segmentId}
+            onChange={setSegmentId}
+          />
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {funnel.window_seconds >= 86400
+              ? `${Math.round(funnel.window_seconds / 86400)}d`
+              : `${Math.round(funnel.window_seconds / 3600)}h`}{" "}
+            window
+          </Badge>
         </div>
-
-        {/* Overall conversion */}
-        {results && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-baseline gap-2"
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setShowEdit(true)}>
+            <Pencil className="h-3.5 w-3.5" />
+            Edit
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="text-destructive hover:text-destructive"
           >
-            <span className="text-sm text-muted-foreground">
-              Overall conversion:
-            </span>
-            <span className="text-2xl font-bold">
-              {results.overall_conversion.toFixed(1)}%
-            </span>
-          </motion.div>
-        )}
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
+          </Button>
+        </div>
+      </div>
 
-        {/* Funnel chart */}
+      {/* Funnel chart */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Funnel Visualization</CardTitle>
+          {results && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-baseline gap-2"
+            >
+              <span className="text-sm text-muted-foreground">
+                Overall conversion
+              </span>
+              <span className="text-xl font-bold tabular-nums">
+                {results.overall_conversion.toFixed(1)}%
+              </span>
+            </motion.div>
+          )}
+        </CardHeader>
+        <CardContent>
+          {resultsLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : results ? (
+            <FunnelChart steps={results.steps} />
+          ) : (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              No results available
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Step table */}
+      {results && results.steps.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Funnel Visualization</CardTitle>
+            <CardTitle>Step Breakdown</CardTitle>
           </CardHeader>
-          <CardContent>
-            {resultsLoading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : results ? (
-              <FunnelChart steps={results.steps} />
-            ) : (
-              <div className="py-12 text-center text-sm text-muted-foreground">
-                No results available
-              </div>
-            )}
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16">Step</TableHead>
+                  <TableHead>Event</TableHead>
+                  <TableHead className="text-right">Users</TableHead>
+                  <TableHead className="text-right">Conversion</TableHead>
+                  <TableHead className="text-right">Drop-off</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {results.steps.map((step, i) => {
+                  const prevUsers = i > 0 ? results.steps[i - 1]!.users : step.users;
+                  const dropoff =
+                    i > 0 && prevUsers > 0
+                      ? ((prevUsers - step.users) / prevUsers) * 100
+                      : 0;
+                  return (
+                    <TableRow key={step.step}>
+                      <TableCell className="font-semibold text-muted-foreground">
+                        {step.step}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {step.event_name}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatNumber(step.users)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">
+                        {step.conversion_rate.toFixed(1)}%
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {i > 0 ? (
+                          <span className="text-destructive">
+                            -{dropoff.toFixed(1)}%
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
+      )}
 
-        {/* Step table */}
-        {results && results.steps.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Step Breakdown</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Step</TableHead>
-                    <TableHead>Event</TableHead>
-                    <TableHead className="text-right">Users</TableHead>
-                    <TableHead className="text-right">Conversion</TableHead>
-                    <TableHead className="text-right">Drop-off</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {results.steps.map((step, i) => {
-                    const prevUsers = i > 0 ? results.steps[i - 1]!.users : step.users;
-                    const dropoff =
-                      i > 0 && prevUsers > 0
-                        ? ((prevUsers - step.users) / prevUsers) * 100
-                        : 0;
-                    return (
-                      <TableRow key={step.step}>
-                        <TableCell className="font-bold text-muted-foreground">
-                          {step.step}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {step.event_name}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatNumber(step.users)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {step.conversion_rate.toFixed(1)}%
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {i > 0 ? (
-                            <span className="text-destructive">
-                              -{dropoff.toFixed(1)}%
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
       {/* Edit Dialog */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent>

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Search, Users } from "lucide-react";
-import { formatDate, formatNumber } from "@/lib/utils";
+import { cn, formatDate, formatNumber } from "@/lib/utils";
 import { useTableParams } from "@/hooks/use-table-params";
 import type { ColumnDef } from "@tanstack/react-table";
 
@@ -18,6 +18,33 @@ interface UserRow {
   first_seen: string;
   last_seen: string;
   event_count: number;
+}
+
+// Warm-toned avatar palette — rotates by string hash
+const AVATAR_COLORS = [
+  "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+  "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300",
+  "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+  "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
+];
+
+function getInitials(name: string, email: string, uid: string): string {
+  if (name) {
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? `${parts[0]![0]}${parts[1]![0]}`.toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  }
+  if (email) return email.slice(0, 2).toUpperCase();
+  return uid.slice(0, 2).toUpperCase();
+}
+
+function hashStr(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
 }
 
 function useDebouncedValue<T>(value: T, delay: number): T {
@@ -72,16 +99,29 @@ export function UsersPage() {
     () => [
       {
         accessorKey: "user_uid",
-        header: "User ID",
-        cell: ({ row }) => (
-          <Link
-            to={`/projects/${id}/users/${encodeURIComponent(row.original.user_uid)}`}
-            className="font-medium text-foreground hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {row.original.user_uid}
-          </Link>
-        ),
+        header: "User",
+        cell: ({ row }) => {
+          const { user_uid, name, email } = row.original;
+          const initials = getInitials(name, email, user_uid);
+          const colorClass = AVATAR_COLORS[hashStr(user_uid) % AVATAR_COLORS.length]!;
+          return (
+            <Link
+              to={`/projects/${id}/users/${encodeURIComponent(user_uid)}`}
+              className="inline-flex items-center gap-2.5 font-medium text-foreground hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span
+                className={cn(
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                  colorClass,
+                )}
+              >
+                {initials}
+              </span>
+              <span className="truncate">{name || user_uid}</span>
+            </Link>
+          );
+        },
         enableSorting: false,
       },
       {
@@ -140,8 +180,8 @@ export function UsersPage() {
     <PageLayout title="Users">
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative ml-auto w-72">
-            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <div className="relative w-72">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -167,11 +207,11 @@ export function UsersPage() {
             <EmptyState
               variant={debouncedSearch ? "search" : "data"}
               icon={Users}
-              title={debouncedSearch ? "No users found" : "No users yet"}
+              title={debouncedSearch ? "No users matched" : "Your users will show up here"}
               description={
                 debouncedSearch
-                  ? "Try adjusting your search query"
-                  : "Users will appear here once they are identified via events"
+                  ? "Try a different name, email, or user ID"
+                  : "Once users trigger identify events, they'll appear in this list"
               }
               compact
             />

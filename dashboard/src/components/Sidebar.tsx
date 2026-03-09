@@ -1,11 +1,10 @@
-import { useState, useCallback, type ReactNode } from "react";
+import { useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 import {
   Menu,
   LayoutDashboard,
   LayoutGrid,
-  TrendingUp,
   List,
   Lightbulb,
   LineChart,
@@ -18,7 +17,7 @@ import {
   Settings,
   UserCog,
   Terminal,
-  ChevronsRight,
+  ChevronsLeft,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserMenu } from "@/components/UserMenu";
@@ -63,6 +62,56 @@ function getPersistedPanelOpen(): boolean {
   } catch {
     return true;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Blinking "ts" logo — the dot on the "i" (implied eye) blinks periodically
+// ---------------------------------------------------------------------------
+
+function TsLogoBlinking() {
+  const [blink, setBlink] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    const scheduleBlink = () => {
+      // Random interval between 3s and 7s for natural feel
+      const delay = 3000 + Math.random() * 4000;
+      timeoutRef.current = setTimeout(() => {
+        setBlink(true);
+        // Blink lasts 150ms
+        setTimeout(() => {
+          setBlink(false);
+          scheduleBlink();
+        }, 150);
+      }, delay);
+    };
+    scheduleBlink();
+    return () => clearTimeout(timeoutRef.current);
+  }, []);
+
+  return (
+    <span className="group/logo inline-flex items-baseline cursor-default select-none">
+      <span
+        className="font-bold tracking-[0.08em] bg-gradient-to-r from-[#081c15] to-[#2d6a4f] bg-clip-text text-transparent dark:from-[#FEC89A] dark:to-[#e07a6a] text-2xl"
+        style={{ fontFamily: "'Chillax', sans-serif" }}
+      >
+        ts
+      </span>
+      {/* Blinking dot — sits after "s" like a full stop */}
+      <span
+        className="ml-[2px] inline-block transition-transform duration-[150ms] ease-[cubic-bezier(0.25,1,0.5,1)]"
+        style={{
+          width: "7px",
+          height: "7px",
+          borderRadius: "50%",
+          transformOrigin: "center bottom",
+          transform: blink ? "scaleY(0.15)" : "scaleY(1)",
+        }}
+      >
+        <span className="block h-full w-full rounded-full bg-gradient-to-r from-[#081c15] to-[#2d6a4f] dark:from-[#FEC89A] dark:to-[#e07a6a]" />
+      </span>
+    </span>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -134,12 +183,7 @@ export function Sidebar() {
           label: "Insights",
           icon: <Lightbulb className="h-5 w-5" />,
           items: [
-            {
-              label: "Analytics",
-              href: `/projects/${projectId}/analytics`,
-              icon: <TrendingUp className="h-4 w-4" />,
-            },
-            {
+{
               label: "Trends",
               href: `/projects/${projectId}/trends`,
               icon: <LineChart className="h-4 w-4" />,
@@ -255,15 +299,15 @@ export function Sidebar() {
 
   // -- Environment toggle (shared between mobile & detail panel) --
   const envToggle = (
-    <div className="flex w-full rounded-md border border-sidebar-border bg-sidebar-active/50 p-0.5">
+    <div className="flex w-full rounded-lg border border-sidebar-border bg-background/50 p-0.5 dark:bg-sidebar-active">
       <button
         type="button"
         onClick={() => setEnvironment("live")}
         className={cn(
-          "flex-1 rounded-sm px-2 py-1 text-xs font-medium transition-colors",
+          "flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
           environment === "live"
-            ? "bg-emerald-700 text-white shadow-sm dark:bg-emerald-600"
-            : "text-sidebar-muted-foreground hover:text-sidebar-foreground",
+            ? "bg-emerald-600 text-white shadow-sm dark:bg-emerald-500"
+            : "text-sidebar-muted-foreground dark:text-sidebar-foreground/70 hover:text-sidebar-foreground",
         )}
       >
         Live
@@ -272,10 +316,10 @@ export function Sidebar() {
         type="button"
         onClick={() => setEnvironment("test")}
         className={cn(
-          "flex-1 rounded-sm px-2 py-1 text-xs font-medium transition-colors",
+          "flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
           environment === "test"
-            ? "bg-orange-600 text-white shadow-sm dark:bg-orange-500"
-            : "text-sidebar-muted-foreground hover:text-sidebar-foreground",
+            ? "bg-amber-500 text-white shadow-sm"
+            : "text-sidebar-muted-foreground dark:text-sidebar-foreground/70 hover:text-sidebar-foreground",
         )}
       >
         Test
@@ -283,16 +327,24 @@ export function Sidebar() {
     </div>
   );
 
+  // -- Brand mark --
+  const brandMark = (size: "sm" | "lg") =>
+    size === "sm" ? (
+      <TsLogoBlinking />
+    ) : (
+      <span
+        className="font-bold tracking-[0.08em] bg-gradient-to-r from-[#081c15] to-[#2d6a4f] bg-clip-text text-transparent dark:from-[#FEC89A] dark:to-[#e07a6a] text-[1.6rem]"
+        style={{ fontFamily: "'Chillax', sans-serif" }}
+      >
+        truesight
+      </span>
+    );
+
   // -- Mobile sidebar (flat list) --
   const mobileSidebar = (closeMobile: () => void) => (
     <>
       <div className="flex justify-center px-4 py-5">
-        <span
-          className="text-[1.6rem] font-bold tracking-[0.08em] bg-gradient-to-r from-[#081c15] to-[#52b788] bg-clip-text text-transparent"
-          style={{ fontFamily: "'Chillax', sans-serif" }}
-        >
-          truesight
-        </span>
+        {brandMark("lg")}
       </div>
       <Separator className="bg-sidebar-border" />
 
@@ -305,7 +357,7 @@ export function Sidebar() {
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-2 scrollbar-thin">
         {groups.map((group) => (
           <div key={group.id}>
-            <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted-foreground">
+            <p className="px-3 pb-1 pt-4 text-[10px] font-bold uppercase tracking-[0.12em] text-sidebar-muted-foreground">
               {group.label}
             </p>
             {group.items.map((item) => (
@@ -313,8 +365,9 @@ export function Sidebar() {
                 key={item.href}
                 to={item.href}
                 onClick={closeMobile}
+                aria-current={isActive(item.href) ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                   isActive(item.href)
                     ? "bg-sidebar-active text-sidebar-foreground"
                     : "text-sidebar-muted-foreground hover:bg-sidebar-active/50 hover:text-sidebar-foreground",
@@ -349,7 +402,7 @@ export function Sidebar() {
 
       {/* Mobile sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="flex w-60 flex-col p-0">
+        <SheetContent side="left" className="flex w-64 flex-col bg-sidebar p-0">
           <SheetHeader className="sr-only">
             <SheetTitle>Navigation</SheetTitle>
             <SheetDescription>Main navigation menu</SheetDescription>
@@ -360,44 +413,45 @@ export function Sidebar() {
 
       {/* Desktop: icon rail + detail panel */}
       <div className="hidden shrink-0 lg:flex">
-        {/* Icon rail */}
-        <div className="flex w-[68px] flex-col border-r border-sidebar-border bg-sidebar">
+        {/* Icon rail — dark green, the anchor of the UI */}
+        <div className="flex w-[72px] flex-col border-r border-sidebar-border bg-sidebar">
           {/* Brand */}
-          <div className="flex justify-center py-4">
-            <span
-              className="text-lg font-bold tracking-[0.08em] bg-gradient-to-r from-[#081c15] to-[#52b788] bg-clip-text text-transparent"
-              style={{ fontFamily: "'Chillax', sans-serif" }}
-            >
-              ts
-            </span>
+          <div className="flex justify-center py-5">
+            {brandMark("sm")}
           </div>
-          <Separator className="bg-sidebar-border" />
 
           {/* Nav group icons */}
-          <nav className="flex-1 flex flex-col items-center gap-1 px-1.5 py-3">
+          <nav className="flex-1 flex flex-col items-center gap-1.5 px-2 py-3">
             {groups.map((group) => {
               const isGroupActive = activeGroupId === group.id;
               return (
                 <button
                   key={group.id}
                   onClick={() => handleRailClick(group.id)}
+                  aria-current={isGroupActive ? "true" : undefined}
                   className={cn(
-                    "flex w-full flex-col items-center gap-0.5 rounded-lg px-1 py-2 text-[10px] font-medium transition-colors",
+                    "relative flex w-full flex-col items-center gap-1 rounded-xl px-1 py-2.5 text-[10px] font-semibold transition-[background-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                     isGroupActive
                       ? "bg-sidebar-active text-sidebar-foreground"
                       : "text-sidebar-muted-foreground hover:bg-sidebar-active/50 hover:text-sidebar-foreground",
                   )}
                 >
+                  {/* Active indicator */}
+                  <span
+                    className={cn(
+                      "absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-primary transition-[height,opacity] duration-200",
+                      isGroupActive ? "h-5 opacity-100" : "h-0 opacity-0",
+                    )}
+                  />
                   {group.icon}
-                  <span className="leading-tight">{group.label}</span>
+                  <span className="leading-tight tracking-wide">{group.label}</span>
                 </button>
               );
             })}
           </nav>
-          <Separator className="bg-sidebar-border" />
 
           {/* User avatar */}
-          <div className="flex justify-center py-3">
+          <div className="flex justify-center pb-4 pt-2">
             {isAuthenticated ? <UserMenu /> : <ThemeToggle />}
           </div>
         </div>
@@ -405,7 +459,7 @@ export function Sidebar() {
         {/* Detail panel */}
         <div
           className={cn(
-            "flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-200 overflow-hidden",
+            "flex flex-col border-r border-sidebar-border bg-sidebar overflow-hidden transition-[width] duration-200 ease-[cubic-bezier(0.25,1,0.5,1)]",
             displayGroup ? "w-52" : "w-0",
           )}
         >
@@ -413,15 +467,16 @@ export function Sidebar() {
             {displayGroup && (
               <>
                 {/* Panel header */}
-                <div className="flex items-center justify-between px-3 py-3.5">
-                  <h2 className="text-sm font-semibold text-sidebar-foreground">
+                <div className="flex items-center justify-between px-3 py-4">
+                  <h2 className="font-display text-sm font-semibold tracking-tight text-sidebar-foreground">
                     {displayGroup.label}
                   </h2>
                   <button
                     onClick={handleClosePanel}
-                    className="rounded-md p-1 text-sidebar-muted-foreground hover:bg-sidebar-active hover:text-sidebar-foreground transition-colors"
+                    aria-label="Close panel"
+                    className="rounded-md p-1.5 text-sidebar-muted-foreground hover:bg-sidebar-active hover:text-sidebar-foreground transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                   >
-                    <ChevronsRight className="h-4 w-4" />
+                    <ChevronsLeft className="h-4 w-4" />
                   </button>
                 </div>
                 <Separator className="bg-sidebar-border" />
@@ -439,13 +494,20 @@ export function Sidebar() {
                     <Link
                       key={item.href}
                       to={item.href}
+                      aria-current={isActive(item.href) ? "page" : undefined}
                       className={cn(
-                        "flex items-center rounded-md px-3 py-1.5 text-sm transition-colors",
+                        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                         isActive(item.href)
-                          ? "bg-sidebar-active text-sidebar-foreground font-medium"
+                          ? "bg-sidebar-active text-sidebar-foreground font-semibold"
                           : "text-sidebar-muted-foreground hover:bg-sidebar-active/50 hover:text-sidebar-foreground",
                       )}
                     >
+                      <span className={cn(
+                        "shrink-0",
+                        isActive(item.href) ? "text-sidebar-foreground" : "text-sidebar-muted-foreground",
+                      )}>
+                        {item.icon}
+                      </span>
                       {item.label}
                     </Link>
                   ))}

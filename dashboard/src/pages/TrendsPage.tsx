@@ -125,7 +125,7 @@ export function TrendsPage() {
   return (
     <PageLayout title="Trends">
       {/* Global controls */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3">
         <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
 
         <ControlDivider />
@@ -152,13 +152,13 @@ export function TrendsPage() {
         <CardHeader>
           <CardTitle>Events</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-2">
           {eventRows.map((row, index) => (
             <div
               key={index}
-              className="flex flex-wrap items-center gap-2 rounded-md border border-border p-3"
+              className="flex flex-wrap items-center gap-2.5 rounded-lg border border-border px-3 py-2.5"
             >
-              <span className="text-xs font-medium text-muted-foreground w-6">
+              <span className="flex h-6 w-6 items-center justify-center rounded bg-muted text-xs font-semibold text-muted-foreground">
                 {String.fromCharCode(65 + index)}
               </span>
 
@@ -186,7 +186,7 @@ export function TrendsPage() {
                 </TabsList>
               </Tabs>
 
-              <div className="flex-1" />
+              <div className="flex-1 min-w-0" />
 
               <PropertyFilter
                 filters={row.filters}
@@ -198,44 +198,49 @@ export function TrendsPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-muted-foreground"
+                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
                   onClick={() => removeEventRow(index)}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
           ))}
 
           {eventRows.length < 10 && (
-            <Button variant="outline" size="sm" onClick={addEventRow}>
-              <Plus className="mr-1 h-4 w-4" />
-              Add Event
-            </Button>
+            <div className="pt-1">
+              <Button variant="outline" size="sm" onClick={addEventRow}>
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                Add Event
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* Global filters + Breakdown */}
-      <div className="flex flex-wrap items-start gap-6">
-        <PropertyFilter
-          filters={globalFilters}
-          onChange={setGlobalFilters}
-          propertyKeys={propertyKeys}
-        />
-        <BreakdownSelector
-          value={groupBy}
-          onChange={setGroupBy}
-          propertyKeys={propertyKeys}
-        />
-      </div>
+      <Card>
+        <CardContent className="flex flex-wrap items-start gap-8">
+          <PropertyFilter
+            filters={globalFilters}
+            onChange={setGlobalFilters}
+            propertyKeys={propertyKeys}
+          />
+          <div className="hidden sm:block self-stretch w-px bg-border" />
+          <BreakdownSelector
+            value={groupBy}
+            onChange={setGroupBy}
+            propertyKeys={propertyKeys}
+          />
+        </CardContent>
+      </Card>
 
       {/* Chart results */}
       <Card>
         <CardHeader>
           <CardTitle>Results</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 py-5">
           <InsightsChart
             series={chartSeries}
             isLoading={isLoading}
