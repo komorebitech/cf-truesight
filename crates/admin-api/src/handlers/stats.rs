@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, Query, State},
     response::IntoResponse,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -19,9 +19,19 @@ const EVENTS_SORT_COLUMNS: &[&str] = &["client_timestamp", "server_timestamp", "
 
 // ── Event Count ──────────────────────────────────────────────────────
 
+fn default_from() -> DateTime<Utc> {
+    Utc::now() - Duration::days(30)
+}
+
+fn default_to() -> DateTime<Utc> {
+    Utc::now()
+}
+
 #[derive(Debug, Deserialize)]
 pub struct TimeRangeQuery {
+    #[serde(default = "default_from")]
     pub from: DateTime<Utc>,
+    #[serde(default = "default_to")]
     pub to: DateTime<Utc>,
     pub environment: Option<String>,
 }
