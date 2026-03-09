@@ -450,9 +450,10 @@ export function Sidebar() {
             })}
           </nav>
 
-          {/* User avatar */}
-          <div className="flex justify-center pb-4 pt-2">
-            {isAuthenticated ? <UserMenu /> : <ThemeToggle />}
+          {/* Theme toggle + User avatar */}
+          <div className="flex flex-col items-center gap-2 pb-4 pt-2">
+            <ThemeToggle />
+            {isAuthenticated && <UserMenu />}
           </div>
         </div>
 
