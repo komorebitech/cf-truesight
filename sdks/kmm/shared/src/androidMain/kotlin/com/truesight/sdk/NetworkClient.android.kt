@@ -33,7 +33,7 @@ actual class NetworkClient {
             val jsonString = Serializer.serializeBatchPayload(payload)
             val compressed = compressDeflate(jsonString.encodeToByteArray())
 
-            val response = client.post("$endpoint/v1/batch") {
+            val response = client.post("$endpoint/v1/events/batch") {
                 header("X-API-Key", apiKey)
                 header("Content-Encoding", "deflate")
                 header("User-Agent", "TrueSight-KMM/${TrueSight.SDK_VERSION}")
