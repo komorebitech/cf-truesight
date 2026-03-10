@@ -55,7 +55,7 @@ function TruesightLogoBlinking() {
             height: "0.2em",
             borderRadius: "50%",
             background: "#081c15",
-            transform: `translateX(-65%) ${blink ? "scaleY(0.15)" : "scaleY(1)"}`,
+            transform: `translateX(-73%) ${blink ? "scaleY(0.15)" : "scaleY(1)"}`,
             transformOrigin: "center bottom",
           }}
         />
@@ -105,7 +105,10 @@ export function LoginPage() {
     return (
       <div
         className="flex h-screen items-center justify-center"
-        style={{ background: "linear-gradient(160deg, #F8EDEB 0%, #FAE1DD 30%, #FFE5D9 60%, #FCD5CE 100%)" }}
+        style={{
+          background:
+            "linear-gradient(160deg, #F8EDEB 0%, #FAE1DD 30%, #FFE5D9 60%, #FCD5CE 100%)",
+        }}
       >
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#081c15]/15 border-t-[#081c15]" />
       </div>
@@ -213,7 +216,8 @@ export function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3, ease: EASE_OUT_QUART }}
           whileHover={{
-            boxShadow: "0 20px 60px -12px rgba(212, 165, 154, 0.3), 0 0 0 1px rgba(8, 28, 21, 0.04)",
+            boxShadow:
+              "0 20px 60px -12px rgba(212, 165, 154, 0.3), 0 0 0 1px rgba(8, 28, 21, 0.04)",
           }}
           className="w-full rounded-2xl bg-white/85 px-8 py-8 shadow-xl shadow-[#d4a59a]/15 ring-1 ring-[#081c15]/[0.04] backdrop-blur-sm transition-shadow duration-500"
         >
