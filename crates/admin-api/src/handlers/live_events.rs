@@ -114,6 +114,7 @@ pub async fn live_events_stream(
             let mut conditions = vec![
                 "project_id = ?".to_string(),
                 "server_timestamp > fromUnixTimestamp64Milli(toInt64(? * 1000))".to_string(),
+                "NOT startsWith(event_name, '$')".to_string(),
             ];
 
             if params.environment.is_some() {

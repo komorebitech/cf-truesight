@@ -216,6 +216,7 @@ pub async fn event_types(
     let by_type_query = format!(
         "SELECT event_type, count() AS count FROM {}.events \
          WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{} \
+         AND NOT startsWith(event_name, '$') \
          GROUP BY event_type",
         db, env_filter
     );
@@ -246,6 +247,7 @@ pub async fn event_types(
     let top_query = format!(
         "SELECT event_name AS name, count() AS count FROM {}.events \
          WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{} \
+         AND NOT startsWith(event_name, '$') \
          GROUP BY name ORDER BY count DESC LIMIT ?",
         db, env_filter
     );
@@ -313,7 +315,7 @@ pub async fn event_names(
 
     let query = format!(
         "SELECT event_name AS name, count() AS count FROM {db}.events \
-         WHERE project_id = ?{search_filter}{env_filter} \
+         WHERE project_id = ? AND NOT startsWith(event_name, '$'){search_filter}{env_filter} \
          GROUP BY name ORDER BY count DESC LIMIT ?"
     );
 
@@ -402,6 +404,7 @@ pub async fn list_events(
     let mut conditions = vec![
         "project_id = ?".to_string(),
         "server_timestamp BETWEEN ? AND ?".to_string(),
+        "NOT startsWith(event_name, '$')".to_string(),
     ];
 
     if params.event_type.is_some() {

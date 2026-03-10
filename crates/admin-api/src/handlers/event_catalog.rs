@@ -75,7 +75,7 @@ pub async fn event_catalog(
          formatDateTime(min(first_seen), '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS first_seen, \
          formatDateTime(max(last_seen), '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS last_seen \
          FROM {db}.event_catalog \
-         WHERE project_id = ?{search_filter}{env_filter} \
+         WHERE project_id = ? AND NOT startsWith(event_name, '$'){search_filter}{env_filter} \
          GROUP BY event_name, event_type \
          ORDER BY {sort_col} {sort_dir} \
          LIMIT ? OFFSET ?"

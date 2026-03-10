@@ -331,6 +331,7 @@ pub async fn user_events(
     let mut conditions = vec![
         "project_id = ?".to_string(),
         "COALESCE(NULLIF(user_id, ''), anonymous_id) = ?".to_string(),
+        "NOT startsWith(event_name, '$')".to_string(),
     ];
 
     if params.from.is_some() {
