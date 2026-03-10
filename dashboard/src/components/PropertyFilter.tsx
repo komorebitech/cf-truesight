@@ -8,6 +8,10 @@ import { X, Plus } from "lucide-react";
 const OPERATORS = [
   { value: "eq", label: "equals" },
   { value: "neq", label: "not equals" },
+  { value: "gt", label: "greater than" },
+  { value: "gte", label: "greater than or equal" },
+  { value: "lt", label: "less than" },
+  { value: "lte", label: "less than or equal" },
   { value: "contains", label: "contains" },
   { value: "in", label: "in" },
   { value: "not_in", label: "not in" },

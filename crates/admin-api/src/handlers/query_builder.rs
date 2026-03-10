@@ -256,6 +256,46 @@ pub fn build_property_filter_clauses(
                     .collect();
                 conditions.push(format!("{} NOT IN ({})", col, escaped.join(", ")));
             }
+            "gt" => {
+                conditions.push(format!("{} > ?", col));
+                let val = f
+                    .value
+                    .as_ref()
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                bind_values.push(val);
+            }
+            "gte" => {
+                conditions.push(format!("{} >= ?", col));
+                let val = f
+                    .value
+                    .as_ref()
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                bind_values.push(val);
+            }
+            "lt" => {
+                conditions.push(format!("{} < ?", col));
+                let val = f
+                    .value
+                    .as_ref()
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                bind_values.push(val);
+            }
+            "lte" => {
+                conditions.push(format!("{} <= ?", col));
+                let val = f
+                    .value
+                    .as_ref()
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                bind_values.push(val);
+            }
             "exists" => {
                 validate_identifier(&f.property)?;
                 conditions.push(format!(

@@ -60,7 +60,8 @@ pub async fn property_keys(
     let query = format!(
         "SELECT DISTINCT arrayJoin(mapKeys(properties_map)) AS key \
          FROM {db}.events \
-         WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{env_filter} \
+         WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
+         AND NOT startsWith(event_name, '$'){env_filter} \
          ORDER BY key LIMIT 500"
     );
 
@@ -122,7 +123,8 @@ pub async fn property_values(
         "SELECT DISTINCT properties_map[?] AS value \
          FROM {db}.events \
          WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
-         AND mapContains(properties_map, ?){env_filter} \
+         AND mapContains(properties_map, ?) \
+         AND NOT startsWith(event_name, '$'){env_filter} \
          ORDER BY value LIMIT 500"
     );
 
