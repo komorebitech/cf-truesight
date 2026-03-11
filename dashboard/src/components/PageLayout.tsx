@@ -8,17 +8,19 @@ interface PageLayoutProps {
   children: ReactNode;
   /** Use false to omit vertical spacing between children (e.g. tabbed pages). Default true. */
   spacing?: boolean;
+  /** Extra classes on the content area. */
+  className?: string;
 }
 
-export function PageLayout({ title, children, spacing = true }: PageLayoutProps) {
+export function PageLayout({ title, children, spacing = true, className }: PageLayoutProps) {
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <Header title={title} />
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-        className={cn("flex-1 px-8 pt-2 pb-8", spacing && "space-y-6")}
+        className={cn("flex min-h-0 flex-1 flex-col px-8 pt-2 pb-4", spacing && "space-y-6", className)}
       >
         {children}
       </motion.div>
