@@ -11,7 +11,9 @@ use truesight_common::error::AppError;
 use truesight_common::team::TeamRole;
 
 use crate::db::funnels as db;
+use crate::db::segments as segments_db;
 use crate::handlers::rbac;
+use crate::handlers::segments::SegmentFilter;
 use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
@@ -144,7 +146,6 @@ pub struct FunnelResultsQuery {
     pub from: DateTime<Utc>,
     pub to: DateTime<Utc>,
     pub environment: Option<String>,
-    #[allow(dead_code)]
     pub segment_id: Option<Uuid>,
 }
 
@@ -186,6 +187,7 @@ async fn compute_funnel_results(
     from: DateTime<Utc>,
     to: DateTime<Utc>,
     environment: Option<String>,
+    segment_id: Option<Uuid>,
 ) -> Result<FunnelResultsResponse, AppError> {
     let funnel = db::find_funnel(&state.db_pool, project_id, funnel_id)?;
 
@@ -197,6 +199,14 @@ async fn compute_funnel_results(
             "Funnel must have at least 2 steps".into(),
         ));
     }
+
+    // Build optional segment filter
+    let segment_filter = if let Some(sid) = segment_id {
+        let segment = segments_db::find_segment(&state.db_pool, project_id, sid)?;
+        SegmentFilter::build(state, &segment.definition, &environment)?
+    } else {
+        None
+    };
 
     let db_name = &state.config.clickhouse_database;
     let from_ts = from.timestamp_millis() as f64 / 1000.0;
@@ -219,6 +229,11 @@ async fn compute_funnel_results(
         ""
     };
 
+    let segment_clause = segment_filter
+        .as_ref()
+        .map(|f| format!(" WHERE {}", f.sql))
+        .unwrap_or_default();
+
     let query = format!(
         "SELECT level, count() AS users FROM ( \
             SELECT user_uid, windowFunnel({window})(toDateTime(server_timestamp), {conditions}) AS level \
@@ -227,7 +242,7 @@ async fn compute_funnel_results(
                 FROM {db_name}.events \
                 WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
                 AND event_name IN ({event_names}){env_filter} \
-            ) GROUP BY user_uid \
+            ){segment_clause} GROUP BY user_uid \
         ) GROUP BY level ORDER BY level",
         window = funnel.window_seconds,
         conditions = conditions.join(", "),
@@ -242,6 +257,9 @@ async fn compute_funnel_results(
         .bind(to_ts);
     if let Some(ref env) = environment {
         q = q.bind(env.as_str());
+    }
+    if let Some(ref sf) = segment_filter {
+        q = sf.bind_params(q, project_id, &environment);
     }
     let rows = q
         .fetch_all::<WindowFunnelRow>()
@@ -318,6 +336,7 @@ pub async fn funnel_results(
         params.from,
         params.to,
         params.environment,
+        params.segment_id,
     )
     .await?;
     Ok(Json(result))
@@ -331,6 +350,7 @@ pub struct CompareFunnelsQuery {
     pub from: DateTime<Utc>,
     pub to: DateTime<Utc>,
     pub environment: Option<String>,
+    pub segment_id: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize)]
@@ -361,6 +381,7 @@ pub async fn compare_funnels(
             params.from,
             params.to,
             params.environment.clone(),
+            params.segment_id,
         )
         .await?;
         results.push(result);
@@ -376,6 +397,7 @@ pub struct CompareTimeRangesQuery {
     pub from_b: DateTime<Utc>,
     pub to_b: DateTime<Utc>,
     pub environment: Option<String>,
+    pub segment_id: Option<Uuid>,
 }
 
 pub async fn compare_time_ranges(
@@ -392,6 +414,7 @@ pub async fn compare_time_ranges(
         params.from_a,
         params.to_a,
         params.environment.clone(),
+        params.segment_id,
     )
     .await?;
     let result_b = compute_funnel_results(
@@ -401,6 +424,7 @@ pub async fn compare_time_ranges(
         params.from_b,
         params.to_b,
         params.environment,
+        params.segment_id,
     )
     .await?;
 

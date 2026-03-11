@@ -462,6 +462,60 @@ fn build_segment_clauses(
     Ok((clauses, connector.to_string(), bind_counts))
 }
 
+// ── Public segment filter for reuse by other handlers ───────────────
+
+/// Opaque segment filter that can be embedded into other ClickHouse queries.
+/// Build with `SegmentFilter::build`, embed `sql` as a WHERE clause,
+/// then call `bind_params` after binding the host query's own params.
+pub struct SegmentFilter {
+    /// SQL fragment: `user_uid IN (SELECT DISTINCT user_uid FROM ...)`
+    pub sql: String,
+    ctx: EvalContext,
+}
+
+impl SegmentFilter {
+    /// Build a segment filter from a segment definition.
+    /// Returns `Ok(None)` when the definition has zero rules (matches everyone).
+    pub fn build(
+        state: &AppState,
+        definition: &serde_json::Value,
+        environment: &Option<String>,
+    ) -> Result<Option<Self>, AppError> {
+        let ctx = prepare_eval(state, definition, environment)?;
+        if ctx.rules.is_empty() {
+            return Ok(None);
+        }
+        let sql = format!(
+            "user_uid IN (\
+                SELECT DISTINCT user_uid FROM (\
+                    SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid \
+                    FROM {db}.events WHERE project_id = ?{env}\
+                ) WHERE {where_expr}\
+            )",
+            db = ctx.db_name,
+            env = ctx.env_filter,
+            where_expr = ctx.where_expr,
+        );
+        Ok(Some(Self { sql, ctx }))
+    }
+
+    /// Bind all `?` placeholders introduced by this filter's SQL.
+    pub fn bind_params(
+        &self,
+        q: clickhouse::query::Query,
+        project_id: Uuid,
+        environment: &Option<String>,
+    ) -> clickhouse::query::Query {
+        // Outer subquery: project_id, [environment]
+        let mut q = q.bind(project_id);
+        if let Some(env) = environment {
+            q = q.bind(env.as_str());
+        }
+        // Per-rule binds
+        bind_rule_params(q, project_id, environment, &self.ctx.rules, &self.ctx.bind_counts)
+    }
+}
+
 // ── Evaluation helpers ──────────────────────────────────────────────
 
 struct EvalContext {
