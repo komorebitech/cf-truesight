@@ -103,7 +103,7 @@ pub fn metric_expr(metric: &str) -> Result<&'static str, AppError> {
         "total" => Ok("toFloat64(count())"),
         "unique_users" => Ok("toFloat64(uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))"),
         "avg_per_user" => Ok(
-            "toFloat64(count()) / max(1, uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))",
+            "toFloat64(count()) / greatest(1, uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))",
         ),
         other => Err(AppError::Validation(format!("Unknown metric: {}", other))),
     }
