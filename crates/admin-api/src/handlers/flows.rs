@@ -165,7 +165,8 @@ pub async fn flows(
                 server_timestamp, \
                 row_number() OVER (PARTITION BY {user_uid} ORDER BY server_timestamp) AS rn \
             FROM {db}.events \
-            WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{extra_where} \
+            WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
+            AND NOT startsWith(event_name, '$'){extra_where} \
         ), \
         anchor AS ( \
             SELECT user_uid, min(rn) AS anchor_rn \
@@ -223,7 +224,8 @@ pub async fn flows(
                 server_timestamp, \
                 row_number() OVER (PARTITION BY {user_uid} ORDER BY server_timestamp) AS rn \
             FROM {db}.events \
-            WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{extra_where} \
+            WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
+            AND NOT startsWith(event_name, '$'){extra_where} \
         ), \
         anchor AS ( \
             SELECT user_uid, min(rn) AS anchor_rn \
