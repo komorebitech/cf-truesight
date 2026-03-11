@@ -231,8 +231,11 @@ enum SegmentRule {
     },
     #[serde(rename = "property")]
     Property {
+        #[serde(default)]
         property: String,
+        #[serde(default)]
         op: String,
+        #[serde(default)]
         value: String,
         #[serde(default = "default_property_source")]
         source: String,
@@ -428,6 +431,10 @@ fn build_segment_clauses(
                 value,
                 source,
             } => {
+                // Skip incomplete property rules (e.g. partially saved segments)
+                if property.is_empty() || op.is_empty() {
+                    continue;
+                }
                 validate_identifier(property)?;
                 validate_identifier(value)?;
                 let sql_operator = sql_op(op)?;
@@ -565,6 +572,12 @@ fn bind_rule_params(
     _bind_counts: &[usize],
 ) -> clickhouse::query::Query {
     for rule in rules {
+        // Skip incomplete property rules (must match build_segment_clauses logic)
+        if let SegmentRule::Property { property, op, .. } = rule {
+            if property.is_empty() || op.is_empty() {
+                continue;
+            }
+        }
         q = q.bind(project_id);
         if let Some(env) = environment {
             q = q.bind(env.as_str());
