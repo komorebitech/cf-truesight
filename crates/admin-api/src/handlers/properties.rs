@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, Query, State},
     response::IntoResponse,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -26,9 +26,19 @@ const MAX_GROUP_BY: usize = 3;
 
 // ── Property Keys ────────────────────────────────────────────────────
 
+fn default_property_keys_from() -> DateTime<Utc> {
+    Utc::now() - Duration::days(90)
+}
+
+fn default_property_keys_to() -> DateTime<Utc> {
+    Utc::now()
+}
+
 #[derive(Debug, Deserialize)]
 pub struct PropertyKeysQuery {
+    #[serde(default = "default_property_keys_from")]
     pub from: DateTime<Utc>,
+    #[serde(default = "default_property_keys_to")]
     pub to: DateTime<Utc>,
     pub environment: Option<String>,
 }
