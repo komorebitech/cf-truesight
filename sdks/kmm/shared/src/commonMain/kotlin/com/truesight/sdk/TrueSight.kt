@@ -18,7 +18,6 @@ import kotlin.time.ExperimentalTime
 object TrueSight {
 
     private const val TAG = "TrueSight"
-    internal const val SDK_VERSION = "1.0.0"
 
     private var initialized = false
     private lateinit var config: Config

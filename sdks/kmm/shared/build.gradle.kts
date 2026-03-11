@@ -12,6 +12,24 @@ plugins {
 val TRUESIGHT_SDK_VERSION: String by project
 version = TRUESIGHT_SDK_VERSION
 
+val generateVersionFile by tasks.registering {
+    val outputDir = layout.buildDirectory.dir("generated/version/com/truesight/sdk")
+    val versionValue = TRUESIGHT_SDK_VERSION
+    inputs.property("sdkVersion", versionValue)
+    outputs.dir(outputDir)
+    doLast {
+        val dir = outputDir.get().asFile
+        dir.mkdirs()
+        dir.resolve("SdkVersion.kt").writeText(
+            """
+            |package com.truesight.sdk
+            |
+            |internal const val SDK_VERSION = "$versionValue"
+            """.trimMargin()
+        )
+    }
+}
+
 kotlin {
     androidLibrary {
         namespace = "com.truesight.sdk"
@@ -40,6 +58,9 @@ kotlin {
     }
 
     sourceSets {
+        commonMain {
+            kotlin.srcDir(generateVersionFile.map { layout.buildDirectory.dir("generated/version") })
+        }
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)

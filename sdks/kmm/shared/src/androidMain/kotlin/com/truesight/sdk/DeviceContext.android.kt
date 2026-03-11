@@ -60,7 +60,7 @@ actual class DeviceContextCollector {
             networkType = networkType,
             locale = locale,
             timezone = timezone,
-            sdkVersion = TrueSight.SDK_VERSION,
+            sdkVersion = SDK_VERSION,
             platform = "android"
         )
     }
@@ -75,7 +75,7 @@ actual class DeviceContextCollector {
             networkType = "unknown",
             locale = java.util.Locale.getDefault().let { "${it.language}-${it.country}" },
             timezone = java.util.TimeZone.getDefault().id,
-            sdkVersion = TrueSight.SDK_VERSION,
+            sdkVersion = SDK_VERSION,
             platform = "android"
         )
     }

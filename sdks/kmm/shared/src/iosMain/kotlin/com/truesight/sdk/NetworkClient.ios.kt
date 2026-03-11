@@ -36,7 +36,7 @@ actual class NetworkClient {
 
             val response = client.post("$endpoint/v1/events/batch") {
                 header("X-API-Key", apiKey)
-                header("User-Agent", "TrueSight-KMM/${TrueSight.SDK_VERSION}")
+                header("User-Agent", "TrueSight-KMM/${SDK_VERSION}")
                 contentType(ContentType.Application.Json)
                 setBody(jsonBytes)
             }
