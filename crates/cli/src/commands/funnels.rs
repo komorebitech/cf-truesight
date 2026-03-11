@@ -49,7 +49,7 @@ pub async fn run(
             render(format, &resp);
         }
         FunnelsCommand::Compare { ids, from, to } => {
-            let mut url = format!("/v1/projects/{project}/funnels/compare?ids={ids}");
+            let mut url = format!("/v1/projects/{project}/funnels/compare?funnel_ids={ids}");
             if let Some(f) = from {
                 url.push_str(&format!("&from={f}"));
             }
