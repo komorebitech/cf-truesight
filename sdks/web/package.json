@@ -1,6 +1,6 @@
 {
   "name": "@cityflo/truesight-web-sdk",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "TrueSight Web Analytics SDK",
   "type": "module",
   "main": "dist/truesight.cjs.js",
