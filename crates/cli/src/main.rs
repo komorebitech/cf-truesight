@@ -60,6 +60,7 @@ async fn main() -> Result<()> {
 
     match &cli.command {
         Command::Update => commands::update::run().await,
+        Command::Skill => commands::skill::run(),
         Command::Auth { command } => auth::run(command, &cli).await,
         Command::Config { command } => commands::config::run(command),
         Command::Projects { command } => {

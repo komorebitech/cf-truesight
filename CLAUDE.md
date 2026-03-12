@@ -89,6 +89,7 @@ Key env vars (see `.env.example` for full list):
 - Auth: browser-based Google OAuth via dashboard `/cli/auth` page
 - Output: JSON by default (`--format table` for human-readable)
 - All admin API read/query features have corresponding CLI commands
+- **Claude Code skill**: `/ts` (alias `/truesight`) at `~/.claude/skills/ts/SKILL.md` — update this skill when CLI commands change (new subcommands, changed flags, etc.)
 - Release process:
   1. Bump version in `crates/cli/Cargo.toml`
   2. Commit and push

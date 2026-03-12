@@ -10,6 +10,7 @@ pub mod projects;
 pub mod properties;
 pub mod retention;
 pub mod segments;
+pub mod skill;
 pub mod stats;
 pub mod teams;
 pub mod trends;

@@ -43,6 +43,8 @@ pub enum OutputFormat {
 pub enum Command {
     /// Update the CLI to the latest version
     Update,
+    /// Install the Claude Code skill (/ts) for AI-assisted CLI usage
+    Skill,
     /// Authenticate with TrueSight via Google OAuth
     Auth {
         #[command(subcommand)]
