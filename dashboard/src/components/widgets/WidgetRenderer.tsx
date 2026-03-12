@@ -15,6 +15,7 @@ export function WidgetRenderer({ widget, projectId }: Props) {
     case "event_trend":
       return <EventTrendWidget projectId={projectId} config={widget.config} />;
     case "trend":
+    case "trends":
       return <TrendWidget projectId={projectId} config={widget.config} />;
     case "funnel":
       return <FunnelWidget projectId={projectId} config={widget.config} />;
