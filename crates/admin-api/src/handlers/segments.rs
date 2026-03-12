@@ -16,7 +16,8 @@ use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
 use super::query_builder::{
-    build_property_filter_clauses, column_expr, escape_string_literal, validate_identifier,
+    build_property_filter_clauses, column_expr, escape_string_literal, is_top_level,
+    validate_identifier,
 };
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -438,23 +439,82 @@ fn build_segment_clauses(
                     continue;
                 }
                 validate_identifier(property)?;
-                validate_identifier(value)?;
-                let sql_operator = sql_op(op)?;
                 let escaped_property = property.replace('\'', "\\'");
-                let escaped_value = value.replace('\'', "\\'");
+
+                // Build the WHERE condition based on operator
+                let condition = match op.as_str() {
+                    "exists" => {
+                        if source == "event" {
+                            if is_top_level(property) {
+                                format!("{} != ''", property)
+                            } else {
+                                format!("mapContains(properties_map, '{escaped_property}')")
+                            }
+                        } else {
+                            format!("mapContains(properties, '{escaped_property}')")
+                        }
+                    }
+                    "not_exists" => {
+                        if source == "event" {
+                            if is_top_level(property) {
+                                format!("{} = ''", property)
+                            } else {
+                                format!("NOT mapContains(properties_map, '{escaped_property}')")
+                            }
+                        } else {
+                            format!("NOT mapContains(properties, '{escaped_property}')")
+                        }
+                    }
+                    "contains" => {
+                        validate_identifier(value)?;
+                        let escaped_value = value.replace('\'', "\\'");
+                        let col = if source == "event" {
+                            column_expr(property)
+                        } else {
+                            format!("properties['{escaped_property}']")
+                        };
+                        format!("positionCaseInsensitive({col}, '{escaped_value}') > 0")
+                    }
+                    "in" | "not_in" => {
+                        validate_identifier(value)?;
+                        let escaped_value = value.replace('\'', "\\'");
+                        let col = if source == "event" {
+                            column_expr(property)
+                        } else {
+                            format!("properties['{escaped_property}']")
+                        };
+                        let sql_in = if op == "in" { "IN" } else { "NOT IN" };
+                        // value is a comma-separated list
+                        let items: Vec<String> = escaped_value
+                            .split(',')
+                            .map(|s| format!("'{}'", s.trim()))
+                            .collect();
+                        format!("{col} {sql_in} ({})", items.join(", "))
+                    }
+                    _ => {
+                        validate_identifier(value)?;
+                        let sql_operator = sql_op(op)?;
+                        let escaped_value = value.replace('\'', "\\'");
+                        let col = if source == "event" {
+                            column_expr(property)
+                        } else {
+                            format!("properties['{escaped_property}']")
+                        };
+                        format!("{col} {sql_operator} '{escaped_value}'")
+                    }
+                };
 
                 let subquery = if source == "event" {
-                    let col = column_expr(property);
                     format!(
                         "SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid \
                          FROM {db_name}.events \
-                         WHERE project_id = ? AND {col} {sql_operator} '{escaped_value}'{env_filter}"
+                         WHERE project_id = ? AND {condition}{env_filter}"
                     )
                 } else {
                     format!(
                         "SELECT user_uid \
                          FROM {db_name}.user_profiles FINAL \
-                         WHERE project_id = ? AND properties['{escaped_property}'] {sql_operator} '{escaped_value}'{env_filter}"
+                         WHERE project_id = ? AND {condition}{env_filter}"
                     )
                 };
                 clauses.push(format!("user_uid IN ({subquery})"));
@@ -575,10 +635,10 @@ fn bind_rule_params(
 ) -> clickhouse::query::Query {
     for rule in rules {
         // Skip incomplete property rules (must match build_segment_clauses logic)
-        if let SegmentRule::Property { property, op, .. } = rule {
-            if property.is_empty() || op.is_empty() {
-                continue;
-            }
+        if let SegmentRule::Property { property, op, .. } = rule
+            && (property.is_empty() || op.is_empty())
+        {
+            continue;
         }
         q = q.bind(project_id);
         if let Some(env) = environment {

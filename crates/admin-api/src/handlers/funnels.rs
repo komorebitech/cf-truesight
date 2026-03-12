@@ -12,6 +12,7 @@ use truesight_common::team::TeamRole;
 
 use crate::db::funnels as db;
 use crate::db::segments as segments_db;
+use crate::handlers::query_builder::{self, build_property_filter_clauses};
 use crate::handlers::rbac;
 use crate::handlers::segments::SegmentFilter;
 use crate::middleware::admin_auth::AuthUser;
@@ -170,7 +171,17 @@ pub struct FunnelResultsResponse {
 pub struct FunnelStep {
     pub event_name: String,
     #[serde(default)]
-    pub filters: serde_json::Value,
+    pub filters: Vec<FunnelPropertyFilter>,
+}
+
+/// Accepts both `property/operator` (canonical) and `key/op` (legacy) field names.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FunnelPropertyFilter {
+    #[serde(alias = "key")]
+    pub property: String,
+    #[serde(alias = "op")]
+    pub operator: String,
+    pub value: Option<serde_json::Value>,
 }
 
 #[derive(Debug, clickhouse::Row, Deserialize)]
@@ -212,11 +223,32 @@ async fn compute_funnel_results(
     let from_ts = from.timestamp_millis() as f64 / 1000.0;
     let to_ts = to.timestamp_millis() as f64 / 1000.0;
 
-    // Build windowFunnel conditions
-    let conditions: Vec<String> = steps
-        .iter()
-        .map(|s| format!("event_name = '{}'", s.event_name.replace('\'', "\\'")))
-        .collect();
+    // Build per-step windowFunnel conditions and collect bind values
+    let mut wf_conditions: Vec<String> = Vec::new();
+    let mut filter_bind_values: Vec<String> = Vec::new();
+
+    for step in &steps {
+        let event_cond = format!("event_name = '{}'", step.event_name.replace('\'', "\\'"));
+
+        if step.filters.is_empty() {
+            wf_conditions.push(event_cond);
+        } else {
+            let qb_filters: Vec<query_builder::PropertyFilter> = step
+                .filters
+                .iter()
+                .map(|f| query_builder::PropertyFilter {
+                    property: f.property.clone(),
+                    operator: f.operator.clone(),
+                    value: f.value.clone(),
+                })
+                .collect();
+            let (prop_conds, prop_binds) = build_property_filter_clauses(&qb_filters)?;
+            let mut all_conds = vec![event_cond];
+            all_conds.extend(prop_conds);
+            wf_conditions.push(all_conds.join(" AND "));
+            filter_bind_values.extend(prop_binds);
+        }
+    }
 
     let event_names: Vec<String> = steps
         .iter()
@@ -234,27 +266,35 @@ async fn compute_funnel_results(
         .map(|f| format!(" WHERE {}", f.sql))
         .unwrap_or_default();
 
+    // Include properties_map in inner SELECT when any step has filters
+    let has_filters = steps.iter().any(|s| !s.filters.is_empty());
+    let extra_cols = if has_filters { ", properties_map" } else { "" };
+
     let query = format!(
         "SELECT level, count() AS users FROM ( \
             SELECT user_uid, windowFunnel({window})(toDateTime(server_timestamp), {conditions}) AS level \
             FROM ( \
-                SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid, server_timestamp, event_name \
+                SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid, server_timestamp, event_name{extra_cols} \
                 FROM {db_name}.events \
                 WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
                 AND event_name IN ({event_names}){env_filter} \
             ){segment_clause} GROUP BY user_uid \
         ) GROUP BY level ORDER BY level",
         window = funnel.window_seconds,
-        conditions = conditions.join(", "),
+        conditions = wf_conditions.join(", "),
         event_names = event_names.join(", "),
     );
 
-    let mut q = state
-        .clickhouse_client
-        .query(&query)
-        .bind(project_id)
-        .bind(from_ts)
-        .bind(to_ts);
+    // Bind order must match ? placeholder order in the SQL:
+    // 1. windowFunnel step filter params (in the SELECT clause)
+    // 2. project_id, from_ts, to_ts (inner WHERE)
+    // 3. environment (inner WHERE, optional)
+    // 4. segment params (outer WHERE, optional)
+    let mut q = state.clickhouse_client.query(&query);
+    for val in &filter_bind_values {
+        q = q.bind(val.as_str());
+    }
+    q = q.bind(project_id).bind(from_ts).bind(to_ts);
     if let Some(ref env) = environment {
         q = q.bind(env.as_str());
     }
