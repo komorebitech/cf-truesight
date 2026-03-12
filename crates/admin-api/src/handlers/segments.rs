@@ -252,7 +252,9 @@ fn default_property_source() -> String {
 
 #[derive(Debug, Deserialize)]
 struct SegmentPropertyFilter {
+    #[serde(alias = "key")]
     property: String,
+    #[serde(alias = "op")]
     operator: String,
     value: Option<serde_json::Value>,
 }
