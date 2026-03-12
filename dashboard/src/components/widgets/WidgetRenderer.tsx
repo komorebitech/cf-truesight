@@ -1,5 +1,6 @@
 import type { BoardWidget } from "@/lib/api";
 import { EventTrendWidget } from "./EventTrendWidget";
+import { TrendWidget } from "./TrendWidget";
 import { FunnelWidget } from "./FunnelWidget";
 import { MetricWidget } from "./MetricWidget";
 import { ActiveUsersWidget } from "./ActiveUsersWidget";
@@ -13,6 +14,8 @@ export function WidgetRenderer({ widget, projectId }: Props) {
   switch (widget.widget_type) {
     case "event_trend":
       return <EventTrendWidget projectId={projectId} config={widget.config} />;
+    case "trend":
+      return <TrendWidget projectId={projectId} config={widget.config} />;
     case "funnel":
       return <FunnelWidget projectId={projectId} config={widget.config} />;
     case "metric":
