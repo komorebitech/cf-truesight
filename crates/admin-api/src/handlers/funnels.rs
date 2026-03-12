@@ -275,7 +275,7 @@ async fn compute_funnel_results(
         "SELECT level, count() AS users FROM ( \
             SELECT user_uid, windowFunnel({window})(toDateTime(server_timestamp), {conditions}) AS level \
             FROM ( \
-                SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid, server_timestamp, event_name{extra_cols} \
+                SELECT anonymous_id AS user_uid, server_timestamp, event_name{extra_cols} \
                 FROM {db_name}.events \
                 WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
                 AND event_name IN ({event_names}){env_filter} \
