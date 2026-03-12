@@ -170,8 +170,9 @@ pub struct FunnelResultsResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FunnelStep {
     pub event_name: String,
-    #[serde(default)]
-    pub filters: Vec<FunnelPropertyFilter>,
+    /// Accepts both `property_filters` (used by dashboard) and `filters` (legacy).
+    #[serde(default, alias = "filters")]
+    pub property_filters: Vec<FunnelPropertyFilter>,
 }
 
 /// Accepts both `property/operator` (canonical) and `key/op` (legacy) field names.
@@ -230,11 +231,11 @@ async fn compute_funnel_results(
     for step in &steps {
         let event_cond = format!("event_name = '{}'", step.event_name.replace('\'', "\\'"));
 
-        if step.filters.is_empty() {
+        if step.property_filters.is_empty() {
             wf_conditions.push(event_cond);
         } else {
             let qb_filters: Vec<query_builder::PropertyFilter> = step
-                .filters
+                .property_filters
                 .iter()
                 .map(|f| query_builder::PropertyFilter {
                     property: f.property.clone(),
@@ -267,7 +268,7 @@ async fn compute_funnel_results(
         .unwrap_or_default();
 
     // Include properties_map in inner SELECT when any step has filters
-    let has_filters = steps.iter().any(|s| !s.filters.is_empty());
+    let has_filters = steps.iter().any(|s| !s.property_filters.is_empty());
     let extra_cols = if has_filters { ", properties_map" } else { "" };
 
     let query = format!(
