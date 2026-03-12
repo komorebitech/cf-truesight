@@ -412,7 +412,7 @@ fn build_segment_clauses(
                 let in_op = if action == "did_not" { "NOT IN" } else { "IN" };
 
                 let subquery = format!(
-                    "SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid \
+                    "SELECT anonymous_id AS user_uid \
                      FROM {db_name}.events \
                      WHERE project_id = ? AND event_name = '{escaped_name}'\
                      {time_clause}{env_filter}{prop_clause} \
@@ -506,7 +506,7 @@ fn build_segment_clauses(
 
                 let subquery = if source == "event" {
                     format!(
-                        "SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid \
+                        "SELECT anonymous_id AS user_uid \
                          FROM {db_name}.events \
                          WHERE project_id = ? AND {condition}{env_filter}"
                     )
@@ -557,7 +557,7 @@ impl SegmentFilter {
         let sql = format!(
             "user_uid IN (\
                 SELECT DISTINCT user_uid FROM (\
-                    SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid \
+                    SELECT anonymous_id AS user_uid \
                     FROM {db}.events WHERE project_id = ?{env}\
                 ) WHERE {where_expr}\
             )",
@@ -689,7 +689,7 @@ pub async fn segment_size(
     let query_str = format!(
         "SELECT count(DISTINCT user_uid) AS cnt \
          FROM ( \
-             SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid \
+             SELECT anonymous_id AS user_uid \
              FROM {db}.events \
              WHERE project_id = ?{env} \
          ) \
@@ -755,7 +755,7 @@ pub async fn segment_users(
     let query_str = format!(
         "SELECT DISTINCT user_uid \
          FROM ( \
-             SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid \
+             SELECT anonymous_id AS user_uid \
              FROM {db}.events \
              WHERE project_id = ?{env} \
          ) \
@@ -823,7 +823,7 @@ pub async fn segment_preview(
     let query_str = format!(
         "SELECT count(DISTINCT user_uid) AS cnt \
          FROM ( \
-             SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid \
+             SELECT anonymous_id AS user_uid \
              FROM {db}.events \
              WHERE project_id = ?{env} \
          ) \

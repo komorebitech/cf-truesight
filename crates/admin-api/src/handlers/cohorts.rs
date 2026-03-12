@@ -280,7 +280,7 @@ fn build_cohort_clauses(
                 let escaped_name = event_name.replace('\'', "\\'");
 
                 let subquery = format!(
-                    "SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid \
+                    "SELECT anonymous_id AS user_uid \
                      FROM {db_name}.events \
                      WHERE project_id = ? AND event_name = '{escaped_name}' \
                      AND server_timestamp >= now() - INTERVAL {interval}{env_filter} \
@@ -351,7 +351,7 @@ pub async fn cohort_users(
     let query_str = format!(
         "SELECT DISTINCT user_uid \
          FROM ( \
-             SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid \
+             SELECT anonymous_id AS user_uid \
              FROM {db_name}.events \
              WHERE project_id = ?{env_filter} \
          ) \
@@ -427,7 +427,7 @@ pub async fn cohort_size(
     let query_str = format!(
         "SELECT count(DISTINCT user_uid) AS cnt \
          FROM ( \
-             SELECT COALESCE(NULLIF(user_id, ''), anonymous_id) AS user_uid \
+             SELECT anonymous_id AS user_uid \
              FROM {db_name}.events \
              WHERE project_id = ?{env_filter} \
          ) \

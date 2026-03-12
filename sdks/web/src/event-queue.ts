@@ -222,6 +222,62 @@ export class EventQueue {
     await this.remove(ids);
   }
 
+  async backfillUserId(userId: string): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not opened. Call open() first.');
+    }
+
+    const key = await deriveKey(this.apiKey);
+
+    return new Promise((resolve, reject) => {
+      const tx = this.db!.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.openCursor();
+
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) return; // transaction will complete naturally
+
+        const stored = cursor.value as StoredEvent;
+        void (async () => {
+          try {
+            const json = await decrypt(stored.encrypted, key);
+            const event = JSON.parse(json) as TrueSightEvent;
+
+            if (!event.user_id) {
+              event.user_id = userId;
+              const encrypted = await encrypt(JSON.stringify(event), key);
+              const updated: StoredEvent = {
+                ...stored,
+                encrypted,
+              };
+              cursor.update(updated);
+            }
+
+            cursor.continue();
+          } catch (err) {
+            logger.error('Failed to backfill event', stored.event_id, err);
+            cursor.continue();
+          }
+        })();
+      };
+
+      request.onerror = () => {
+        logger.error('Failed to backfill userId', request.error);
+        reject(request.error);
+      };
+
+      tx.oncomplete = () => {
+        logger.debug(`Backfilled queued events with userId: ${userId}`);
+        resolve();
+      };
+
+      tx.onerror = () => {
+        reject(tx.error);
+      };
+    });
+  }
+
   close(): void {
     if (this.db) {
       this.db.close();

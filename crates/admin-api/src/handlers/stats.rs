@@ -660,7 +660,7 @@ pub async fn live_users(
     };
 
     let query_5m = format!(
-        "SELECT uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)) AS active \
+        "SELECT uniqExact(anonymous_id) AS active \
          FROM {db}.events \
          WHERE project_id = ? AND server_timestamp >= now() - INTERVAL 5 MINUTE{env_filter}"
     );
@@ -675,7 +675,7 @@ pub async fn live_users(
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
 
     let query_30m = format!(
-        "SELECT uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)) AS active \
+        "SELECT uniqExact(anonymous_id) AS active \
          FROM {db}.events \
          WHERE project_id = ? AND server_timestamp >= now() - INTERVAL 30 MINUTE{env_filter}"
     );
@@ -727,7 +727,7 @@ pub async fn platform_distribution(
 
     let query = format!(
         "SELECT platform, \
-         uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)) AS users, \
+         uniqExact(anonymous_id) AS users, \
          count() AS events \
          FROM {db}.events \
          WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{env_filter} \

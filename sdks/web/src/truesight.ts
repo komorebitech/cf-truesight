@@ -8,6 +8,7 @@ import {
   getOrCreateAnonymousId,
   resetAnonymousId,
 } from './anonymous-id.js';
+import { readUserId, writeUserId, clearUserId } from './user-id.js';
 import { clearKeyCache } from './encryption.js';
 import { logger } from './logger.js';
 import { SessionManager } from './session-manager.js';
@@ -49,6 +50,9 @@ export class TrueSightSDK {
 
     // Initialize anonymous ID
     this.anonymousId = await getOrCreateAnonymousId(this.config.apiKey);
+
+    // Restore persisted user ID
+    this.userId = await readUserId(this.config.apiKey);
 
     // Open IndexedDB queue
     this.queue = new EventQueue(this.config.apiKey, this.config.maxQueueHard);
@@ -116,6 +120,9 @@ export class TrueSightSDK {
     this.userId = userId;
     this.traits = { ...this.traits, ...traits };
 
+    // Persist user ID for cross-reload continuity
+    await writeUserId(userId, this.config.apiKey);
+
     // Auto-promote mobile_number and email from traits
     if (
       typeof traits.mobile_number === 'string' &&
@@ -126,6 +133,9 @@ export class TrueSightSDK {
     if (typeof traits.email === 'string' && traits.email) {
       this.email = traits.email;
     }
+
+    // Backfill queued events that have no user_id
+    await this.queue.backfillUserId(userId);
 
     await this.enqueueEvent('identify', 'identify', traits);
   }
@@ -171,6 +181,9 @@ export class TrueSightSDK {
     this.mobileNumber = null;
     this.email = null;
     this.traits = {};
+
+    // Clear persisted user ID
+    clearUserId();
 
     // Reset session
     if (this.sessionManager) {

@@ -5,9 +5,9 @@ use truesight_common::error::AppError;
 
 // ── Constants ────────────────────────────────────────────────────────
 
-/// `COALESCE(NULLIF(user_id, ''), anonymous_id)` — the canonical expression
-/// for resolving a unique user identifier across all ClickHouse queries.
-pub const USER_UID_EXPR: &str = "COALESCE(NULLIF(user_id, ''), anonymous_id)";
+/// `anonymous_id` — the canonical expression for resolving a unique user
+/// identifier across all ClickHouse analytics queries.
+pub const USER_UID_EXPR: &str = "anonymous_id";
 
 /// Merged superset of top-level columns from properties.rs and flows.rs.
 pub const TOP_LEVEL_COLUMNS: &[&str] = &[
@@ -101,9 +101,9 @@ pub fn extract_string_array(value: &Option<serde_json::Value>) -> Result<Vec<Str
 pub fn metric_expr(metric: &str) -> Result<&'static str, AppError> {
     match metric {
         "total" => Ok("toFloat64(count())"),
-        "unique_users" => Ok("toFloat64(uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))"),
+        "unique_users" => Ok("toFloat64(uniqExact(anonymous_id))"),
         "avg_per_user" => Ok(
-            "toFloat64(count()) / greatest(1, uniqExact(COALESCE(NULLIF(user_id, ''), anonymous_id)))",
+            "toFloat64(count()) / greatest(1, uniqExact(anonymous_id))",
         ),
         other => Err(AppError::Validation(format!("Unknown metric: {}", other))),
     }
