@@ -22,6 +22,8 @@ import { Workflow, ArrowLeft, ChevronRight } from "lucide-react";
 
 type Direction = "forward" | "backward";
 
+const MAX_DEPTH = 3;
+
 export function FlowsPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -34,61 +36,78 @@ export function FlowsPage() {
   const [topPaths, setTopPaths] = useState(10);
   const [segmentId, setSegmentId] = useState<string | undefined>();
 
-  // Sub-flow: 1 level deep only
-  const [subFlowAnchor, setSubFlowAnchor] = useState<string | null>(null);
+  // Breadcrumb stack of sub-flow anchors (max MAX_DEPTH deep)
+  const [breadcrumbs, setBreadcrumbs] = useState<string[]>([]);
 
-  const baseRequest: FlowsRequest | null = useMemo(() => {
-    if (!anchorEvent) return null;
-    return {
-      anchor_event: anchorEvent,
-      direction,
-      steps,
-      top_paths: topPaths,
-      from: timeRange.from,
-      to: timeRange.to,
-      environment,
-      segment_id: segmentId,
-    };
-  }, [anchorEvent, direction, steps, topPaths, timeRange, environment, segmentId]);
+  const depth = breadcrumbs.length;
+  const currentAnchor = depth > 0 ? breadcrumbs[depth - 1]! : anchorEvent;
 
-  const subFlowRequest: FlowsRequest | null = useMemo(() => {
-    if (!subFlowAnchor || !baseRequest) return null;
-    return {
-      ...baseRequest,
-      anchor_event: subFlowAnchor,
-    };
-  }, [subFlowAnchor, baseRequest]);
+  const makeRequest = useCallback(
+    (anchor: string): FlowsRequest | null => {
+      if (!anchor) return null;
+      return {
+        anchor_event: anchor,
+        direction,
+        steps,
+        top_paths: topPaths,
+        from: timeRange.from,
+        to: timeRange.to,
+        environment,
+        segment_id: segmentId,
+      };
+    },
+    [direction, steps, topPaths, timeRange, environment, segmentId],
+  );
 
-  const { data: flowsData, isLoading } = useFlows(id, baseRequest);
-  const { data: subFlowData, isLoading: subFlowLoading } = useFlows(id, subFlowRequest);
+  // Always fetch the current level
+  const activeRequest = useMemo(
+    () => makeRequest(currentAnchor),
+    [makeRequest, currentAnchor],
+  );
 
-  const isViewingSubFlow = subFlowAnchor !== null;
-  const activeData = isViewingSubFlow ? subFlowData : flowsData;
-  const activeLoading = isViewingSubFlow ? subFlowLoading : isLoading;
-  const handleNodeClick = useCallback((eventName: string) => {
-    setSubFlowAnchor(eventName);
-  }, []);
+  const { data: activeData, isLoading: activeLoading } = useFlows(id, activeRequest);
+
+  const canDrillDown = depth < MAX_DEPTH;
+
+  const handleNodeClick = useCallback(
+    (eventName: string) => {
+      if (!canDrillDown) return;
+      setBreadcrumbs((prev) => [...prev, eventName]);
+    },
+    [canDrillDown],
+  );
 
   const handleBack = useCallback(() => {
-    setSubFlowAnchor(null);
+    setBreadcrumbs((prev) => prev.slice(0, -1));
   }, []);
 
-  // Reset sub-flow when main controls change
+  const handleNavigateTo = useCallback((index: number) => {
+    // index -1 = root anchor, 0 = first breadcrumb, etc.
+    if (index < 0) {
+      setBreadcrumbs([]);
+    } else {
+      setBreadcrumbs((prev) => prev.slice(0, index + 1));
+    }
+  }, []);
+
+  // Reset breadcrumbs when main controls change
+  const resetBreadcrumbs = useCallback(() => setBreadcrumbs([]), []);
+
   const handleAnchorChange = useCallback((v: string) => {
     setAnchorEvent(v);
-    setSubFlowAnchor(null);
+    setBreadcrumbs([]);
   }, []);
 
   const handleDirectionChange = useCallback((v: string) => {
     setDirection(v as Direction);
-    setSubFlowAnchor(null);
+    setBreadcrumbs([]);
   }, []);
 
   const handleStepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
     if (!isNaN(val) && val >= 2 && val <= 7) {
       setSteps(val);
-      setSubFlowAnchor(null);
+      resetBreadcrumbs();
     }
   };
 
@@ -96,9 +115,13 @@ export function FlowsPage() {
     const val = parseInt(e.target.value, 10);
     if (!isNaN(val) && val >= 1 && val <= 20) {
       setTopPaths(val);
-      setSubFlowAnchor(null);
+      resetBreadcrumbs();
     }
   };
+
+  // Build the full breadcrumb trail: [root anchor, ...sub-flow anchors]
+  const trail = [anchorEvent, ...breadcrumbs];
+  const isSubFlow = depth > 0;
 
   return (
     <PageLayout title="Flows" spacing={false} className="flex min-h-0 flex-col overflow-hidden !pb-4">
@@ -172,7 +195,7 @@ export function FlowsPage() {
         <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <CardHeader className="shrink-0 py-3">
             <div className="flex items-center gap-3">
-              {isViewingSubFlow && (
+              {isSubFlow && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -184,16 +207,28 @@ export function FlowsPage() {
               )}
               <div className="min-w-0">
                 <CardTitle className="text-base">
-                  {isViewingSubFlow ? (
+                  {isSubFlow ? (
                     <span className="flex items-center gap-1.5 flex-wrap">
-                      <button
-                        onClick={handleBack}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {anchorEvent}
-                      </button>
-                      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <span>{subFlowAnchor}</span>
+                      {trail.map((name, i) => {
+                        const isLast = i === trail.length - 1;
+                        return (
+                          <span key={i} className="flex items-center gap-1.5">
+                            {i > 0 && (
+                              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            )}
+                            {isLast ? (
+                              <span>{name}</span>
+                            ) : (
+                              <button
+                                onClick={() => handleNavigateTo(i - 1)}
+                                className="text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                {name}
+                              </button>
+                            )}
+                          </span>
+                        );
+                      })}
                     </span>
                   ) : (
                     <>
@@ -203,8 +238,8 @@ export function FlowsPage() {
                   )}
                 </CardTitle>
                 <CardDescription className="mt-0.5">
-                  {isViewingSubFlow
-                    ? `Sub-flow from \u201c${subFlowAnchor}\u201d \u00b7 Click back to return`
+                  {isSubFlow
+                    ? `Depth ${depth}/${MAX_DEPTH} \u00b7 ${canDrillDown ? "Click a node to go deeper" : "Maximum depth reached"}`
                     : `Top ${topPaths} paths across ${steps} steps \u00b7 Click a node to explore its sub-flow`
                   }
                 </CardDescription>
@@ -216,8 +251,8 @@ export function FlowsPage() {
               nodes={activeData?.nodes ?? []}
               links={activeData?.links ?? []}
               isLoading={activeLoading}
-              isClickable={!isViewingSubFlow}
-              onNodeClick={!isViewingSubFlow ? handleNodeClick : undefined}
+              isClickable={canDrillDown}
+              onNodeClick={canDrillDown ? handleNodeClick : undefined}
             />
           </CardContent>
         </Card>
