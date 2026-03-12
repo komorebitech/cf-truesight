@@ -20,7 +20,7 @@ export function PageLayout({ title, children, spacing = true, className }: PageL
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-        className={cn("flex min-h-0 flex-1 flex-col px-8 pt-2 pb-4", spacing && "space-y-6", className)}
+        className={cn("flex-1 px-8 pt-2 pb-8", spacing && "space-y-6", className)}
       >
         {children}
       </motion.div>

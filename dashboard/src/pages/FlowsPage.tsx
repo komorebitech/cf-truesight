@@ -101,7 +101,7 @@ export function FlowsPage() {
   };
 
   return (
-    <PageLayout title="Flows" spacing={false} className="overflow-hidden">
+    <PageLayout title="Flows" spacing={false} className="flex min-h-0 flex-col overflow-hidden !pb-4">
       {/* Controls */}
       <div className="shrink-0 flex flex-wrap items-center gap-3 pb-4">
         <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
