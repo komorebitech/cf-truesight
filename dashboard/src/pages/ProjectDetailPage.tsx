@@ -313,9 +313,17 @@ export function ProjectDetailPage() {
   const maxEventCount = topEvents[0]?.count ?? 1;
 
   // Platform donut data
+  const DEVICE_LABELS: Record<string, string> = {
+    ios: "iOS",
+    android: "Android",
+    desktop: "Desktop",
+    mobile_web: "Mobile Web",
+    web: "Web",
+    other: "Other",
+  };
   const platformChartData = (platformData?.data ?? []).map((d) => ({
     ...d,
-    platform: d.platform || "unknown",
+    platform: DEVICE_LABELS[d.platform] ?? d.platform || "Unknown",
   }));
 
   // Sparkline data
@@ -523,15 +531,15 @@ export function ProjectDetailPage() {
           >
             <Card className="h-full">
               <CardHeader>
-                <CardTitle className="text-sm font-medium">Platform Mix</CardTitle>
+                <CardTitle className="text-sm font-medium">Device Mix</CardTitle>
               </CardHeader>
               <CardContent>
                 {platformLoading ? (
                   <Skeleton className="mx-auto h-40 w-40 rounded-full" />
                 ) : platformChartData.length === 0 ? (
                   <div className="flex h-40 flex-col items-center justify-center gap-1">
-                    <span className="text-sm text-muted-foreground">Waiting for your first platforms</span>
-                    <span className="text-xs text-muted-foreground/60">Web, Android, iOS — we'll track them all</span>
+                    <span className="text-sm text-muted-foreground">Waiting for your first events</span>
+                    <span className="text-xs text-muted-foreground/60">iOS, Android, Desktop, Mobile Web</span>
                   </div>
                 ) : (
                   <>

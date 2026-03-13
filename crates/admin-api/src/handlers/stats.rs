@@ -726,7 +726,16 @@ pub async fn platform_distribution(
     };
 
     let query = format!(
-        "SELECT platform, \
+        "SELECT \
+         CASE \
+           WHEN platform != 'web' THEN platform \
+           WHEN os_name IN ('iOS', 'iPadOS') THEN 'ios' \
+           WHEN os_name = 'Android' THEN 'android' \
+           WHEN os_name IN ('Windows', 'macOS', 'Linux', 'Chrome OS') THEN 'desktop' \
+           WHEN device_model = 'Desktop' THEN 'desktop' \
+           WHEN device_model = 'Mobile' THEN 'mobile_web' \
+           ELSE 'other' \
+         END AS platform, \
          uniqExact(anonymous_id) AS users, \
          count() AS events \
          FROM {db}.events \

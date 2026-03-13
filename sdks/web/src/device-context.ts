@@ -29,6 +29,17 @@ function parseBrowserVersion(ua: string): string {
   return 'Unknown';
 }
 
+function detectOS(ua: string): string {
+  if (/iPad/i.test(ua)) return 'iPadOS';
+  if (/iPhone|iPod/i.test(ua)) return 'iOS';
+  if (/Android/i.test(ua)) return 'Android';
+  if (/Windows/i.test(ua)) return 'Windows';
+  if (/Mac OS|Macintosh/i.test(ua)) return 'macOS';
+  if (/CrOS/i.test(ua)) return 'Chrome OS';
+  if (/Linux/i.test(ua)) return 'Linux';
+  return 'Unknown';
+}
+
 function detectDeviceModel(ua: string): string {
   if (/Tablet|iPad/i.test(ua)) {
     return 'Tablet';
@@ -146,7 +157,7 @@ async function getCachedDeviceFields(): Promise<CachedDeviceFields> {
       typeof document !== 'undefined'
         ? document.querySelector('meta[name=version]')?.getAttribute('content') || 'unknown'
         : 'unknown',
-    os_name: 'Web',
+    os_name: detectOS(ua),
     os_version: parseBrowserVersion(ua),
     device_model: detectDeviceModel(ua),
     device_id: deviceId,
