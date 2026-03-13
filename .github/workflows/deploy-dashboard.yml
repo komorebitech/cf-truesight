@@ -2,7 +2,7 @@ name: Deploy - Dashboard
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - "dashboard/**"
   workflow_dispatch:
