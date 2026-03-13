@@ -16,8 +16,8 @@ use crate::state::AppState;
 
 use super::query_builder::{
     GroupedSeriesRow, GroupedTotalsRow, PropertyFilter, build_group_key,
-    build_property_filter_clauses, column_expr, group_series_rows, metric_expr, period_expr,
-    validate_identifier,
+    build_property_filter_clauses, column_expr, group_series_rows, identity_join, metric_expr,
+    period_expr, validate_identifier,
 };
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -268,8 +268,9 @@ pub async fn insights(
     };
 
     // Build WHERE conditions
+    let ij = identity_join(db);
     let mut conditions = Vec::new();
-    conditions.push("project_id = ?".to_string());
+    conditions.push("e.project_id = ?".to_string());
     conditions.push("server_timestamp BETWEEN ? AND ?".to_string());
 
     if req.event_name.is_some() {
@@ -289,7 +290,7 @@ pub async fn insights(
 
     let series_query = format!(
         "SELECT {period} AS period, {group_select}, {metric} AS value \
-         FROM {db}.events \
+         FROM {db}.events AS e{ij} \
          WHERE {where_clause} \
          GROUP BY period{group_by_clause} \
          ORDER BY period"
@@ -325,7 +326,7 @@ pub async fn insights(
 
     let totals_query = format!(
         "SELECT {group_select}, {metric} AS value \
-         FROM {db}.events \
+         FROM {db}.events AS e{ij} \
          WHERE {where_clause} \
          {totals_group_by}\
          ORDER BY value DESC \

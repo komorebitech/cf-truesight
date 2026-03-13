@@ -17,7 +17,8 @@ use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
 use super::query_builder::{
-    PropertyFilter, build_property_filter_clauses, column_expr, metric_expr, validate_identifier,
+    PropertyFilter, build_property_filter_clauses, column_expr, identity_join, metric_expr,
+    validate_identifier,
 };
 
 // ── Request / Response ──────────────────────────────────────────────
@@ -93,8 +94,9 @@ pub async fn pivots(
     let metric = metric_expr(&req.metric)?;
 
     // Build WHERE conditions
+    let ij = identity_join(db);
     let mut conditions = Vec::new();
-    conditions.push("project_id = ?".to_string());
+    conditions.push("e.project_id = ?".to_string());
     conditions.push("server_timestamp BETWEEN ? AND ?".to_string());
 
     if req.event_name.is_some() {
@@ -111,7 +113,7 @@ pub async fn pivots(
 
     let query = format!(
         "SELECT {row_expr} AS row_val, {col_expr} AS col_val, {metric} AS value \
-         FROM {db}.events \
+         FROM {db}.events AS e{ij} \
          WHERE {where_clause} \
          GROUP BY row_val, col_val \
          ORDER BY row_val, col_val"

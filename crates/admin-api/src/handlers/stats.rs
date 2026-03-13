@@ -556,11 +556,14 @@ pub async fn active_users(
         ""
     };
 
-    // Active users per period
+    // Active users per period (resolve identity for pre-identify events)
     let active_query = format!(
-        "SELECT {period_expr} AS period, uniqExact(user_uid) AS active_users \
-         FROM {db}.users_daily \
-         WHERE project_id = ? AND event_date BETWEEN ? AND ?{env_filter} \
+        "SELECT {period_expr} AS period, \
+         uniqExact(COALESCE(m.user_id, ud.user_uid)) AS active_users \
+         FROM {db}.users_daily AS ud \
+         LEFT JOIN {db}.identity_map FINAL AS m \
+           ON m.project_id = ud.project_id AND m.anonymous_id = ud.user_uid \
+         WHERE ud.project_id = ? AND event_date BETWEEN ? AND ?{env_filter} \
          GROUP BY period ORDER BY period"
     );
 
@@ -659,10 +662,13 @@ pub async fn live_users(
         ""
     };
 
+    let ij = super::query_builder::identity_join(db);
+    let user_uid = super::query_builder::USER_UID_EXPR;
+
     let query_5m = format!(
-        "SELECT uniqExact(anonymous_id) AS active \
-         FROM {db}.events \
-         WHERE project_id = ? AND server_timestamp >= now() - INTERVAL 5 MINUTE{env_filter}"
+        "SELECT uniqExact({user_uid}) AS active \
+         FROM {db}.events AS e{ij} \
+         WHERE e.project_id = ? AND server_timestamp >= now() - INTERVAL 5 MINUTE{env_filter}"
     );
 
     let mut q = state.clickhouse_client.query(&query_5m).bind(project_id);
@@ -675,9 +681,9 @@ pub async fn live_users(
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
 
     let query_30m = format!(
-        "SELECT uniqExact(anonymous_id) AS active \
-         FROM {db}.events \
-         WHERE project_id = ? AND server_timestamp >= now() - INTERVAL 30 MINUTE{env_filter}"
+        "SELECT uniqExact({user_uid}) AS active \
+         FROM {db}.events AS e{ij} \
+         WHERE e.project_id = ? AND server_timestamp >= now() - INTERVAL 30 MINUTE{env_filter}"
     );
 
     let mut q = state.clickhouse_client.query(&query_30m).bind(project_id);
@@ -725,6 +731,8 @@ pub async fn platform_distribution(
         ""
     };
 
+    let ij = super::query_builder::identity_join(db);
+    let user_uid = super::query_builder::USER_UID_EXPR;
     let query = format!(
         "SELECT \
          CASE \
@@ -736,10 +744,10 @@ pub async fn platform_distribution(
            WHEN device_model = 'Mobile' THEN 'mobile_web' \
            ELSE 'other' \
          END AS platform, \
-         uniqExact(anonymous_id) AS users, \
+         uniqExact({user_uid}) AS users, \
          count() AS events \
-         FROM {db}.events \
-         WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{env_filter} \
+         FROM {db}.events AS e{ij} \
+         WHERE e.project_id = ? AND server_timestamp BETWEEN ? AND ?{env_filter} \
          GROUP BY platform ORDER BY events DESC"
     );
 

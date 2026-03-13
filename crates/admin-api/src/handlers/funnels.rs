@@ -12,7 +12,7 @@ use truesight_common::team::TeamRole;
 
 use crate::db::funnels as db;
 use crate::db::segments as segments_db;
-use crate::handlers::query_builder::{self, build_property_filter_clauses};
+use crate::handlers::query_builder::{self, build_property_filter_clauses, identity_join, USER_UID_EXPR};
 use crate::handlers::rbac;
 use crate::handlers::segments::SegmentFilter;
 use crate::middleware::admin_auth::AuthUser;
@@ -270,14 +270,16 @@ async fn compute_funnel_results(
     // Include properties_map in inner SELECT when any step has filters
     let has_filters = steps.iter().any(|s| !s.property_filters.is_empty());
     let extra_cols = if has_filters { ", properties_map" } else { "" };
+    let user_uid = USER_UID_EXPR;
+    let ij = identity_join(db_name);
 
     let query = format!(
         "SELECT level, count() AS users FROM ( \
             SELECT user_uid, windowFunnel({window})(toDateTime(server_timestamp), {conditions}) AS level \
             FROM ( \
-                SELECT anonymous_id AS user_uid, server_timestamp, event_name{extra_cols} \
-                FROM {db_name}.events \
-                WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
+                SELECT {user_uid} AS user_uid, server_timestamp, event_name{extra_cols} \
+                FROM {db_name}.events AS e{ij} \
+                WHERE e.project_id = ? AND server_timestamp BETWEEN ? AND ? \
                 AND event_name IN ({event_names}){env_filter} \
             ){segment_clause} GROUP BY user_uid \
         ) GROUP BY level ORDER BY level",

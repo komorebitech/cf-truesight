@@ -15,7 +15,7 @@ use crate::handlers::rbac;
 use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
-use super::query_builder::validate_identifier;
+use super::query_builder::{identity_join, validate_identifier, USER_UID_EXPR};
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -279,10 +279,11 @@ fn build_cohort_clauses(
                 let interval = parse_time_window(time_window)?;
                 let escaped_name = event_name.replace('\'', "\\'");
 
+                let ij = identity_join(db_name);
                 let subquery = format!(
-                    "SELECT anonymous_id AS user_uid \
-                     FROM {db_name}.events \
-                     WHERE project_id = ? AND event_name = '{escaped_name}' \
+                    "SELECT {USER_UID_EXPR} AS user_uid \
+                     FROM {db_name}.events AS e{ij} \
+                     WHERE e.project_id = ? AND event_name = '{escaped_name}' \
                      AND server_timestamp >= now() - INTERVAL {interval}{env_filter} \
                      GROUP BY user_uid \
                      HAVING count() {sql_operator} {count}"
@@ -348,12 +349,13 @@ pub async fn cohort_users(
     let offset = (page - 1) * per_page;
     let fetch_limit = per_page + 1;
 
+    let ij = identity_join(db_name);
     let query_str = format!(
         "SELECT DISTINCT user_uid \
          FROM ( \
-             SELECT anonymous_id AS user_uid \
-             FROM {db_name}.events \
-             WHERE project_id = ?{env_filter} \
+             SELECT {USER_UID_EXPR} AS user_uid \
+             FROM {db_name}.events AS e{ij} \
+             WHERE e.project_id = ?{env_filter} \
          ) \
          WHERE {where_expr} \
          ORDER BY user_uid \
@@ -424,12 +426,13 @@ pub async fn cohort_size(
     let (clauses, connector) = build_cohort_clauses(&def, db_name, env_filter)?;
     let where_expr = clauses.join(&format!(" {} ", connector));
 
+    let ij = identity_join(db_name);
     let query_str = format!(
         "SELECT count(DISTINCT user_uid) AS cnt \
          FROM ( \
-             SELECT anonymous_id AS user_uid \
-             FROM {db_name}.events \
-             WHERE project_id = ?{env_filter} \
+             SELECT {USER_UID_EXPR} AS user_uid \
+             FROM {db_name}.events AS e{ij} \
+             WHERE e.project_id = ?{env_filter} \
          ) \
          WHERE {where_expr}"
     );

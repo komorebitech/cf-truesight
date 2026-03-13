@@ -17,7 +17,8 @@ use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
 use super::query_builder::{
-    PropertyFilter, USER_UID_EXPR, build_property_filter_clauses, validate_identifier,
+    PropertyFilter, USER_UID_EXPR, build_property_filter_clauses, identity_join,
+    validate_identifier,
 };
 
 // ── Defaults ────────────────────────────────────────────────────────
@@ -150,14 +151,15 @@ pub async fn retention(
     };
 
     let user_uid = USER_UID_EXPR;
+    let ij = identity_join(db);
     let query = format!(
         "WITH \
           cohort_users AS ( \
             SELECT user_uid, {pfn_alias} AS cohort_period \
             FROM ( \
               SELECT {user_uid} AS user_uid, server_timestamp \
-              FROM {db}.events \
-              WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
+              FROM {db}.events AS e{ij} \
+              WHERE e.project_id = ? AND server_timestamp BETWEEN ? AND ? \
                 AND event_name = ?{cohort_env_filter}{cohort_filter_sql} \
             ) \
             GROUP BY user_uid, cohort_period \
@@ -167,8 +169,8 @@ pub async fn retention(
             SELECT \
               {user_uid} AS user_uid, \
               {pfn_alias} AS activity_period \
-            FROM {db}.events \
-            WHERE project_id = ? AND server_timestamp BETWEEN ? AND ?{return_event_filter}{activity_env_filter} \
+            FROM {db}.events AS e{ij} \
+            WHERE e.project_id = ? AND server_timestamp BETWEEN ? AND ?{return_event_filter}{activity_env_filter} \
             GROUP BY user_uid, activity_period \
           ) \
         SELECT \

@@ -328,9 +328,10 @@ pub async fn user_events(
     };
     let sort_dir = params.sort_order.as_sql();
 
+    let uid_expr = super::query_builder::USER_UID_EXPR;
     let mut conditions = vec![
-        "project_id = ?".to_string(),
-        "COALESCE(NULLIF(user_id, ''), anonymous_id) = ?".to_string(),
+        "e.project_id = ?".to_string(),
+        format!("{uid_expr} = ?"),
         "NOT startsWith(event_name, '$')".to_string(),
     ];
 
@@ -346,14 +347,15 @@ pub async fn user_events(
 
     let where_clause = conditions.join(" AND ");
 
+    let ij = super::query_builder::identity_join(db);
     let query_str = format!(
-        "SELECT toString(event_id) AS event_id, toString(project_id) AS project_id, \
+        "SELECT toString(event_id) AS event_id, toString(e.project_id) AS project_id, \
          event_name, event_type, \
-         COALESCE(user_id, '') AS user_id, anonymous_id, \
+         COALESCE(e.user_id, '') AS user_id, e.anonymous_id, \
          formatDateTime(client_timestamp, '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS client_ts, \
          formatDateTime(server_timestamp, '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS server_ts, \
          properties \
-         FROM {db}.events \
+         FROM {db}.events AS e{ij} \
          WHERE {where_clause} \
          ORDER BY {sort_col} {sort_dir} \
          LIMIT ? OFFSET ?"

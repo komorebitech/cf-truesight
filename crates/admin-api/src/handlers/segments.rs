@@ -16,8 +16,8 @@ use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
 use super::query_builder::{
-    build_property_filter_clauses, column_expr, escape_string_literal, is_top_level,
-    validate_identifier,
+    build_property_filter_clauses, column_expr, escape_string_literal, identity_join, is_top_level,
+    validate_identifier, USER_UID_EXPR,
 };
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -410,11 +410,12 @@ fn build_segment_clauses(
                 };
 
                 let in_op = if action == "did_not" { "NOT IN" } else { "IN" };
+                let ij = identity_join(db_name);
 
                 let subquery = format!(
-                    "SELECT anonymous_id AS user_uid \
-                     FROM {db_name}.events \
-                     WHERE project_id = ? AND event_name = '{escaped_name}'\
+                    "SELECT {USER_UID_EXPR} AS user_uid \
+                     FROM {db_name}.events AS e{ij} \
+                     WHERE e.project_id = ? AND event_name = '{escaped_name}'\
                      {time_clause}{env_filter}{prop_clause} \
                      GROUP BY user_uid \
                      HAVING count() {sql_operator} {count}"
@@ -505,10 +506,11 @@ fn build_segment_clauses(
                 };
 
                 let subquery = if source == "event" {
+                    let ij = identity_join(db_name);
                     format!(
-                        "SELECT anonymous_id AS user_uid \
-                         FROM {db_name}.events \
-                         WHERE project_id = ? AND {condition}{env_filter}"
+                        "SELECT {USER_UID_EXPR} AS user_uid \
+                         FROM {db_name}.events AS e{ij} \
+                         WHERE e.project_id = ? AND {condition}{env_filter}"
                     )
                 } else {
                     format!(
@@ -554,11 +556,12 @@ impl SegmentFilter {
         if ctx.rules.is_empty() {
             return Ok(None);
         }
+        let ij = identity_join(&ctx.db_name);
         let sql = format!(
             "user_uid IN (\
                 SELECT DISTINCT user_uid FROM (\
-                    SELECT anonymous_id AS user_uid \
-                    FROM {db}.events WHERE project_id = ?{env}\
+                    SELECT {USER_UID_EXPR} AS user_uid \
+                    FROM {db}.events AS e{ij} WHERE e.project_id = ?{env}\
                 ) WHERE {where_expr}\
             )",
             db = ctx.db_name,
@@ -686,12 +689,13 @@ pub async fn segment_size(
         }));
     }
 
+    let ij = identity_join(&ctx.db_name);
     let query_str = format!(
         "SELECT count(DISTINCT user_uid) AS cnt \
          FROM ( \
-             SELECT anonymous_id AS user_uid \
-             FROM {db}.events \
-             WHERE project_id = ?{env} \
+             SELECT {USER_UID_EXPR} AS user_uid \
+             FROM {db}.events AS e{ij} \
+             WHERE e.project_id = ?{env} \
          ) \
          WHERE {where_expr}",
         db = ctx.db_name,
@@ -752,12 +756,13 @@ pub async fn segment_users(
     let offset = (page - 1) * per_page;
     let fetch_limit = per_page + 1;
 
+    let ij = identity_join(&ctx.db_name);
     let query_str = format!(
         "SELECT DISTINCT user_uid \
          FROM ( \
-             SELECT anonymous_id AS user_uid \
-             FROM {db}.events \
-             WHERE project_id = ?{env} \
+             SELECT {USER_UID_EXPR} AS user_uid \
+             FROM {db}.events AS e{ij} \
+             WHERE e.project_id = ?{env} \
          ) \
          WHERE {where_expr} \
          ORDER BY user_uid \
@@ -820,12 +825,13 @@ pub async fn segment_preview(
         return Ok(Json(PreviewResponse { size: 0 }));
     }
 
+    let ij = identity_join(&ctx.db_name);
     let query_str = format!(
         "SELECT count(DISTINCT user_uid) AS cnt \
          FROM ( \
-             SELECT anonymous_id AS user_uid \
-             FROM {db}.events \
-             WHERE project_id = ?{env} \
+             SELECT {USER_UID_EXPR} AS user_uid \
+             FROM {db}.events AS e{ij} \
+             WHERE e.project_id = ?{env} \
          ) \
          WHERE {where_expr}",
         db = ctx.db_name,

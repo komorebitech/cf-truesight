@@ -17,7 +17,8 @@ use crate::middleware::admin_auth::AuthUser;
 use crate::state::AppState;
 
 use super::query_builder::{
-    PropertyFilter, USER_UID_EXPR, build_property_filter_clauses, validate_identifier,
+    PropertyFilter, USER_UID_EXPR, build_property_filter_clauses, identity_join,
+    validate_identifier,
 };
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -157,6 +158,7 @@ pub async fn flows(
     // ── Transition query ────────────────────────────────────────────
 
     let user_uid = USER_UID_EXPR;
+    let ij = identity_join(db);
     let transition_query = format!(
         "WITH user_events AS ( \
             SELECT \
@@ -164,8 +166,8 @@ pub async fn flows(
                 event_name, \
                 server_timestamp, \
                 row_number() OVER (PARTITION BY {user_uid} ORDER BY server_timestamp) AS rn \
-            FROM {db}.events \
-            WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
+            FROM {db}.events AS e{ij} \
+            WHERE e.project_id = ? AND server_timestamp BETWEEN ? AND ? \
             AND NOT startsWith(event_name, '$'){extra_where} \
         ), \
         anchor AS ( \
@@ -223,8 +225,8 @@ pub async fn flows(
                 event_name, \
                 server_timestamp, \
                 row_number() OVER (PARTITION BY {user_uid} ORDER BY server_timestamp) AS rn \
-            FROM {db}.events \
-            WHERE project_id = ? AND server_timestamp BETWEEN ? AND ? \
+            FROM {db}.events AS e{ij} \
+            WHERE e.project_id = ? AND server_timestamp BETWEEN ? AND ? \
             AND NOT startsWith(event_name, '$'){extra_where} \
         ), \
         anchor AS ( \
