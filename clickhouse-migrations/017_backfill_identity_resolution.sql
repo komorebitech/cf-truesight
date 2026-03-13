@@ -23,7 +23,7 @@ SELECT
     e.environment,
     toDate(e.server_timestamp) AS event_date
 FROM truesight.events AS e
-LEFT JOIN truesight.identity_map FINAL AS m
+LEFT JOIN (SELECT * FROM truesight.identity_map FINAL) AS m
     ON m.project_id = e.project_id AND m.anonymous_id = e.anonymous_id
 GROUP BY ALL;
 
@@ -40,7 +40,7 @@ SELECT
     e.environment,
     toDate(min(e.server_timestamp)) AS first_seen_date
 FROM truesight.events AS e
-LEFT JOIN truesight.identity_map FINAL AS m
+LEFT JOIN (SELECT * FROM truesight.identity_map FINAL) AS m
     ON m.project_id = e.project_id AND m.anonymous_id = e.anonymous_id
 GROUP BY e.project_id, user_uid, e.environment;
 
@@ -59,7 +59,7 @@ SELECT
     min(e.server_timestamp) AS first_seen,
     max(e.server_timestamp) AS last_seen
 FROM truesight.events AS e
-LEFT JOIN truesight.identity_map FINAL AS m
+LEFT JOIN (SELECT * FROM truesight.identity_map FINAL) AS m
     ON m.project_id = e.project_id AND m.anonymous_id = e.anonymous_id
 GROUP BY e.project_id, user_uid, e.environment;
 
@@ -76,5 +76,5 @@ OPTIMIZE TABLE truesight.user_stats FINAL;
 ALTER TABLE truesight.user_profiles DELETE WHERE
     (project_id, user_uid) IN (
         SELECT project_id, anonymous_id
-        FROM truesight.identity_map FINAL
+        FROM (SELECT * FROM truesight.identity_map FINAL)
     );

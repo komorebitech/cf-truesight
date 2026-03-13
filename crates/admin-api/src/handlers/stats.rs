@@ -561,7 +561,7 @@ pub async fn active_users(
         "SELECT {period_expr} AS period, \
          uniqExact(COALESCE(m.user_id, ud.user_uid)) AS active_users \
          FROM {db}.users_daily AS ud \
-         LEFT JOIN {db}.identity_map FINAL AS m \
+         LEFT JOIN (SELECT * FROM {db}.identity_map FINAL) AS m \
            ON m.project_id = ud.project_id AND m.anonymous_id = ud.user_uid \
          WHERE ud.project_id = ? AND event_date BETWEEN ? AND ?{env_filter} \
          GROUP BY period ORDER BY period"

@@ -14,7 +14,7 @@ pub const USER_UID_EXPR: &str = "COALESCE(_im.user_id, e.anonymous_id)";
 /// identity_map table.  The events table **must** be aliased as `e`.
 pub fn identity_join(db: &str) -> String {
     format!(
-        " LEFT JOIN {db}.identity_map FINAL AS _im \
+        " LEFT JOIN (SELECT * FROM {db}.identity_map FINAL) AS _im \
          ON _im.project_id = e.project_id AND _im.anonymous_id = e.anonymous_id"
     )
 }
