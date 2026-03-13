@@ -88,7 +88,7 @@ pub async fn list_users(
     };
 
     let query_str = format!(
-        "SELECT COALESCE(im.user_id, s.user_uid) AS user_uid, \
+        "SELECT COALESCE(NULLIF(im.user_id, ''), s.user_uid) AS user_uid, \
          COALESCE(any(p.email), '') AS email, \
          COALESCE(any(p.name), '') AS name, \
          COALESCE(any(p.mobile_number), '') AS mobile_number, \
@@ -100,10 +100,10 @@ pub async fn list_users(
            ON im.project_id = s.project_id AND im.anonymous_id = s.user_uid \
          LEFT JOIN (SELECT * FROM {db}.user_profiles FINAL) AS p \
            ON s.project_id = p.project_id \
-           AND COALESCE(im.user_id, s.user_uid) = p.user_uid \
+           AND COALESCE(NULLIF(im.user_id, ''), s.user_uid) = p.user_uid \
            AND s.environment = p.environment \
          WHERE s.project_id = ?{env_filter} \
-         GROUP BY COALESCE(im.user_id, s.user_uid){search_filter} \
+         GROUP BY COALESCE(NULLIF(im.user_id, ''), s.user_uid){search_filter} \
          ORDER BY {sort_col} {sort_dir} \
          LIMIT ? OFFSET ?"
     );

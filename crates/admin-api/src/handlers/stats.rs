@@ -559,7 +559,7 @@ pub async fn active_users(
     // Active users per period (resolve identity for pre-identify events)
     let active_query = format!(
         "SELECT {period_expr} AS period, \
-         uniqExact(COALESCE(m.user_id, ud.user_uid)) AS active_users \
+         uniqExact(COALESCE(NULLIF(m.user_id, ''), ud.user_uid)) AS active_users \
          FROM {db}.users_daily AS ud \
          LEFT JOIN (SELECT * FROM {db}.identity_map FINAL) AS m \
            ON m.project_id = ud.project_id AND m.anonymous_id = ud.user_uid \
