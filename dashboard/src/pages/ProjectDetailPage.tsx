@@ -328,7 +328,7 @@ export function ProjectDetailPage() {
   };
   const platformChartData = (platformData?.data ?? []).map((d) => ({
     ...d,
-    platform: DEVICE_LABELS[d.platform] ?? d.platform || "Unknown",
+    platform: DEVICE_LABELS[d.platform] ?? (d.platform || "Unknown"),
   }));
 
   // Sparkline data
