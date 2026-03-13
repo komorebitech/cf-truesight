@@ -88,7 +88,7 @@ pub async fn list_users(
     };
 
     let query_str = format!(
-        "SELECT s.user_uid AS user_uid, \
+        "SELECT COALESCE(im.user_id, s.user_uid) AS user_uid, \
          COALESCE(any(p.email), '') AS email, \
          COALESCE(any(p.name), '') AS name, \
          COALESCE(any(p.mobile_number), '') AS mobile_number, \
@@ -96,10 +96,14 @@ pub async fn list_users(
          formatDateTime(max(s.last_seen), '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS last_seen, \
          sum(s.event_count) AS event_count \
          FROM {db}.user_stats AS s \
+         LEFT JOIN {db}.identity_map FINAL AS im \
+           ON im.project_id = s.project_id AND im.anonymous_id = s.user_uid \
          LEFT JOIN (SELECT * FROM {db}.user_profiles FINAL) AS p \
-           ON s.project_id = p.project_id AND s.user_uid = p.user_uid AND s.environment = p.environment \
+           ON s.project_id = p.project_id \
+           AND COALESCE(im.user_id, s.user_uid) = p.user_uid \
+           AND s.environment = p.environment \
          WHERE s.project_id = ?{env_filter} \
-         GROUP BY s.user_uid{search_filter} \
+         GROUP BY COALESCE(im.user_id, s.user_uid){search_filter} \
          ORDER BY {sort_col} {sort_dir} \
          LIMIT ? OFFSET ?"
     );
@@ -213,13 +217,17 @@ pub async fn get_user(
         .await
         .map_err(|e| AppError::Database(format!("ClickHouse error: {}", e)))?;
 
-    // Get accurate stats from user_stats
+    // Get accurate stats from user_stats, including any linked anonymous_ids
     let stats_query = format!(
         "SELECT sum(event_count) AS event_count, \
          formatDateTime(min(first_seen), '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS first_seen, \
          formatDateTime(max(last_seen), '%Y-%m-%dT%H:%i:%SZ', 'UTC') AS last_seen \
          FROM {db}.user_stats \
-         WHERE project_id = ? AND user_uid = ?{stats_env_filter}"
+         WHERE project_id = ? AND (user_uid = ? \
+           OR user_uid IN ( \
+             SELECT anonymous_id FROM {db}.identity_map FINAL \
+             WHERE project_id = ? AND user_id = ? \
+           )){stats_env_filter}"
     );
 
     #[derive(clickhouse::Row, Deserialize)]
@@ -232,6 +240,8 @@ pub async fn get_user(
     let mut sq = state
         .clickhouse_client
         .query(&stats_query)
+        .bind(project_id)
+        .bind(user_uid.as_str())
         .bind(project_id)
         .bind(user_uid.as_str());
     if let Some(ref env) = params.environment {
