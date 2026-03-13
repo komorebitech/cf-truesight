@@ -126,6 +126,7 @@ pub fn period_expr(granularity: &str) -> Result<&'static str, AppError> {
         "day" => Ok("formatDateTime(toDate(server_timestamp), '%Y-%m-%d')"),
         "week" => Ok("formatDateTime(toMonday(server_timestamp), '%Y-%m-%d')"),
         "month" => Ok("formatDateTime(toStartOfMonth(server_timestamp), '%Y-%m-%d')"),
+        "total" => Ok("'total'"),
         other => Err(AppError::Validation(format!(
             "Unknown granularity: {}",
             other

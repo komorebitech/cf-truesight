@@ -266,16 +266,16 @@ export function ProjectDetailPage() {
   const { data: liveData, isLoading: liveLoading } = useLiveUsers(id, environment);
 
   // DAU today + yesterday for trend
-  const { data: dauToday } = useActiveUsers(id, todayStart, nowISO, "day", environment);
-  const { data: dauYesterday } = useActiveUsers(id, yesterdayStart, todayStart, "day", environment);
+  const { data: dauToday } = useActiveUsers(id, todayStart, nowISO, "total", environment);
+  const { data: dauYesterday } = useActiveUsers(id, yesterdayStart, todayStart, "total", environment);
 
   // WAU this week + last week
-  const { data: wauThis } = useActiveUsers(id, d7Ago, nowISO, "week", environment);
-  const { data: wauPrev } = useActiveUsers(id, d14Ago, d7Ago, "week", environment);
+  const { data: wauThis } = useActiveUsers(id, d7Ago, nowISO, "total", environment);
+  const { data: wauPrev } = useActiveUsers(id, d14Ago, d7Ago, "total", environment);
 
   // MAU this month + last month
-  const { data: mauThis } = useActiveUsers(id, d30Ago, nowISO, "month", environment);
-  const { data: mauPrev } = useActiveUsers(id, d60Ago, d30Ago, "month", environment);
+  const { data: mauThis } = useActiveUsers(id, d30Ago, nowISO, "total", environment);
+  const { data: mauPrev } = useActiveUsers(id, d60Ago, d30Ago, "total", environment);
 
   // 30-day DAU chart
   const { data: dauChart, isLoading: dauChartLoading } = useActiveUsers(

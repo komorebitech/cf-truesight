@@ -547,6 +547,7 @@ pub async fn active_users(
     let period_expr = match params.granularity.as_str() {
         "week" => "toString(toMonday(event_date))".to_string(),
         "month" => "toString(toStartOfMonth(event_date))".to_string(),
+        "total" => "'total'".to_string(),
         _ => "toString(event_date)".to_string(), // day
     };
 
@@ -585,6 +586,7 @@ pub async fn active_users(
     let new_period_expr = match params.granularity.as_str() {
         "week" => "toString(toMonday(first_seen_date))".to_string(),
         "month" => "toString(toStartOfMonth(first_seen_date))".to_string(),
+        "total" => "'total'".to_string(),
         _ => "toString(first_seen_date)".to_string(),
     };
 
