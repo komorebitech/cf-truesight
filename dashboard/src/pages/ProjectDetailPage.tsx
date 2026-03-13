@@ -247,15 +247,20 @@ export function ProjectDetailPage() {
     if (id) setLastProject(id);
   }, [id, setLastProject]);
 
-  // Date boundaries
-  const now = new Date();
-  const todayStart = formatISO(startOfDay(now));
-  const nowISO = formatISO(now);
-  const yesterdayStart = formatISO(startOfDay(subDays(now, 1)));
-  const d7Ago = formatISO(startOfDay(subDays(now, 7)));
-  const d14Ago = formatISO(startOfDay(subDays(now, 14)));
-  const d30Ago = formatISO(startOfDay(subDays(now, 30)));
-  const d60Ago = formatISO(startOfDay(subDays(now, 60)));
+  // Date boundaries — memoised so TanStack Query keys stay stable across renders
+  const { todayStart, nowISO, yesterdayStart, d7Ago, d14Ago, d30Ago, d60Ago } =
+    useMemo(() => {
+      const now = new Date();
+      return {
+        todayStart: formatISO(startOfDay(now)),
+        nowISO: formatISO(now),
+        yesterdayStart: formatISO(startOfDay(subDays(now, 1))),
+        d7Ago: formatISO(startOfDay(subDays(now, 7))),
+        d14Ago: formatISO(startOfDay(subDays(now, 14))),
+        d30Ago: formatISO(startOfDay(subDays(now, 30))),
+        d60Ago: formatISO(startOfDay(subDays(now, 60))),
+      };
+    }, []);
 
   // -- Data fetching (all parallel via TanStack Query) --
   const { data: liveData, isLoading: liveLoading } = useLiveUsers(id, environment);
